@@ -14,6 +14,10 @@
         "deploy": "truffle deploy --network ci",
         "test": "truffle test --network development",
         "coverage": "solidity-coverage",
+<<<<<<< HEAD
         "testrpc": "testrpc --port 7545 --gasLimit 0xFFFFFFFF"
+=======
+        "testrpc": "testrpc --gasLimit 0xFFFFFFFF"
+>>>>>>> 3b24dad... Move the existing code from our internal repo
     }
 }

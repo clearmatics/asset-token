@@ -14,8 +14,8 @@ contract AssetToken is ERC223Token {
 
     uint public totalSupply;
 
-    string private symbol;
-    string private name;
+    string private _symbol;
+    string private _name;
 
     // Owner of this contract
     address private _owner;
@@ -29,29 +29,29 @@ contract AssetToken is ERC223Token {
     }
 
     // Constructor
-    function AssetToken(string _symbol, string _name) public {
-        symbol = _symbol;
-        name = _name;
+    function AssetToken(string symbol, string name) public {
+        _symbol = symbol;
+        _name = name;
         _owner = msg.sender;
         totalSupply = 0;
     }
 
-    function transferWithData(address _to, uint _value, bytes _data) public {
-        transfer(_to, _value, _data);
+    function transferWithData(address to, uint value, bytes data) public {
+        transfer(to, value, data);
     }
 
-    function transferNoData(address _to, uint _value) public {
-        transfer(_to, _value);
+    function transferNoData(address to, uint value) public {
+        transfer(to, value);
     }
 
-    function fund(address _member, uint256 _value) public onlyOwner {
-        balances[_member] = balances[_member].add(_value);
-        totalSupply = totalSupply.add(_value);
+    function fund(address member, uint256 value) public onlyOwner {
+        _balances[member] = _balances[member].add(value);
+        totalSupply = totalSupply.add(value);
     }
 
-    function defund(address _member, uint256 _value) public onlyOwner {
-        balances[_member] = balances[_member].sub(_value);
-        totalSupply = totalSupply.sub(_value);
+    function defund(address member, uint256 value) public onlyOwner {
+        _balances[member] = _balances[member].sub(value);
+        totalSupply = totalSupply.sub(value);
     }
 
     // Fallback that prevents ETH from being sent to this contract

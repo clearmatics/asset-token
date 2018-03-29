@@ -1,0 +1,19 @@
+{
+    "name": "test_smart_contract",
+    "version": "1.0.0",
+    "main": "index.js",
+    "license": "MIT",
+    "dependencies": {
+        "ethereumjs-testrpc": "^6.0.1",
+        "solidity-coverage": "^0.4.0 ",
+        "truffle": "^4.0.1",
+        "web3": "^0.20.6"
+    },
+    "scripts": {
+        "compile": "truffle compile",
+        "deploy": "truffle deploy --network ci",
+        "test": "truffle test --network development",
+        "coverage": "solidity-coverage",
+        "testrpc": "testrpc --gasLimit 0xFFFFFFFF"
+    }
+}

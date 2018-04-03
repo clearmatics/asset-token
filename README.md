@@ -1,5 +1,5 @@
 # Asset Token
-Designed to represented a currency as an [ERC223][1] token.
+Designed to represented a fungible asset with a single issuance/redemption oracle as an [ERC223][1] token.
 
 ## Developing
 

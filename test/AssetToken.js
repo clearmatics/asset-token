@@ -15,6 +15,12 @@ contract('AssetToken', (accounts) => {
         assert.strictEqual(actualName, expectedName);
     });
 
+    it('Check the tokens symbol', async () => {
+        const actualSymbol = await CONTRACT.symbol.call();
+	const expectedSymbol = "CLR";
+
+        assert.strictEqual(actualSymbol, expectedSymbol);
+    });
 
     it('transfer tokens without data', async () => {
         const addrSender = addrOwner;

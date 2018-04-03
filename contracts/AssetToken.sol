@@ -36,14 +36,6 @@ contract AssetToken is ERC223Token {
         totalSupply = 0;
     }
 
-    function transferWithData(address to, uint value, bytes data) public {
-        transfer(to, value, data);
-    }
-
-    function transferNoData(address to, uint value) public {
-        transfer(to, value);
-    }
-
     function fund(address member, uint256 value) public onlyOwner {
         _balances[member] = _balances[member].add(value);
         totalSupply = totalSupply.add(value);

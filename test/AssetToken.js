@@ -20,55 +20,7 @@ contract('AssetToken', (accounts) => {
 
         const addrRecepient = accounts[1];
         const transferVal = 1;
-        const transferRes = await CONTRACT.transferNoData(addrRecepient, transferVal, { from: addrSender });
-        const balanceRecepient = await CONTRACT.balanceOf.call(addrRecepient);
-        balanceOwner = await CONTRACT.balanceOf.call(addrOwner);
-
-        assert.strictEqual(balanceRecepient.plus(balanceOwner).toNumber(),totalSupply.toNumber());
-
-        const transferLog = transferRes.logs.find(element => element.event.match('Transfer'));
-        assert.strictEqual(transferLog.args.from, addrSender);
-        assert.strictEqual(transferLog.args.to, addrRecepient);
-        assert.strictEqual(transferLog.args.value.toString(), balanceRecepient.toString());
-    });
-
-    it('transfer tokens with data', async () => {
-        const addrSender = addrOwner;
-
-        const fundVal = 1;
-        CONTRACT.fund(addrSender, fundVal, { from: addrSender });
-
-        const totalSupply = await CONTRACT.totalSupply.call();
-        let balanceOwner = await CONTRACT.balanceOf.call(addrOwner);
-        assert.strictEqual(totalSupply.toNumber(),balanceOwner.toNumber());
-
-        const addrRecepient = accounts[1];
-        const transferVal = 1;
-        const transferRes = await CONTRACT.transferWithData(addrRecepient, transferVal, "Asset Token Payment", { from: addrSender });
-        const balanceRecepient = await CONTRACT.balanceOf.call(addrRecepient);
-        balanceOwner = await CONTRACT.balanceOf.call(addrOwner);
-
-        assert.strictEqual(balanceRecepient.plus(balanceOwner).toNumber(),totalSupply.toNumber());
-
-        const transferLog = transferRes.logs.find(element => element.event.match('Transfer'));
-        assert.strictEqual(transferLog.args.from, addrSender);
-        assert.strictEqual(transferLog.args.to, addrRecepient);
-        assert.strictEqual(transferLog.args.value.toString(), balanceRecepient.toString());
-    });
-
-    it('transfer tokens with null data', async () => {
-        const addrSender = addrOwner;
-
-        const fundVal = 1;
-        CONTRACT.fund(addrSender, fundVal, { from: addrSender });
-
-        const totalSupply = await CONTRACT.totalSupply.call();
-        let balanceOwner = await CONTRACT.balanceOf.call(addrOwner);
-        assert.strictEqual(totalSupply.toNumber(),balanceOwner.toNumber());
-
-        const addrRecepient = accounts[1];
-        const transferVal = 1;
-        const transferRes = await CONTRACT.transferWithData(addrRecepient, transferVal, "", { from: addrSender });
+        const transferRes = await CONTRACT.transfer(addrRecepient, transferVal, { from: addrSender });
         const balanceRecepient = await CONTRACT.balanceOf.call(addrRecepient);
         balanceOwner = await CONTRACT.balanceOf.call(addrOwner);
 

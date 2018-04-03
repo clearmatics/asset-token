@@ -8,6 +8,14 @@ contract('AssetToken', (accounts) => {
         CONTRACT = await AssetToken.new("CLR", "Asset Token", { from: accounts[0] });
     });
 
+    it('Check the name of the token', async () => {
+        const actualName = await CONTRACT.name.call();
+	const expectedName = "Asset Token";
+
+        assert.strictEqual(actualName, expectedName);
+    });
+
+
     it('transfer tokens without data', async () => {
         const addrSender = addrOwner;
 

@@ -1,14 +1,15 @@
 pragma solidity ^0.4.19;
 
- /**
- * @title Contract that will work with ERC223 tokens.
- */
+/**
+* @title Contract that will work with ERC223 tokens.
+*/
 
 import "./ERC223Token.sol";
 
 /**
- * @title ERC223 standard token implementation.
- */
+* @title ERC223 standard token implementation.
+*/
+
 contract AssetToken is ERC223Token {
     using SafeMath for uint;
 
@@ -36,6 +37,14 @@ contract AssetToken is ERC223Token {
         totalSupply = 0;
     }
 
+    // Fallback that prevents ETH from being sent to this contract
+    function () public payable {
+        revert();
+    }
+
+    event FundEvent(address indexed member, uint256 value);
+    event DefundEvent(address indexed member, uint256 value);
+
     function transferWithData(address _to, uint _value, bytes _data) public {
         transfer(_to, _value, _data);
     }
@@ -47,15 +56,15 @@ contract AssetToken is ERC223Token {
     function fund(address _member, uint256 _value) public onlyOwner {
         balances[_member] = balances[_member].add(_value);
         totalSupply = totalSupply.add(_value);
+
+        emit FundEvent(_member, _value);
     }
 
     function defund(address _member, uint256 _value) public onlyOwner {
         balances[_member] = balances[_member].sub(_value);
         totalSupply = totalSupply.sub(_value);
+
+        emit DefundEvent(_member, _value);
     }
 
-    // Fallback that prevents ETH from being sent to this contract
-    function () public payable {
-        revert();
-    }
 }

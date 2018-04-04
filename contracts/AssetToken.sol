@@ -29,6 +29,7 @@ contract AssetToken is ERC223Token {
         name = _name;
         _owner = msg.sender;
         totalSupply = 0;
+	decimals = 3;
     }
 
     function fund(address member, uint256 value) public onlyOwner {

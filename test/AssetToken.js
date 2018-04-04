@@ -8,7 +8,28 @@ contract('AssetToken', (accounts) => {
         CONTRACT = await AssetToken.new("CLR", "Asset Token", { from: accounts[0] });
     });
 
-    it('transfer tokens without data', async () => {
+    it('Check the name of the token', async () => {
+        const actualName = await CONTRACT.name.call();
+	const expectedName = "Asset Token";
+
+        assert.strictEqual(actualName, expectedName);
+    });
+
+    it('Check the tokens symbol', async () => {
+        const actualSymbol = await CONTRACT.symbol.call();
+	const expectedSymbol = "CLR";
+
+        assert.strictEqual(actualSymbol, expectedSymbol);
+    });
+
+    it('Check the number of decimal place in the tokens', async () => {
+        const actualDecimals = await CONTRACT.decimals.call();
+	const expectedDecimals = 3;
+
+        assert.strictEqual(actualDecimals.toNumber(), expectedDecimals);
+    });
+
+    it('Transfer tokens without any extra data field', async () => {
         const addrSender = addrOwner;
 
         const fundVal = 1;
@@ -32,7 +53,7 @@ contract('AssetToken', (accounts) => {
         assert.strictEqual(transferLog.args.value.toString(), balanceRecepient.toString());
     });
 
-    it('fund account', async () => {
+    it('Fund an account', async () => {
         const addrRecepient = accounts[1];
 
         const totalSupplyBefore = await CONTRACT.totalSupply.call();
@@ -48,7 +69,7 @@ contract('AssetToken', (accounts) => {
         assert.strictEqual(balanceRecepientBefore.toNumber() + fundVal, balanceRecepientAfter.toNumber());
     });
 
-    it('defund account', async () => {
+    it('Defund an account', async () => {
         const addrRecepient = accounts[1];
 
         const totalSupplyBefore = await CONTRACT.totalSupply.call();

@@ -45,6 +45,28 @@ contract('AssetToken', (accounts) => {
         assert.strictEqual(balanceRecepientBefore.toNumber() + fundVal, balanceRecepientAfter.toNumber());
     });
 
+    it('Attempt to Fund when not the contract owner', async () => {
+        const addrRecepient = accounts[1];
+
+        const totalSupplyBefore = await CONTRACT.totalSupply.call();
+        const balanceRecepientBefore = await CONTRACT.balanceOf.call(addrRecepient);
+       
+   	let actualError = null;
+	try {
+		const fundVal = 100;
+        	const fundRes = await CONTRACT.fund(addrRecepient, fundVal, { from: addrRecepient });
+	} catch (error) {
+		actualError = error;
+	}
+
+        const totalSupplyAfter = await CONTRACT.totalSupply.call();
+        const balanceRecepientAfter = await CONTRACT.balanceOf.call(addrRecepient);
+
+        assert.strictEqual(totalSupplyBefore.toNumber(), totalSupplyAfter.toNumber());
+        assert.strictEqual(balanceRecepientBefore.toNumber(), balanceRecepientAfter.toNumber());
+        assert.strictEqual(actualError.toString(),"Error: VM Exception while processing transaction: revert");
+    });
+
     it('Attempt to Fund the contract owner', async () => {
         const totalSupplyBefore = await CONTRACT.totalSupply.call();
         const balanceRecepientBefore = await CONTRACT.balanceOf.call(addrOwner);

@@ -22,7 +22,7 @@ contract('AssetToken', (accounts) => {
         assert.strictEqual(actualSymbol, expectedSymbol);
     });
 
-    it('transfer tokens without data', async () => {
+    it('Transfer tokens without any extra data field', async () => {
         const addrSender = addrOwner;
 
         const fundVal = 1;
@@ -46,7 +46,7 @@ contract('AssetToken', (accounts) => {
         assert.strictEqual(transferLog.args.value.toString(), balanceRecepient.toString());
     });
 
-    it('fund account', async () => {
+    it('Fund an account', async () => {
         const addrRecepient = accounts[1];
 
         const totalSupplyBefore = await CONTRACT.totalSupply.call();
@@ -62,7 +62,7 @@ contract('AssetToken', (accounts) => {
         assert.strictEqual(balanceRecepientBefore.toNumber() + fundVal, balanceRecepientAfter.toNumber());
     });
 
-    it('defund account', async () => {
+    it('Defund an account', async () => {
         const addrRecepient = accounts[1];
 
         const totalSupplyBefore = await CONTRACT.totalSupply.call();

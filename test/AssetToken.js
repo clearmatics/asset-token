@@ -5,7 +5,7 @@ let CONTRACT;
 contract('AssetToken', (accounts) => {
     const addrOwner = accounts[0];
     beforeEach(async () => {
-        CONTRACT = await AssetToken.new("CLR", "Asset Token", { from: accounts[0] });
+        CONTRACT = await AssetToken.new("CLR", "Asset Token", { from: addrOwner });
     });
 
     it('Check the name of the token', async () => {
@@ -30,16 +30,16 @@ contract('AssetToken', (accounts) => {
     });
 
     it('Transfer tokens without any extra data field', async () => {
-        const addrSender = addrOwner;
+        const addrSender = accounts[1];
 
         const fundVal = 1;
-        CONTRACT.fund(addrSender, fundVal, { from: addrSender });
+        CONTRACT.fund(addrSender, fundVal, { from: addrOwner });
 
         const totalSupply = await CONTRACT.totalSupply.call();
-        let balanceOwner = await CONTRACT.balanceOf.call(addrOwner);
-        assert.strictEqual(totalSupply.toNumber(),balanceOwner.toNumber());
+        let balanceSender = await CONTRACT.balanceOf.call(addrSender);
+        assert.strictEqual(totalSupply.toNumber(),balanceSender.toNumber());
 
-        const addrRecepient = accounts[1];
+        const addrRecepient = accounts[2];
         const transferVal = 1;
         const transferRes = await CONTRACT.transfer(addrRecepient, transferVal, { from: addrSender });
         const balanceRecepient = await CONTRACT.balanceOf.call(addrRecepient);

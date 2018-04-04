@@ -87,6 +87,26 @@ contract('AssetToken', (accounts) => {
         assert.strictEqual(actualError.toString(),"Error: VM Exception while processing transaction: revert");
     });
 
+    it('Attempt to defund the contract owner', async () => {
+        const totalSupplyBefore = await CONTRACT.totalSupply.call();
+        const balanceRecepientBefore = await CONTRACT.balanceOf.call(addrOwner);
+
+   	let actualError = null;
+	try {
+		const defundVal = 50;
+		const defundRes = await CONTRACT.defund(defundVal, { from: addrOwner });
+	} catch (error) {
+		actualError = error;
+	}
+
+        const totalSupplyDefunded = await CONTRACT.totalSupply.call();
+        const balanceRecepientDefunded = await CONTRACT.balanceOf.call(addrOwner);
+
+        assert.strictEqual(totalSupplyBefore.toNumber(), totalSupplyDefunded.toNumber());
+        assert.strictEqual(balanceRecepientBefore.toNumber(), balanceRecepientDefunded.toNumber());
+        assert.strictEqual(actualError.toString(),"Error: VM Exception while processing transaction: revert");
+    });
+
     it('Defund an account', async () => {
         const addrRecepient = accounts[1];
 

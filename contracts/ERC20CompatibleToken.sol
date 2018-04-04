@@ -5,27 +5,27 @@ import './SafeMath.sol';
 contract ERC20CompatibleToken {
     using SafeMath for uint;
 
-    mapping(address => uint) balances; // List of user balances.
-    mapping (address => mapping (address => uint256)) internal allowed;
+    mapping(address => uint) _balances; // List of user balances.
+    mapping (address => mapping (address => uint256)) internal _allowed;
 
     event Transfer(address indexed from, address indexed to, uint value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
 
     /**
      * @dev Transfer tokens from one address to another
-     * @param _from address The address which you want to send tokens from
-     * @param _to address The address which you want to transfer to
-     * @param _value uint256 the amount of tokens to be transferred
+     * @param from address The address which you want to send tokens from
+     * @param to address The address which you want to transfer to
+     * @param value uint256 the amount of tokens to be transferred
      */
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
-        require(_value <= balances[_from]);
-        require(_value <= allowed[_from][msg.sender]);
+    function transferFrom(address from, address to, uint256 value) public returns (bool) {
+        require(to != address(0));
+        require(value <= _balances[from]);
+        require(value <= _allowed[from][msg.sender]);
 
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        Transfer(_from, _to, _value);
+        _balances[from] = _balances[from].sub(value);
+        _balances[to] = _balances[to].add(value);
+        _allowed[from][msg.sender] = _allowed[from][msg.sender].sub(value);
+        Transfer(from, to, value);
         return true;
     }
 
@@ -36,23 +36,23 @@ contract ERC20CompatibleToken {
      * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
      * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
      * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-     * @param _spender The address which will spend the funds.
-     * @param _value The amount of tokens to be spent.
+     * @param spender The address which will spend the funds.
+     * @param value The amount of tokens to be spent.
      */
-    function approve(address _spender, uint256 _value) public returns (bool) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+    function approve(address spender, uint256 value) public returns (bool) {
+        _allowed[msg.sender][spender] = value;
+        Approval(msg.sender, spender, value);
         return true;
     }
 
     /**
      * @dev Function to check the amount of tokens that an owner allowed to a spender.
-     * @param _owner address The address which owns the funds.
-     * @param _spender address The address which will spend the funds.
+     * @param owner address The address which owns the funds.
+     * @param spender address The address which will spend the funds.
      * @return A uint256 specifying the amount of tokens still available for the spender.
      */
-    function allowance(address _owner, address _spender) public view returns (uint256) {
-        return allowed[_owner][_spender];
+    function allowance(address owner, address spender) public view returns (uint256) {
+        return _allowed[owner][spender];
     }
 
     /**
@@ -61,20 +61,20 @@ contract ERC20CompatibleToken {
      * the first transaction is mined)
      * From MonolithDAO Token.sol
      */
-    function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
-        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    function increaseApproval(address spender, uint addedValue) public returns (bool) {
+        _allowed[msg.sender][spender] = _allowed[msg.sender][spender].add(addedValue);
+        Approval(msg.sender, spender, _allowed[msg.sender][spender]);
         return true;
     }
 
-    function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
-        uint oldValue = allowed[msg.sender][_spender];
-        if (_subtractedValue > oldValue) {
-            allowed[msg.sender][_spender] = 0;
+    function decreaseApproval(address spender, uint subtractedValue) public returns (bool) {
+        uint oldValue = _allowed[msg.sender][spender];
+        if (subtractedValue > oldValue) {
+            _allowed[msg.sender][spender] = 0;
         } else {
-            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+            _allowed[msg.sender][spender] = oldValue.sub(subtractedValue);
         }
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        Approval(msg.sender, spender, _allowed[msg.sender][spender]);
         return true;
     }
 }

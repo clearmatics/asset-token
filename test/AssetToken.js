@@ -82,7 +82,7 @@ contract('AssetToken', (accounts) => {
         const balanceRecepientFunded = await CONTRACT.balanceOf.call(addrRecepient);
 
         const defundVal = 50;
-        const defundRes = await CONTRACT.defund(addrRecepient, defundVal, { from: addrOwner });
+        const defundRes = await CONTRACT.defund(defundVal, { from: addrRecepient });
 
         const totalSupplyDefunded = await CONTRACT.totalSupply.call();
         const balanceRecepientDefunded = await CONTRACT.balanceOf.call(addrRecepient);

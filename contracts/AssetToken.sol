@@ -37,8 +37,8 @@ contract AssetToken is ERC223Token {
         totalSupply = totalSupply.add(value);
     }
 
-    function defund(address member, uint256 value) public onlyOwner {
-        _balances[member] = _balances[member].sub(value);
+    function defund(uint256 value) public {
+        _balances[msg.sender] = _balances[msg.sender].sub(value);
         totalSupply = totalSupply.sub(value);
     }
 

@@ -8,28 +8,28 @@ contract('AssetToken', (accounts) => {
         CONTRACT = await AssetToken.new("CLR", "Asset Token", { from: addrOwner });
     });
 
-    it('Check the name of the token', async () => {
+    it('name: Check the name of the token', async () => {
         const actualName = await CONTRACT.name.call();
 	const expectedName = "Asset Token";
 
         assert.strictEqual(actualName, expectedName);
     });
 
-    it('Check the tokens symbol', async () => {
+    it('symbol: Check the tokens symbol', async () => {
         const actualSymbol = await CONTRACT.symbol.call();
 	const expectedSymbol = "CLR";
 
         assert.strictEqual(actualSymbol, expectedSymbol);
     });
 
-    it('Check the number of decimal place in the tokens', async () => {
+    it('decimals: Check the number of decimal place in the tokens', async () => {
         const actualDecimals = await CONTRACT.decimals.call();
 	const expectedDecimals = 3;
 
         assert.strictEqual(actualDecimals.toNumber(), expectedDecimals);
     });
 
-    it('Fund an account', async () => {
+    it('fund: Fund an account', async () => {
         const addrRecepient = accounts[1];
 
         const totalSupplyBefore = await CONTRACT.totalSupply.call();
@@ -45,7 +45,7 @@ contract('AssetToken', (accounts) => {
         assert.strictEqual(balanceRecepientBefore.toNumber() + fundVal, balanceRecepientAfter.toNumber());
     });
 
-    it('Attempt to Fund when not the contract owner', async () => {
+    it('fund: Attempt to Fund when not the contract owner', async () => {
         const addrRecepient = accounts[1];
 
         const totalSupplyBefore = await CONTRACT.totalSupply.call();
@@ -67,7 +67,7 @@ contract('AssetToken', (accounts) => {
         assert.strictEqual(actualError.toString(),"Error: VM Exception while processing transaction: revert");
     });
 
-    it('Attempt to Fund the contract owner', async () => {
+    it('fund: Attempt to Fund the contract owner', async () => {
         const totalSupplyBefore = await CONTRACT.totalSupply.call();
         const balanceRecepientBefore = await CONTRACT.balanceOf.call(addrOwner);
        
@@ -87,7 +87,7 @@ contract('AssetToken', (accounts) => {
         assert.strictEqual(actualError.toString(),"Error: VM Exception while processing transaction: revert");
     });
 
-    it('Attempt to defund the contract owner', async () => {
+    it('defund: Attempt to defund the contract owner', async () => {
         const totalSupplyBefore = await CONTRACT.totalSupply.call();
         const balanceRecepientBefore = await CONTRACT.balanceOf.call(addrOwner);
 
@@ -107,7 +107,7 @@ contract('AssetToken', (accounts) => {
         assert.strictEqual(actualError.toString(),"Error: VM Exception while processing transaction: revert");
     });
 
-    it('Defund an account', async () => {
+    it('defund: Defund an account', async () => {
         const addrRecepient = accounts[1];
 
         const totalSupplyBefore = await CONTRACT.totalSupply.call();
@@ -132,7 +132,7 @@ contract('AssetToken', (accounts) => {
         assert.strictEqual(balanceRecepientFunded.toNumber() - defundVal, balanceRecepientDefunded.toNumber());
     });
 
-    it('Transfer tokens without any extra data field', async () => {
+    it('transfer: Transfer tokens without any extra data field', async () => {
         const addrSender = accounts[1];
 
         const fundVal = 1;

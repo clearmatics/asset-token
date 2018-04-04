@@ -29,30 +29,6 @@ contract('AssetToken', (accounts) => {
         assert.strictEqual(actualDecimals.toNumber(), expectedDecimals);
     });
 
-    it('Transfer tokens without any extra data field', async () => {
-        const addrSender = accounts[1];
-
-        const fundVal = 1;
-        CONTRACT.fund(addrSender, fundVal, { from: addrOwner });
-
-        const totalSupply = await CONTRACT.totalSupply.call();
-        let balanceSender = await CONTRACT.balanceOf.call(addrSender);
-        assert.strictEqual(totalSupply.toNumber(),balanceSender.toNumber());
-
-        const addrRecepient = accounts[2];
-        const transferVal = 1;
-        const transferRes = await CONTRACT.transfer(addrRecepient, transferVal, { from: addrSender });
-        const balanceRecepient = await CONTRACT.balanceOf.call(addrRecepient);
-        balanceOwner = await CONTRACT.balanceOf.call(addrOwner);
-
-        assert.strictEqual(balanceRecepient.plus(balanceOwner).toNumber(),totalSupply.toNumber());
-
-        const transferLog = transferRes.logs.find(element => element.event.match('Transfer'));
-        assert.strictEqual(transferLog.args.from, addrSender);
-        assert.strictEqual(transferLog.args.to, addrRecepient);
-        assert.strictEqual(transferLog.args.value.toString(), balanceRecepient.toString());
-    });
-
     it('Fund an account', async () => {
         const addrRecepient = accounts[1];
 
@@ -92,5 +68,29 @@ contract('AssetToken', (accounts) => {
 
         assert.strictEqual(totalSupplyFunded.toNumber() - defundVal, totalSupplyDefunded.toNumber());
         assert.strictEqual(balanceRecepientFunded.toNumber() - defundVal, balanceRecepientDefunded.toNumber());
+    });
+
+    it('Transfer tokens without any extra data field', async () => {
+        const addrSender = accounts[1];
+
+        const fundVal = 1;
+        CONTRACT.fund(addrSender, fundVal, { from: addrOwner });
+
+        const totalSupply = await CONTRACT.totalSupply.call();
+        let balanceSender = await CONTRACT.balanceOf.call(addrSender);
+        assert.strictEqual(totalSupply.toNumber(),balanceSender.toNumber());
+
+        const addrRecepient = accounts[2];
+        const transferVal = 1;
+        const transferRes = await CONTRACT.transfer(addrRecepient, transferVal, { from: addrSender });
+        const balanceRecepient = await CONTRACT.balanceOf.call(addrRecepient);
+        balanceOwner = await CONTRACT.balanceOf.call(addrOwner);
+
+        assert.strictEqual(balanceRecepient.plus(balanceOwner).toNumber(),totalSupply.toNumber());
+
+        const transferLog = transferRes.logs.find(element => element.event.match('Transfer'));
+        assert.strictEqual(transferLog.args.from, addrSender);
+        assert.strictEqual(transferLog.args.to, addrRecepient);
+        assert.strictEqual(transferLog.args.value.toString(), balanceRecepient.toString());
     });
 });

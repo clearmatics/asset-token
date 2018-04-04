@@ -12,11 +12,6 @@ import "./ERC223Token.sol";
 contract AssetToken is ERC223Token {
     using SafeMath for uint;
 
-    uint public totalSupply;
-
-    string private _symbol;
-    string private _name;
-
     // Owner of this contract
     address private _owner;
 
@@ -29,19 +24,11 @@ contract AssetToken is ERC223Token {
     }
 
     // Constructor
-    function AssetToken(string symbol, string name) public {
-        _symbol = symbol;
-        _name = name;
+    function AssetToken(string _symbol, string _name) public {
+        symbol = _symbol;
+        name = _name;
         _owner = msg.sender;
         totalSupply = 0;
-    }
-
-    function transferWithData(address to, uint value, bytes data) public {
-        transfer(to, value, data);
-    }
-
-    function transferNoData(address to, uint value) public {
-        transfer(to, value);
     }
 
     function fund(address member, uint256 value) public onlyOwner {

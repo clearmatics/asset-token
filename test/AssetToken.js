@@ -29,6 +29,19 @@ contract('AssetToken', (accounts) => {
         assert.strictEqual(actualDecimals.toNumber(), expectedDecimals);
     });
 
+    it('default: Attempt to send Eth to the contract', async () => {
+	weiToSend = web3.toWei(1,"ether");
+   	
+	let actualError = null;
+	try {
+		const result = await CONTRACT.sendTransaction({from:web3.eth.coinbase,value:weiToSend});
+	} catch (error) {
+		actualError = error;
+	}
+
+        assert.strictEqual(actualError.toString(),"Error: VM Exception while processing transaction: revert");
+    });
+
     it('fund: Fund an account', async () => {
         const addrRecipient = accounts[1];
 

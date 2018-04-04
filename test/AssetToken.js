@@ -22,6 +22,13 @@ contract('AssetToken', (accounts) => {
         assert.strictEqual(actualSymbol, expectedSymbol);
     });
 
+    it('Check the number of decimal place in the tokens', async () => {
+        const actualDecimals = await CONTRACT.decimals.call();
+	const expectedDecimals = 3;
+
+        assert.strictEqual(actualDecimals.toNumber(), expectedDecimals);
+    });
+
     it('Transfer tokens without any extra data field', async () => {
         const addrSender = addrOwner;
 

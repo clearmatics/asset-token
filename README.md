@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.com/clearmatics/asset-token.svg?token=ybN3xFwE4whSpdqtVYux&branch=master)](https://travis-ci.com/clearmatics/asset-token)
 
-Designed to represente a fungible asset with offchain interaction as an [ERC223][1] token.
+Designed to represent a fungible asset with offchain interaction as an [ERC223][1] token.
 
 ## Developing
 

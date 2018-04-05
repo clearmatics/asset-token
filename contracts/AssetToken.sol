@@ -41,9 +41,4 @@ contract AssetToken is ERC223Token {
         _balances[member] = _balances[member].sub(value);
         totalSupply = totalSupply.sub(value);
     }
-
-    // Fallback that prevents ETH from being sent to this contract
-    function () public payable {
-        revert();
-    }
 }

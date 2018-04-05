@@ -139,4 +139,9 @@ contract ERC223Token is ERC223Interface, ERC20CompatibleToken {
     function balanceOf(address owner) public constant returns (uint balance) {
         return _balances[owner];
     }
+
+    // Fallback that prevents ETH from being sent to this contract
+    function () public payable {
+        revert();
+    }
 }

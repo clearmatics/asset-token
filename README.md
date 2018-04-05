@@ -2,15 +2,15 @@
 
 [![Build Status](https://travis-ci.com/clearmatics/asset-token.svg?token=ybN3xFwE4whSpdqtVYux&branch=master)](https://travis-ci.com/clearmatics/asset-token)
 
-Designed to represented a fungible asset with offchain interaction as an [ERC223][1] token.
+Designed to represent a fungible asset with offchain interaction as an [ERC223][1] token.
 
 ## Developing
 
-[Truffle][2] is used to develop and test the Asset Token Smart Contract. This has a dependency of [Node.js][3].
+[Truffle][2] is used to develop and test the Asset Token Smart Contract. This has a dependency on [Node.js][3].
 
 Prerequisites:
 
-[yarn][4] (but [npm][5] should work just as well) and [solidity-coverage ][6] need to be installed.
+[yarn][4] (but [npm][5] should work just as well) and [solidity-coverage ][6] needs to be installed.
 
     yarn install
 

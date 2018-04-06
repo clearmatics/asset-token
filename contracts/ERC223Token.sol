@@ -50,23 +50,16 @@ contract ERC223Token is ERC223Interface, ERC20CompatibleToken {
      * @param to    Receiver address.
      * @param value Amount of tokens that will be transferred.
      */
-    function transfer(address to, uint value) public {
-        uint codeLength;
-        bytes memory empty;
-
-        assembly {
-            // Retrieve the size of the code on target address, this needs assembly .
-            codeLength := extcodesize(to)
-        }
-
-        _balances[msg.sender] = _balances[msg.sender].sub(value);
-        _balances[to] = _balances[to].add(value);
-        if(codeLength>0) {
-            ERC223ReceivingContract receiver = ERC223ReceivingContract(to);
-            receiver.tokenFallback(msg.sender, value, empty);
-        }
-        Transfer(msg.sender, to, value, empty);
-    }
+     function transfer(address to, uint value) public returns (bool) {   
+         //standard function transfer similar to ERC20 transfer with no _data
+         //added due to backwards compatibility reasons
+         bytes memory empty;
+         if(isContract(to)) {
+             return transferToContract(to, value, empty);
+         } else {
+             return transferToAddress(to, value, empty);
+         }
+     }
 
     /**
      * @dev Transfer the specified amount of tokens to the specified address.
@@ -79,23 +72,12 @@ contract ERC223Token is ERC223Interface, ERC20CompatibleToken {
      * @param value Amount of tokens that will be transferred.
      * @param data  Transaction metadata.
      */
-    function transfer(address to, uint value, bytes data) public {
-        // Standard function transfer similar to ERC20 transfer with no _data .
-        // Added due to backwards compatibility reasons .
-        uint codeLength;
-
-        assembly {
-            // Retrieve the size of the code on target address, this needs assembly .
-            codeLength := extcodesize(to)
+    function transfer(address to, uint value, bytes data) public returns (bool) {     
+        if(isContract(to)) {
+            return transferToContract(to, value, data);
+        } else {
+            return transferToAddress(to, value, data);
         }
-
-        _balances[msg.sender] = _balances[msg.sender].sub(value);
-        _balances[to] = _balances[to].add(value);
-        if(codeLength>0) {
-            ERC223ReceivingContract receiver = ERC223ReceivingContract(to);
-            receiver.tokenFallback(msg.sender, value, data);
-        }
-        Transfer(msg.sender, to, value, data);
     }
 
     /**
@@ -111,23 +93,50 @@ contract ERC223Token is ERC223Interface, ERC20CompatibleToken {
      * @param custom_fallback Name of the fallback function to call
      */
     function transfer(address to, uint value, bytes data, string custom_fallback) public returns (bool) {
-        // Standard function transfer similar to ERC20 transfer with no _data .
-        // Added due to backwards compatibility reasons .
-        uint codeLength;
-
-        assembly {
-            // Retrieve the size of the code on target address, this needs assembly .
-            codeLength := extcodesize(to)
+      
+        if(isContract(to)) {
+            if (balanceOf(msg.sender) < value) revert();
+            _balances[msg.sender] = _balances[msg.sender].sub(value);
+            _balances[to] = _balances[to].add(value);
+            assert(to.call.value(0)(bytes4(keccak256(custom_fallback)), msg.sender, value, data));
+            Transfer(msg.sender, to, value, data);
+            return true;
+        } else {
+           return transferToAddress(to, value, data);
         }
+   }
+
+    //assemble the given address bytecode. If bytecode exists then the _addr is a contract.
+    function isContract(address addr) private view returns (bool) {
+        uint length;
+        assembly {
+            //retrieve the size of the code on target address, this needs assembly
+            length := extcodesize(addr)
+        }
+        return (length>0);
+    }
+
+    //function that is called when transaction target is an address
+    function transferToAddress(address to, uint value, bytes data) private returns (bool) {
+        if (balanceOf(msg.sender) < value) revert();
+        _balances[msg.sender] = _balances[msg.sender].sub(value);
+        _balances[to] = _balances[to].add(value);
+        Transfer(msg.sender, to, value, data);
+        return true;
+    }
+  
+    //function that is called when transaction target is a contract
+    function transferToContract(address to, uint value, bytes data) private returns (bool) {
+        if (balanceOf(msg.sender) < value) revert();
 
         _balances[msg.sender] = _balances[msg.sender].sub(value);
         _balances[to] = _balances[to].add(value);
+        ERC223ReceivingContract receiver = ERC223ReceivingContract(to);
+        receiver.tokenFallback(msg.sender, value, data);
 
-        if(codeLength>0) {
-	    assert(to.call.value(0)(bytes4(keccak256(custom_fallback)), msg.sender, value, data));
-            Transfer(msg.sender, to, value, data);
-        }
         Transfer(msg.sender, to, value, data);
+        
+	return true;
     }
 
     /**
@@ -138,5 +147,10 @@ contract ERC223Token is ERC223Interface, ERC20CompatibleToken {
      */
     function balanceOf(address owner) public constant returns (uint balance) {
         return _balances[owner];
+    }
+
+    // Fallback that prevents ETH from being sent to this contract
+    function () public payable {
+        revert();
     }
 }

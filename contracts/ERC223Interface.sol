@@ -9,8 +9,8 @@ contract ERC223Interface {
     function decimals() public view returns (uint8);
     function totalSupply() public view returns (uint256);
 
-    function transfer(address to, uint value) public;
-    function transfer(address to, uint value, bytes data) public;
+    function transfer(address to, uint value) public returns (bool);
+    function transfer(address to, uint value, bytes data) public returns (bool);
     function transfer(address to, uint value, bytes data, string custom_fallback) public returns (bool);
 
     event Transfer(address from, address to, uint value, bytes data);

@@ -23,6 +23,14 @@ contract AssetToken is ERC223Token {
         _;
     }
 
+    // Functions with this modifier can not have the owner as a counterparty
+    modifier noOwnerAsCounterparty(address counterparty) {
+        if (counterparty == _owner) {
+            revert();
+        }
+        _;
+    }
+
     // Constructor
     function AssetToken(string _symbol, string _name) public {
         symbol = _symbol;
@@ -32,13 +40,13 @@ contract AssetToken is ERC223Token {
 	decimals = 3;
     }
 
-    function fund(address member, uint256 value) public onlyOwner {
+    function fund(address member, uint256 value) public onlyOwner noOwnerAsCounterparty(member) {
         _balances[member] = _balances[member].add(value);
         totalSupply = totalSupply.add(value);
     }
 
-    function defund(address member, uint256 value) public onlyOwner {
-        _balances[member] = _balances[member].sub(value);
+    function defund(uint256 value) public noOwnerAsCounterparty(msg.sender) {
+        _balances[msg.sender] = _balances[msg.sender].sub(value);
         totalSupply = totalSupply.sub(value);
     }
 

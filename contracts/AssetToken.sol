@@ -40,20 +40,20 @@ contract AssetToken is ERC223Token {
         decimals = 3;
     }
 
-    event FundEvent(address indexed member, uint256 value);
-    event DefundEvent(address indexed member, uint256 value);
+    event FundEvent(address indexed member, uint256 value, uint256 balance);
+    event DefundEvent(address indexed member, uint256 value, uint256 balance);
 
     function fund(address member, uint256 value) public onlyOwner noOwnerAsCounterparty(member) {
         _balances[member] = _balances[member].add(value);
         totalSupply = totalSupply.add(value);
 
-        emit FundEvent(member, value);
+        FundEvent(member, value, _balances[member]);
     }
 
     function defund(uint256 value) public noOwnerAsCounterparty(msg.sender) {
         _balances[msg.sender] = _balances[msg.sender].sub(value);
         totalSupply = totalSupply.sub(value);
 
-        emit DefundEvent(member, value);
+        DefundEvent(msg.sender, value, _balances[msg.sender]);
     }
 }

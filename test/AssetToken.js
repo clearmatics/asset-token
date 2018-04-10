@@ -177,6 +177,44 @@ contract('AssetToken', (accounts) => {
         assert.strictEqual(balanceRecepientFunded.toNumber() - defundVal, balanceRecepientDefunded.toNumber());
     });
 
+    it('transfer: Transfer more tokens than in the account', async () => {
+        const addrSender = accounts[1];
+        const addrRecepient = accounts[2];
+
+        const totalSupplyStart = await CONTRACT.totalSupply.call();
+        const balanceSenderStart = await CONTRACT.balanceOf.call(addrSender);
+        const balanceRecepientStart = await CONTRACT.balanceOf.call(addrRecepient);
+
+        const fundVal = 1;
+        CONTRACT.fund(addrSender, fundVal, { from: addrOwner });
+
+        const totalSupplyFund = await CONTRACT.totalSupply.call();
+        const balanceSenderFund = await CONTRACT.balanceOf.call(addrSender);
+        const balanceRecepientFund = await CONTRACT.balanceOf.call(addrRecepient);
+
+   	let actualError = null;
+	try {
+		const transferVal = balanceSenderFund.toNumber() + 50;
+		const transferRes = await CONTRACT.transfer(addrRecepient, transferVal, { from: addrSender });
+	} catch (error) {
+		actualError = error;
+	}
+
+        const totalSupplyDefund = await CONTRACT.totalSupply.call();
+        const balanceSenderDefund = await CONTRACT.balanceOf.call(addrSender);
+        const balanceRecepientDefund = await CONTRACT.balanceOf.call(addrRecepient);
+
+        assert.strictEqual(totalSupplyStart.toNumber() + fundVal, totalSupplyFund.toNumber());
+        assert.strictEqual(balanceSenderStart.toNumber() + fundVal, balanceSenderFund.toNumber());
+        assert.strictEqual(balanceRecepientStart.toNumber(), balanceRecepientFund.toNumber());
+
+        assert.strictEqual(totalSupplyFund.toNumber(), totalSupplyDefund.toNumber());
+        assert.strictEqual(balanceSenderFund.toNumber(), balanceSenderFund.toNumber());
+        assert.strictEqual(balanceRecepientFund.toNumber(), balanceRecepientFund.toNumber());
+
+        assert.strictEqual(actualError.toString(),"Error: VM Exception while processing transaction: revert");
+    });
+
     it('transfer: Transfer tokens without any extra data field', async () => {
         const addrSender = accounts[1];
 

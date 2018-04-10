@@ -30,7 +30,7 @@ contract('AssetToken', (accounts) => {
     });
 
     it('default: Attempt to send Eth to the contract', async () => {
-	weiToSend = web3.toWei(1,"ether");
+	const weiToSend = web3.toWei(1,"ether");
    	
 	let actualError = null;
 	try {
@@ -186,7 +186,7 @@ contract('AssetToken', (accounts) => {
         const balanceRecepientStart = await CONTRACT.balanceOf.call(addrRecepient);
 
         const fundVal = 1;
-        CONTRACT.fund(addrSender, fundVal, { from: addrOwner });
+        const fundRes = await CONTRACT.fund(addrSender, fundVal, { from: addrOwner });
 
         const totalSupplyFund = await CONTRACT.totalSupply.call();
         const balanceSenderFund = await CONTRACT.balanceOf.call(addrSender);
@@ -200,26 +200,26 @@ contract('AssetToken', (accounts) => {
 		actualError = error;
 	}
 
-        const totalSupplyDefund = await CONTRACT.totalSupply.call();
-        const balanceSenderDefund = await CONTRACT.balanceOf.call(addrSender);
-        const balanceRecepientDefund = await CONTRACT.balanceOf.call(addrRecepient);
+        const totalSupplyAfterTransfer = await CONTRACT.totalSupply.call();
+        const balanceSenderAfterTransfer = await CONTRACT.balanceOf.call(addrSender);
+        const balanceRecepientAfterTransfer = await CONTRACT.balanceOf.call(addrRecepient);
+
+        assert.strictEqual(actualError.toString(),"Error: VM Exception while processing transaction: revert");
 
         assert.strictEqual(totalSupplyStart.toNumber() + fundVal, totalSupplyFund.toNumber());
         assert.strictEqual(balanceSenderStart.toNumber() + fundVal, balanceSenderFund.toNumber());
         assert.strictEqual(balanceRecepientStart.toNumber(), balanceRecepientFund.toNumber());
 
-        assert.strictEqual(totalSupplyFund.toNumber(), totalSupplyDefund.toNumber());
-        assert.strictEqual(balanceSenderFund.toNumber(), balanceSenderFund.toNumber());
-        assert.strictEqual(balanceRecepientFund.toNumber(), balanceRecepientFund.toNumber());
-
-        assert.strictEqual(actualError.toString(),"Error: VM Exception while processing transaction: revert");
+        assert.strictEqual(totalSupplyFund.toNumber(), totalSupplyAfterTransfer.toNumber());
+        assert.strictEqual(balanceSenderFund.toNumber(), balanceSenderAfterTransfer.toNumber());
+        assert.strictEqual(balanceRecepientFund.toNumber(), balanceRecepientAfterTransfer.toNumber());
     });
 
     it('transfer: Transfer tokens without any extra data field', async () => {
         const addrSender = accounts[1];
 
         const fundVal = 1;
-        CONTRACT.fund(addrSender, fundVal, { from: addrOwner });
+        const fundRes = await CONTRACT.fund(addrSender, fundVal, { from: addrOwner });
 
         const totalSupply = await CONTRACT.totalSupply.call();
         let balanceSender = await CONTRACT.balanceOf.call(addrSender);

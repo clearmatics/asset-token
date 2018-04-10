@@ -107,6 +107,38 @@ contract('AssetToken', (accounts) => {
         assert.strictEqual(actualError.toString(),"Error: VM Exception while processing transaction: revert");
     });
 
+    it('defund: Defund more tokens than in the account', async () => {
+        const addrRecepient = accounts[1];
+
+        const totalSupplyBefore = await CONTRACT.totalSupply.call();
+        const balanceRecepientBefore = await CONTRACT.balanceOf.call(addrRecepient);
+
+        const fundVal = 100;
+        const fundRes = await CONTRACT.fund(addrRecepient, fundVal, { from: addrOwner });
+
+        const totalSupplyFunded = await CONTRACT.totalSupply.call();
+        const balanceRecepientFunded = await CONTRACT.balanceOf.call(addrRecepient);
+
+
+   	let actualError = null;
+	try {
+		const defundVal = balanceRecepientFunded.toNumber() + 50;
+		const defundRes = await CONTRACT.defund(defundVal, { from: addrRecepient });
+	} catch (error) {
+		actualError = error;
+	}
+
+        const totalSupplyDefunded = await CONTRACT.totalSupply.call();
+        const balanceRecepientDefunded = await CONTRACT.balanceOf.call(addrRecepient);
+
+        assert.strictEqual(totalSupplyBefore.toNumber() + fundVal, totalSupplyFunded.toNumber());
+        assert.strictEqual(balanceRecepientBefore.toNumber() + fundVal, balanceRecepientFunded.toNumber());
+
+        assert.strictEqual(totalSupplyFunded.toNumber(), totalSupplyDefunded.toNumber());
+        assert.strictEqual(balanceRecepientFunded.toNumber() , balanceRecepientDefunded.toNumber());
+        assert.strictEqual(actualError.toString(),"Error: VM Exception while processing transaction: revert");
+    });
+
     it('defund: Defund an account', async () => {
         const addrRecipient = accounts[1];
 

@@ -38,31 +38,18 @@ contract('AssetToken', (accounts) => {
         const fundVal = 100;
         const fundRes = await CONTRACT.fund(addrRecipient, fundVal, { from: addrOwner });
 
+        const fundEvent = fundRes.logs.filter((log) => log.event === 'FundEvent')[0];
+        const fundEventVal = fundEvent.args.value.toNumber();
+        const fundEventBalance = fundEvent.args.balance.toNumber();
+
         const totalSupplyAfter = await CONTRACT.totalSupply.call();
         const balanceRecipientAfter = await CONTRACT.balanceOf.call(addrRecipient);
 
+        assert(fundEvent != null);
+        assert.strictEqual(fundVal, fundEventVal);
+        assert.strictEqual(balanceRecipientBefore.toNumber() + fundVal, fundEventBalance);
         assert.strictEqual(totalSupplyBefore.toNumber() + fundVal, totalSupplyAfter.toNumber());
         assert.strictEqual(balanceRecipientBefore.toNumber() + fundVal, balanceRecipientAfter.toNumber());
-    });
-
-    it ('fund: FundEvent is triggered', async () => {
-        const addrRecipient = accounts[1];
-
-        const balanceRecipientBefore = await CONTRACT.balanceOf.call(addrRecipient);
-
-        const fundVal = 100;
-        const fundRes = await CONTRACT.fund(addrRecipient, fundVal, { from: addrOwner });
-
-        const balanceRecipientAfter = await CONTRACT.balanceOf.call(addrRecipient);
-
-        const fundEvent = fundRes.logs.filter((log) => log.event === 'FundEvent')[0]
-        const fundEventVal = fundEvent.args.value.toNumber()
-        const fundEventBalance = fundEvent.args.balance.toNumber()
-
-        assert(fundEvent != null)
-        assert.strictEqual(fundVal, fundEventVal)
-        assert.strictEqual(balanceRecipientBefore.toNumber() + fundVal, fundEventBalance)
-        assert.strictEqual(balanceRecipientBefore.toNumber() + fundEventVal, balanceRecipientAfter.toNumber())
     });
 
     it('fund: Attempt to Fund when not the contract owner', async () => {
@@ -116,54 +103,34 @@ contract('AssetToken', (accounts) => {
         const fundVal = 100;
         const fundRes = await CONTRACT.fund(addrRecipient, fundVal, { from: addrOwner });
 
+        const fundEvent = fundRes.logs.filter((log) => log.event === 'FundEvent')[0]
+        const fundEventVal = fundEvent.args.value.toNumber()
+        const fundEventBalance = fundEvent.args.balance.toNumber()
+
         const totalSupplyFunded = await CONTRACT.totalSupply.call();
         const balanceRecipientFunded = await CONTRACT.balanceOf.call(addrRecipient);
 
         const defundVal = 50;
         const defundRes = await CONTRACT.defund(defundVal, { from: addrRecipient });
 
-        const totalSupplyDefunded = await CONTRACT.totalSupply.call();
-        const balanceRecipientDefunded = await CONTRACT.balanceOf.call(addrRecipient);
-
-        assert.strictEqual(totalSupplyBefore.toNumber() + fundVal, totalSupplyFunded.toNumber());
-        assert.strictEqual(balanceRecipientBefore.toNumber() + fundVal, balanceRecipientFunded.toNumber());
-
-        assert.strictEqual(totalSupplyFunded.toNumber() - defundVal, totalSupplyDefunded.toNumber());
-        assert.strictEqual(balanceRecipientFunded.toNumber() - defundVal, balanceRecipientDefunded.toNumber());
-    });
-
-    it ('defund: DefundEvent is triggered', async () => {
-        const addrRecipient = accounts[1];
-
-        const balanceRecipientBefore = await CONTRACT.balanceOf.call(addrRecipient);
-
-        const fundVal = 100;
-        const fundRes = await CONTRACT.fund(addrRecipient, fundVal, { from: addrOwner });
-
-        const balanceRecipientFunded = await CONTRACT.balanceOf.call(addrRecipient);
-
-        const defundVal = 50;
-        const defundRes = await CONTRACT.defund(defundVal, { from: addrRecipient });
-
-        const balanceRecipientDefunded = await CONTRACT.balanceOf.call(addrRecipient);
-
-        const fundEvent = fundRes.logs.filter((log) => log.event === 'FundEvent')[0]
-        const fundEventVal = fundEvent.args.value.toNumber()
-        const fundEventBalance = fundEvent.args.balance.toNumber()
-
         const defundEvent = defundRes.logs.filter((log) => log.event === 'DefundEvent')[0]
         const defundEventVal = defundEvent.args.value.toNumber()
         const defundEventBalance = defundEvent.args.balance.toNumber()
 
+        const totalSupplyDefunded = await CONTRACT.totalSupply.call();
+        const balanceRecipientDefunded = await CONTRACT.balanceOf.call(addrRecipient);
+
         assert(fundEvent != null)
         assert.strictEqual(fundVal, fundEventVal)
         assert.strictEqual(balanceRecipientBefore.toNumber() + fundVal, fundEventBalance)
-        assert.strictEqual(balanceRecipientBefore.toNumber() + fundEventVal, balanceRecipientFunded.toNumber())
+        assert.strictEqual(totalSupplyBefore.toNumber() + fundVal, totalSupplyFunded.toNumber());
+        assert.strictEqual(balanceRecipientBefore.toNumber() + fundVal, balanceRecipientFunded.toNumber());
 
         assert(defundEvent != null)
         assert.strictEqual(defundVal, defundEventVal)
         assert.strictEqual(balanceRecipientFunded.toNumber() - defundVal, defundEventBalance)
-        assert.strictEqual(balanceRecipientFunded.toNumber() - defundEventVal, balanceRecipientDefunded.toNumber())
+        assert.strictEqual(totalSupplyFunded.toNumber() - defundVal, totalSupplyDefunded.toNumber());
+        assert.strictEqual(balanceRecipientFunded.toNumber() - defundVal, balanceRecipientDefunded.toNumber());
     });
 
     it('defund: Attempt to Defund the contract owner', async () => {

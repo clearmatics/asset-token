@@ -3,7 +3,7 @@ pragma solidity ^0.4.19;
 contract ERC223Interface {
     function balanceOf(address who) public constant returns (uint);
 
-  
+
     function name() public view returns (string);
     function symbol() public view returns (string);
     function decimals() public view returns (uint8);

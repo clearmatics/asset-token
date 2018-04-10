@@ -29,6 +29,19 @@ contract('AssetToken', (accounts) => {
         assert.strictEqual(actualDecimals.toNumber(), expectedDecimals);
     });
 
+    it('default: Attempt to send Eth to the contract', async () => {
+	const weiToSend = web3.toWei(1,"ether");
+   	
+	let actualError = null;
+	try {
+		const result = await CONTRACT.sendTransaction({from:web3.eth.coinbase,value:weiToSend});
+	} catch (error) {
+		actualError = error;
+	}
+
+        assert.strictEqual(actualError.toString(),"Error: VM Exception while processing transaction: revert");
+    });
+
     it('fund: Fund an account', async () => {
         const addrRecepient = accounts[1];
 
@@ -107,6 +120,38 @@ contract('AssetToken', (accounts) => {
         assert.strictEqual(actualError.toString(),"Error: VM Exception while processing transaction: revert");
     });
 
+    it('defund: Defund more tokens than in the account', async () => {
+        const addrRecepient = accounts[1];
+
+        const totalSupplyBefore = await CONTRACT.totalSupply.call();
+        const balanceRecepientBefore = await CONTRACT.balanceOf.call(addrRecepient);
+
+        const fundVal = 100;
+        const fundRes = await CONTRACT.fund(addrRecepient, fundVal, { from: addrOwner });
+
+        const totalSupplyFunded = await CONTRACT.totalSupply.call();
+        const balanceRecepientFunded = await CONTRACT.balanceOf.call(addrRecepient);
+
+
+   	let actualError = null;
+	try {
+		const defundVal = balanceRecepientFunded.toNumber() + 50;
+		const defundRes = await CONTRACT.defund(defundVal, { from: addrRecepient });
+	} catch (error) {
+		actualError = error;
+	}
+
+        const totalSupplyDefunded = await CONTRACT.totalSupply.call();
+        const balanceRecepientDefunded = await CONTRACT.balanceOf.call(addrRecepient);
+
+        assert.strictEqual(totalSupplyBefore.toNumber() + fundVal, totalSupplyFunded.toNumber());
+        assert.strictEqual(balanceRecepientBefore.toNumber() + fundVal, balanceRecepientFunded.toNumber());
+
+        assert.strictEqual(totalSupplyFunded.toNumber(), totalSupplyDefunded.toNumber());
+        assert.strictEqual(balanceRecepientFunded.toNumber() , balanceRecepientDefunded.toNumber());
+        assert.strictEqual(actualError.toString(),"Error: VM Exception while processing transaction: revert");
+    });
+
     it('defund: Defund an account', async () => {
         const addrRecepient = accounts[1];
 
@@ -132,11 +177,49 @@ contract('AssetToken', (accounts) => {
         assert.strictEqual(balanceRecepientFunded.toNumber() - defundVal, balanceRecepientDefunded.toNumber());
     });
 
+    it('transfer: Transfer more tokens than in the account', async () => {
+        const addrSender = accounts[1];
+        const addrRecepient = accounts[2];
+
+        const totalSupplyStart = await CONTRACT.totalSupply.call();
+        const balanceSenderStart = await CONTRACT.balanceOf.call(addrSender);
+        const balanceRecepientStart = await CONTRACT.balanceOf.call(addrRecepient);
+
+        const fundVal = 1;
+        const fundRes = await CONTRACT.fund(addrSender, fundVal, { from: addrOwner });
+
+        const totalSupplyFund = await CONTRACT.totalSupply.call();
+        const balanceSenderFund = await CONTRACT.balanceOf.call(addrSender);
+        const balanceRecepientFund = await CONTRACT.balanceOf.call(addrRecepient);
+
+   	let actualError = null;
+	try {
+		const transferVal = balanceSenderFund.toNumber() + 50;
+		const transferRes = await CONTRACT.transfer(addrRecepient, transferVal, { from: addrSender });
+	} catch (error) {
+		actualError = error;
+	}
+
+        const totalSupplyAfterTransfer = await CONTRACT.totalSupply.call();
+        const balanceSenderAfterTransfer = await CONTRACT.balanceOf.call(addrSender);
+        const balanceRecepientAfterTransfer = await CONTRACT.balanceOf.call(addrRecepient);
+
+        assert.strictEqual(actualError.toString(),"Error: VM Exception while processing transaction: revert");
+
+        assert.strictEqual(totalSupplyStart.toNumber() + fundVal, totalSupplyFund.toNumber());
+        assert.strictEqual(balanceSenderStart.toNumber() + fundVal, balanceSenderFund.toNumber());
+        assert.strictEqual(balanceRecepientStart.toNumber(), balanceRecepientFund.toNumber());
+
+        assert.strictEqual(totalSupplyFund.toNumber(), totalSupplyAfterTransfer.toNumber());
+        assert.strictEqual(balanceSenderFund.toNumber(), balanceSenderAfterTransfer.toNumber());
+        assert.strictEqual(balanceRecepientFund.toNumber(), balanceRecepientAfterTransfer.toNumber());
+    });
+
     it('transfer: Transfer tokens without any extra data field', async () => {
         const addrSender = accounts[1];
 
         const fundVal = 1;
-        CONTRACT.fund(addrSender, fundVal, { from: addrOwner });
+        const fundRes = await CONTRACT.fund(addrSender, fundVal, { from: addrOwner });
 
         const totalSupply = await CONTRACT.totalSupply.call();
         let balanceSender = await CONTRACT.balanceOf.call(addrSender);

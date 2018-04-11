@@ -102,11 +102,14 @@ contract ERC223Token is ERC223Interface, ERC20CompatibleToken {
       
         if (isContract(to)) {
             if (balanceOf(msg.sender) < value) revert();
+
             _balances[msg.sender] = _balances[msg.sender].sub(value);
             _balances[to] = _balances[to].add(value);
             // solhint-disable-next-line avoid-call-value
             assert(to.call.value(0)(bytes4(keccak256(customFallback)), msg.sender, value, data));
-            Transfer(msg.sender, to, value, data);
+
+            emit Transfer(msg.sender, to, value, data);
+
             return true;
         } else {
             return transferToAddress(to, value, data);
@@ -138,9 +141,12 @@ contract ERC223Token is ERC223Interface, ERC20CompatibleToken {
     //function that is called when transaction target is an address
     function transferToAddress(address to, uint value, bytes data) private returns (bool) {
         if (balanceOf(msg.sender) < value) revert();
+
         _balances[msg.sender] = _balances[msg.sender].sub(value);
         _balances[to] = _balances[to].add(value);
-        Transfer(msg.sender, to, value, data);
+
+        emit Transfer(msg.sender, to, value, data);
+
         return true;
     }
   
@@ -153,7 +159,7 @@ contract ERC223Token is ERC223Interface, ERC20CompatibleToken {
         ERC223ReceivingContract receiver = ERC223ReceivingContract(to);
         receiver.tokenFallback(msg.sender, value, data);
 
-        Transfer(msg.sender, to, value, data);
+        emit Transfer(msg.sender, to, value, data);
        
         return true;
     }

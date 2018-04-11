@@ -26,7 +26,7 @@ contract ERC20CompatibleToken {
         _balances[from] = _balances[from].sub(value);
         _balances[to] = _balances[to].add(value);
         _allowed[from][msg.sender] = _allowed[from][msg.sender].sub(value);
-        Transfer(from, to, value);
+        emit Transfer(from, to, value);
         return true;
     }
 
@@ -42,7 +42,7 @@ contract ERC20CompatibleToken {
      */
     function approve(address spender, uint256 value) public returns (bool) {
         _allowed[msg.sender][spender] = value;
-        Approval(msg.sender, spender, value);
+        emit Approval(msg.sender, spender, value);
         return true;
     }
 
@@ -64,7 +64,7 @@ contract ERC20CompatibleToken {
      */
     function increaseApproval(address spender, uint addedValue) public returns (bool) {
         _allowed[msg.sender][spender] = _allowed[msg.sender][spender].add(addedValue);
-        Approval(msg.sender, spender, _allowed[msg.sender][spender]);
+        emit Approval(msg.sender, spender, _allowed[msg.sender][spender]);
         return true;
     }
 
@@ -75,7 +75,7 @@ contract ERC20CompatibleToken {
         } else {
             _allowed[msg.sender][spender] = oldValue.sub(subtractedValue);
         }
-        Approval(msg.sender, spender, _allowed[msg.sender][spender]);
+        emit Approval(msg.sender, spender, _allowed[msg.sender][spender]);
         return true;
     }
 }

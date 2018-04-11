@@ -48,7 +48,7 @@ contract AssetToken is ERC223Token {
         _balances[member] = _balances[member].add(value);
         totalSupply = totalSupply.add(value);
 
-        FundEvent(member, value, _balances[member]);
+        emit FundEvent(member, value, _balances[member]);
     }
 
     function defund(uint256 value) public noOwnerAsCounterparty(msg.sender) {
@@ -57,7 +57,7 @@ contract AssetToken is ERC223Token {
         _balances[msg.sender] = _balances[msg.sender].sub(value);
         totalSupply = totalSupply.sub(value);
 
-        DefundEvent(msg.sender, value, _balances[msg.sender]);
+        emit DefundEvent(msg.sender, value, _balances[msg.sender]);
     }
 
 }

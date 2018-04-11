@@ -14,5 +14,6 @@ contract ERC223Interface {
     function transfer(address to, uint value, bytes data) public returns (bool);
     function transfer(address to, uint value, bytes data, string customFallback) public returns (bool);
 
+    // solhint-disable-next-line no-simple-event-func-name
     event Transfer(address from, address to, uint value, bytes data);
 }

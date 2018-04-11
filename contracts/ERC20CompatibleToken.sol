@@ -6,7 +6,7 @@ import "./SafeMath.sol";
 contract ERC20CompatibleToken {
     using SafeMath for uint;
 
-    mapping(address => uint) _balances; // List of user balances.
+    mapping(address => uint) internal _balances; // List of user balances.
     mapping (address => mapping (address => uint256)) internal _allowed;
 
     event Transfer(address indexed from, address indexed to, uint value);

@@ -114,7 +114,7 @@ contract ERC223Token is ERC223Interface, ERC20CompatibleToken {
             //retrieve the size of the code on target address, this needs assembly
             length := extcodesize(addr)
         }
-        return (length>0);
+        return (length > 0);
     }
 
     //function that is called when transaction target is an address

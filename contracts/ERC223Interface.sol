@@ -1,4 +1,4 @@
-pragma solidity ^0.4.19;
+pragma solidity 0.4.21;
 
 contract ERC223Interface {
     function balanceOf(address who) public constant returns (uint);

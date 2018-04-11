@@ -55,7 +55,7 @@ contract ERC223Token is ERC223Interface, ERC20CompatibleToken {
          //standard function transfer similar to ERC20 transfer with no _data
          //added due to backwards compatibility reasons
          bytes memory empty;
-         if(isContract(to)) {
+         if (isContract(to)) {
              return transferToContract(to, value, empty);
          } else {
              return transferToAddress(to, value, empty);
@@ -74,7 +74,7 @@ contract ERC223Token is ERC223Interface, ERC20CompatibleToken {
      * @param data  Transaction metadata.
      */
     function transfer(address to, uint value, bytes data) public returns (bool) {     
-        if(isContract(to)) {
+        if (isContract(to)) {
             return transferToContract(to, value, data);
         } else {
             return transferToAddress(to, value, data);
@@ -95,7 +95,7 @@ contract ERC223Token is ERC223Interface, ERC20CompatibleToken {
      */
     function transfer(address to, uint value, bytes data, string custom_fallback) public returns (bool) {
       
-        if(isContract(to)) {
+        if (isContract(to)) {
             if (balanceOf(msg.sender) < value) revert();
             _balances[msg.sender] = _balances[msg.sender].sub(value);
             _balances[to] = _balances[to].add(value);

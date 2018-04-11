@@ -14,6 +14,11 @@ contract ERC223Token is ERC223Interface, ERC20CompatibleToken {
     uint8 public decimals;
     uint256 public totalSupply;
 
+    // Fallback that prevents ETH from being sent to this contract
+    function () public payable {
+        revert();
+    }
+
     /**
      * @dev Function to access name of token.
      */
@@ -107,6 +112,16 @@ contract ERC223Token is ERC223Interface, ERC20CompatibleToken {
         }
     }
 
+    /**
+     * @dev Returns balance of the `_owner`.
+     *
+     * @param owner   The address whose balance will be returned.
+     * @return balance Balance of the `_owner`.
+     */
+    function balanceOf(address owner) public constant returns (uint balance) {
+        return _balances[owner];
+    }
+
     //assemble the given address bytecode. If bytecode exists then the _addr is a contract.
     function isContract(address addr) private view returns (bool) {
         uint length;
@@ -138,20 +153,5 @@ contract ERC223Token is ERC223Interface, ERC20CompatibleToken {
         Transfer(msg.sender, to, value, data);
        
         return true;
-    }
-
-    /**
-     * @dev Returns balance of the `_owner`.
-     *
-     * @param owner   The address whose balance will be returned.
-     * @return balance Balance of the `_owner`.
-     */
-    function balanceOf(address owner) public constant returns (uint balance) {
-        return _balances[owner];
-    }
-
-    // Fallback that prevents ETH from being sent to this contract
-    function () public payable {
-        revert();
     }
 }

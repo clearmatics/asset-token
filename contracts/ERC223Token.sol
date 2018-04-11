@@ -104,6 +104,7 @@ contract ERC223Token is ERC223Interface, ERC20CompatibleToken {
             if (balanceOf(msg.sender) < value) revert();
             _balances[msg.sender] = _balances[msg.sender].sub(value);
             _balances[to] = _balances[to].add(value);
+            // solhint-disable-next-line avoid-call-value
             assert(to.call.value(0)(bytes4(keccak256(customFallback)), msg.sender, value, data));
             Transfer(msg.sender, to, value, data);
             return true;

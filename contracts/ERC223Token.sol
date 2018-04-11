@@ -125,6 +125,8 @@ contract ERC223Token is ERC223Interface, ERC20CompatibleToken {
     //assemble the given address bytecode. If bytecode exists then the _addr is a contract.
     function isContract(address addr) private view returns (bool) {
         uint length;
+
+        // solhint-disable-next-line no-inline-assembly 
         assembly {
             //retrieve the size of the code on target address, this needs assembly
             length := extcodesize(addr)

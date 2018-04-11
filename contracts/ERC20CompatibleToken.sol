@@ -2,6 +2,7 @@ pragma solidity 0.4.21;
 
 import './SafeMath.sol';
 
+
 contract ERC20CompatibleToken {
     using SafeMath for uint;
 

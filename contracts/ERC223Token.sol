@@ -5,6 +5,7 @@ import './ERC223Interface.sol';
 import './ERC223ReceivingContract.sol';
 import './SafeMath.sol';
 
+
 contract ERC223Token is ERC223Interface, ERC20CompatibleToken {
     using SafeMath for uint;
 

@@ -1,5 +1,6 @@
 pragma solidity 0.4.21;
 
+
 contract ERC223ReceivingContract {
     /**
     * @dev Standard ERC223 function that will handle incoming token transfers.

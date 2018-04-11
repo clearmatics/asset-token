@@ -6,6 +6,7 @@ pragma solidity 0.4.21;
 
 import "./ERC223Token.sol";
 
+
 /**
 * @title ERC223 standard token implementation.
 */

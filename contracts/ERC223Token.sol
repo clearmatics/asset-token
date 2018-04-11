@@ -1,9 +1,9 @@
 pragma solidity 0.4.21;
 
-import './ERC20CompatibleToken.sol';
-import './ERC223Interface.sol';
-import './ERC223ReceivingContract.sol';
-import './SafeMath.sol';
+import "./ERC20CompatibleToken.sol";
+import "./ERC223Interface.sol";
+import "./ERC223ReceivingContract.sol";
+import "./SafeMath.sol";
 
 
 contract ERC223Token is ERC223Interface, ERC20CompatibleToken {

@@ -51,16 +51,16 @@ contract ERC223Token is ERC223Interface, ERC20CompatibleToken {
      * @param to    Receiver address.
      * @param value Amount of tokens that will be transferred.
      */
-     function transfer(address to, uint value) public returns (bool) {   
-         //standard function transfer similar to ERC20 transfer with no _data
-         //added due to backwards compatibility reasons
-         bytes memory empty;
-         if (isContract(to)) {
-             return transferToContract(to, value, empty);
-         } else {
-             return transferToAddress(to, value, empty);
-         }
-     }
+    function transfer(address to, uint value) public returns (bool) {   
+        //standard function transfer similar to ERC20 transfer with no _data
+        //added due to backwards compatibility reasons
+        bytes memory empty;
+        if (isContract(to)) {
+            return transferToContract(to, value, empty);
+        } else {
+            return transferToAddress(to, value, empty);
+        }
+    }
 
     /**
      * @dev Transfer the specified amount of tokens to the specified address.
@@ -91,21 +91,21 @@ contract ERC223Token is ERC223Interface, ERC20CompatibleToken {
      * @param to              Receiver address.
      * @param value           Amount of tokens that will be transferred.
      * @param data  	      Transaction metadata.
-     * @param custom_fallback Name of the fallback function to call
+     * @param customFallback Name of the fallback function to call
      */
-    function transfer(address to, uint value, bytes data, string custom_fallback) public returns (bool) {
+    function transfer(address to, uint value, bytes data, string customFallback) public returns (bool) {
       
         if (isContract(to)) {
             if (balanceOf(msg.sender) < value) revert();
             _balances[msg.sender] = _balances[msg.sender].sub(value);
             _balances[to] = _balances[to].add(value);
-            assert(to.call.value(0)(bytes4(keccak256(custom_fallback)), msg.sender, value, data));
+            assert(to.call.value(0)(bytes4(keccak256(customFallback)), msg.sender, value, data));
             Transfer(msg.sender, to, value, data);
             return true;
         } else {
-           return transferToAddress(to, value, data);
+            return transferToAddress(to, value, data);
         }
-   }
+    }
 
     //assemble the given address bytecode. If bytecode exists then the _addr is a contract.
     function isContract(address addr) private view returns (bool) {
@@ -136,8 +136,8 @@ contract ERC223Token is ERC223Interface, ERC20CompatibleToken {
         receiver.tokenFallback(msg.sender, value, data);
 
         Transfer(msg.sender, to, value, data);
-        
-	return true;
+       
+        return true;
     }
 
     /**

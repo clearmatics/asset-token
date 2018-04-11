@@ -12,7 +12,7 @@ contract ERC223Interface {
 
     function transfer(address to, uint value) public returns (bool);
     function transfer(address to, uint value, bytes data) public returns (bool);
-    function transfer(address to, uint value, bytes data, string custom_fallback) public returns (bool);
+    function transfer(address to, uint value, bytes data, string customFallback) public returns (bool);
 
     event Transfer(address from, address to, uint value, bytes data);
 }

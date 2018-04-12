@@ -1,4 +1,5 @@
-pragma solidity ^0.4.19;
+pragma solidity 0.4.21;
+
 
 contract ERC223Interface {
     function balanceOf(address who) public constant returns (uint);
@@ -11,7 +12,8 @@ contract ERC223Interface {
 
     function transfer(address to, uint value) public returns (bool);
     function transfer(address to, uint value, bytes data) public returns (bool);
-    function transfer(address to, uint value, bytes data, string custom_fallback) public returns (bool);
+    function transfer(address to, uint value, bytes data, string customFallback) public returns (bool);
 
+    // solhint-disable-next-line no-simple-event-func-name
     event Transfer(address from, address to, uint value, bytes data);
 }

@@ -49,7 +49,7 @@ contract('AssetTokenDefund', (accounts) => {
         const fundVal = 100;
         const fundRes = await CONTRACT.fund(addrRecipient, fundVal, { from: addrOwner });
 
-        const fundEvent = fundRes.logs.filter((log) => log.event === 'FundEvent')[0]
+        const fundEvent = fundRes.logs.filter((log) => log.event === 'Fund')[0]
         const fundEventVal = fundEvent.args.value.toNumber()
         const fundEventBalance = fundEvent.args.balance.toNumber()
 
@@ -59,7 +59,7 @@ contract('AssetTokenDefund', (accounts) => {
         const defundVal = 50;
         const defundRes = await CONTRACT.defund(defundVal, { from: addrRecipient });
 
-        const defundEvent = defundRes.logs.filter((log) => log.event === 'DefundEvent')[0]
+        const defundEvent = defundRes.logs.filter((log) => log.event === 'Defund')[0]
         const defundEventVal = defundEvent.args.value.toNumber()
         const defundEventBalance = defundEvent.args.balance.toNumber()
 

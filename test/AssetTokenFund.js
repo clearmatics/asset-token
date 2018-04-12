@@ -17,7 +17,7 @@ contract('AssetTokenFund', (accounts) => {
         const fundVal = 100;
         const fundRes = await CONTRACT.fund(addrRecipient, fundVal, { from: addrOwner });
 
-        const fundEvent = fundRes.logs.filter((log) => log.event === 'FundEvent')[0];
+        const fundEvent = fundRes.logs.filter((log) => log.event === 'Fund')[0];
         const fundEventVal = fundEvent.args.value.toNumber();
         const fundEventBalance = fundEvent.args.balance.toNumber();
 

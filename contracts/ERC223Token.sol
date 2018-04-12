@@ -56,7 +56,9 @@ contract ERC223Token is ERC223Interface, ERC20CompatibleToken {
      * @param to    Receiver address.
      * @param value Amount of tokens that will be transferred.
      */
-    function transfer(address to, uint value) public returns (bool) {   
+    function transfer(address to, uint value)
+    public noOwnerAsCounterparty(to) noOwnerAsCounterparty(msg.sender)
+    returns (bool) {
         //standard function transfer similar to ERC20 transfer with no _data
         //added due to backwards compatibility reasons
         bytes memory empty;
@@ -78,7 +80,9 @@ contract ERC223Token is ERC223Interface, ERC20CompatibleToken {
      * @param value Amount of tokens that will be transferred.
      * @param data  Transaction metadata.
      */
-    function transfer(address to, uint value, bytes data) public returns (bool) {     
+    function transfer(address to, uint value, bytes data)
+    public noOwnerAsCounterparty(to) noOwnerAsCounterparty(msg.sender)
+    returns (bool) {
         if (isContract(to)) {
             return transferToContract(to, value, data);
         } else {
@@ -98,8 +102,10 @@ contract ERC223Token is ERC223Interface, ERC20CompatibleToken {
      * @param data  	      Transaction metadata.
      * @param customFallback Name of the fallback function to call
      */
-    function transfer(address to, uint value, bytes data, string customFallback) public returns (bool) {
-      
+    function transfer(address to, uint value, bytes data, string customFallback) public
+    noOwnerAsCounterparty(to) noOwnerAsCounterparty(msg.sender)
+    returns (bool) {
+
         if (isContract(to)) {
             if (balanceOf(msg.sender) < value) revert();
 
@@ -130,7 +136,7 @@ contract ERC223Token is ERC223Interface, ERC20CompatibleToken {
     function isContract(address addr) private view returns (bool) {
         uint length;
 
-        // solhint-disable-next-line no-inline-assembly 
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             //retrieve the size of the code on target address, this needs assembly
             length := extcodesize(addr)
@@ -149,7 +155,7 @@ contract ERC223Token is ERC223Interface, ERC20CompatibleToken {
 
         return true;
     }
-  
+
     //function that is called when transaction target is a contract
     function transferToContract(address to, uint value, bytes data) private returns (bool) {
         if (balanceOf(msg.sender) < value) revert();
@@ -160,7 +166,7 @@ contract ERC223Token is ERC223Interface, ERC20CompatibleToken {
         receiver.tokenFallback(msg.sender, value, data);
 
         emit Transfer(msg.sender, to, value, data);
-       
+
         return true;
     }
 }

@@ -6,11 +6,22 @@ import "./SafeMath.sol";
 contract ERC20CompatibleToken {
     using SafeMath for uint;
 
+    // Owner of this contract
+    address internal _owner;
+
     mapping(address => uint) internal _balances; // List of user balances.
     mapping (address => mapping (address => uint256)) internal _allowed;
 
     event Transfer(address indexed from, address indexed to, uint value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
+
+    // Functions with this modifier can not have the owner as a counterparty
+    modifier noOwnerAsCounterparty(address counterparty) {
+        if (counterparty == _owner) {
+            revert();
+        }
+        _;
+    }
 
     /**
      * @dev Transfer tokens from one address to another

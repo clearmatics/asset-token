@@ -13,20 +13,9 @@ import "./ERC223Token.sol";
 contract AssetToken is ERC223Token {
     using SafeMath for uint;
 
-    // Owner of this contract
-    address private _owner;
-
     // Functions with this modifier can only be executed by the owner
     modifier onlyOwner() {
         if (msg.sender != _owner) {
-            revert();
-        }
-        _;
-    }
-
-    // Functions with this modifier can not have the owner as a counterparty
-    modifier noOwnerAsCounterparty(address counterparty) {
-        if (counterparty == _owner) {
             revert();
         }
         _;

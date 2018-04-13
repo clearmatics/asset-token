@@ -18,9 +18,9 @@ This will install all the required packages.
 
 ## Testing
 
-Start `testrpc` in a separate terminal tab or window.
+Start `ganache` in a separate terminal tab or window.
 
-    yarn testrpc
+    yarn ganache
     
     # in separate window or tab
     yarn test

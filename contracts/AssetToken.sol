@@ -13,7 +13,7 @@ contract AssetToken is ERC223Interface, ERC20Interface {
     string public symbol;
     uint8 public decimals;
     uint256 public totalSupply;
-    
+
     address private _owner;
     mapping(address => uint) private _balances;
     mapping (address => mapping (address => uint256)) private _allowed;
@@ -47,19 +47,19 @@ contract AssetToken is ERC223Interface, ERC20Interface {
         _;
     }
 
-    function approve(address spender, uint256 value) external returns (bool) {
+    function approve(address spender, uint256 value) public returns (bool) {
         _allowed[msg.sender][spender] = value;
         emit Approval(msg.sender, spender, value);
         return true;
     }
 
-    function increaseApproval(address spender, uint addedValue) external returns (bool) {
+    function increaseApproval(address spender, uint addedValue) public returns (bool) {
         _allowed[msg.sender][spender] = _allowed[msg.sender][spender].add(addedValue);
         emit Approval(msg.sender, spender, _allowed[msg.sender][spender]);
         return true;
     }
 
-    function decreaseApproval(address spender, uint subtractedValue) external returns (bool) {
+    function decreaseApproval(address spender, uint subtractedValue) public returns (bool) {
         uint oldValue = _allowed[msg.sender][spender];
         if (subtractedValue > oldValue) {
             _allowed[msg.sender][spender] = 0;
@@ -71,7 +71,7 @@ contract AssetToken is ERC223Interface, ERC20Interface {
     }
 
     function transferFrom(address from, address to, uint256 value)
-    external noOwnerAsCounterparty(from) noOwnerAsCounterparty(to) noOwnerAsCounterparty(msg.sender)
+    public noOwnerAsCounterparty(from) noOwnerAsCounterparty(to) noOwnerAsCounterparty(msg.sender)
     returns (bool) {
         require(to != address(0));
         require(value <= _balances[from]);
@@ -84,27 +84,27 @@ contract AssetToken is ERC223Interface, ERC20Interface {
         return true;
     }
 
-    function allowance(address owner, address spender) external view returns (uint256) {
+    function allowance(address owner, address spender) public view returns (uint256) {
         return _allowed[owner][spender];
     }
 
-    function name() external view returns (string) {
+    function name() public view returns (string) {
         return name;
     }
 
-    function symbol() external view returns (string) {
+    function symbol() public view returns (string) {
         return symbol;
     }
 
-    function decimals() external view returns (uint8) {
+    function decimals() public view returns (uint8) {
         return decimals;
     }
 
-    function totalSupply() external view returns (uint256) {
+    function totalSupply() public view returns (uint256) {
         return totalSupply;
     }
 
-    function balanceOf(address owner) external view returns (uint balance) {
+    function balanceOf(address owner) public view returns (uint balance) {
         return _balances[owner];
     }
 
@@ -135,7 +135,7 @@ contract AssetToken is ERC223Interface, ERC20Interface {
     public noOwnerAsCounterparty(to) noOwnerAsCounterparty(msg.sender)
     returns (bool) {
         if (isContract(to)) {
-            if (this.balanceOf(msg.sender) < value) revert();
+            if (balanceOf(msg.sender) < value) revert();
 
             _balances[msg.sender] = _balances[msg.sender].sub(value);
             _balances[to] = _balances[to].add(value);
@@ -158,7 +158,7 @@ contract AssetToken is ERC223Interface, ERC20Interface {
     }
 
     function defund(uint256 value) public noOwnerAsCounterparty(msg.sender) {
-        if (this.balanceOf(msg.sender) < value) revert();
+        if (balanceOf(msg.sender) < value) revert();
 
         _balances[msg.sender] = _balances[msg.sender].sub(value);
         totalSupply = totalSupply.sub(value);
@@ -178,7 +178,7 @@ contract AssetToken is ERC223Interface, ERC20Interface {
     }
 
     function transferToAddress(address to, uint value, bytes data) private returns (bool) {
-        if (this.balanceOf(msg.sender) < value) revert();
+        if (balanceOf(msg.sender) < value) revert();
 
         _balances[msg.sender] = _balances[msg.sender].sub(value);
         _balances[to] = _balances[to].add(value);
@@ -189,7 +189,7 @@ contract AssetToken is ERC223Interface, ERC20Interface {
     }
 
     function transferToContract(address to, uint value, bytes data) private returns (bool) {
-        if (this.balanceOf(msg.sender) < value) revert();
+        if (balanceOf(msg.sender) < value) revert();
 
         _balances[msg.sender] = _balances[msg.sender].sub(value);
         _balances[to] = _balances[to].add(value);

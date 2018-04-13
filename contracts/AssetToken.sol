@@ -47,6 +47,46 @@ contract AssetToken is ERC223Interface, ERC20Interface {
         _;
     }
 
+    function allowance(address owner, address spender) public view returns (uint256) {
+        return _allowed[owner][spender];
+    }
+
+    function name() public view returns (string) {
+        return name;
+    }
+
+    function symbol() public view returns (string) {
+        return symbol;
+    }
+
+    function decimals() public view returns (uint8) {
+        return decimals;
+    }
+
+    function totalSupply() public view returns (uint256) {
+        return totalSupply;
+    }
+
+    function balanceOf(address owner) public view returns (uint balance) {
+        return _balances[owner];
+    }
+
+    function fund(address member, uint256 value) public onlyOwner noOwnerAsCounterparty(member) {
+        _balances[member] = _balances[member].add(value);
+        totalSupply = totalSupply.add(value);
+
+        emit Fund(member, value, _balances[member]);
+    }
+
+    function defund(uint256 value) public noOwnerAsCounterparty(msg.sender) {
+        if (balanceOf(msg.sender) < value) revert();
+
+        _balances[msg.sender] = _balances[msg.sender].sub(value);
+        totalSupply = totalSupply.sub(value);
+
+        emit Defund(msg.sender, value, _balances[msg.sender]);
+    }
+
     function approve(address spender, uint256 value) public returns (bool) {
         _allowed[msg.sender][spender] = value;
         emit Approval(msg.sender, spender, value);
@@ -82,30 +122,6 @@ contract AssetToken is ERC223Interface, ERC20Interface {
         _allowed[from][msg.sender] = _allowed[from][msg.sender].sub(value);
         emit Transfer(from, to, value);
         return true;
-    }
-
-    function allowance(address owner, address spender) public view returns (uint256) {
-        return _allowed[owner][spender];
-    }
-
-    function name() public view returns (string) {
-        return name;
-    }
-
-    function symbol() public view returns (string) {
-        return symbol;
-    }
-
-    function decimals() public view returns (uint8) {
-        return decimals;
-    }
-
-    function totalSupply() public view returns (uint256) {
-        return totalSupply;
-    }
-
-    function balanceOf(address owner) public view returns (uint balance) {
-        return _balances[owner];
     }
 
     function transfer(address to, uint value)
@@ -148,22 +164,6 @@ contract AssetToken is ERC223Interface, ERC20Interface {
         } else {
             return transferToAddress(to, value, data);
         }
-    }
-
-    function fund(address member, uint256 value) public onlyOwner noOwnerAsCounterparty(member) {
-        _balances[member] = _balances[member].add(value);
-        totalSupply = totalSupply.add(value);
-
-        emit Fund(member, value, _balances[member]);
-    }
-
-    function defund(uint256 value) public noOwnerAsCounterparty(msg.sender) {
-        if (balanceOf(msg.sender) < value) revert();
-
-        _balances[msg.sender] = _balances[msg.sender].sub(value);
-        totalSupply = totalSupply.sub(value);
-
-        emit Defund(msg.sender, value, _balances[msg.sender]);
     }
 
     function isContract(address addr) private view returns (bool) {

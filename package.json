@@ -15,7 +15,7 @@
         "deploy": "truffle deploy --network ci",
         "test": "truffle test --network development",
         "coverage": "solidity-coverage",
-        "testrpc": "ganache-cli --port 7545 --gasLimit 0xFFFFFFFF",
+        "ganache": "ganache-cli --port 7545 --gasLimit 0xFFFFFFFF",
         "lint": "solhint contracts/**/*.sol"
     }
 }

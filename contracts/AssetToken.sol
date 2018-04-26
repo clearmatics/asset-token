@@ -2,7 +2,7 @@
 
 // SPDX-License-Identifier: LGPL-3.0+
 
-pragma solidity 0.4.21;
+pragma solidity 0.4.23;
 
 import "./SafeMath.sol";
 import "./ERC20Interface.sol";
@@ -25,7 +25,7 @@ contract AssetToken is ERC223Interface, ERC20Interface {
     event Fund(address indexed member, uint256 value, uint256 balance);
     event Defund(address indexed member, uint256 value, uint256 balance);
 
-    function AssetToken(string _symbol, string _name) public {
+    constructor(string _symbol, string _name) public {
         symbol = _symbol;
         name = _name;
         _owner = msg.sender;

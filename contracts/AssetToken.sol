@@ -2,7 +2,7 @@
 
 // SPDX-License-Identifier: LGPL-3.0+
 
-pragma solidity 0.4.21;
+pragma solidity 0.4.23;
 
 import "./SafeMath.sol";
 import "./ERC20Interface.sol";
@@ -25,7 +25,7 @@ contract AssetToken is ERC223Interface, ERC20Interface {
     event Fund(address indexed member, uint256 value, uint256 balance);
     event Defund(address indexed member, uint256 value, uint256 balance);
 
-    function AssetToken(string _symbol, string _name) public {
+    constructor(string _symbol, string _name) public {
         symbol = _symbol;
         name = _name;
         _owner = msg.sender;
@@ -34,19 +34,19 @@ contract AssetToken is ERC223Interface, ERC20Interface {
     }
 
     function () public payable {
-        revert();
+        revert("This contract does not support ETH");
     }
 
     modifier onlyOwner() {
         if (msg.sender != _owner) {
-            revert();
+            revert("Only the contract owner can perform this operation");
         }
         _;
     }
 
     modifier noOwnerAsCounterparty(address counterparty) {
         if (counterparty == _owner) {
-            revert();
+            revert("The contract owner can not perform this operation");
         }
         _;
     }
@@ -83,7 +83,7 @@ contract AssetToken is ERC223Interface, ERC20Interface {
     }
 
     function defund(uint256 value) public noOwnerAsCounterparty(msg.sender) {
-        if (balanceOf(msg.sender) < value) revert();
+        if (balanceOf(msg.sender) < value) revert("You must have sufficent balance to perform this operation");
 
         _balances[msg.sender] = _balances[msg.sender].sub(value);
         totalSupply = totalSupply.sub(value);
@@ -155,7 +155,7 @@ contract AssetToken is ERC223Interface, ERC20Interface {
     public noOwnerAsCounterparty(to) noOwnerAsCounterparty(msg.sender)
     returns (bool) {
         if (isContract(to)) {
-            if (balanceOf(msg.sender) < value) revert();
+            if (balanceOf(msg.sender) < value) revert("You must have sufficent balance to perform this operation");
 
             _balances[msg.sender] = _balances[msg.sender].sub(value);
             _balances[to] = _balances[to].add(value);
@@ -182,7 +182,7 @@ contract AssetToken is ERC223Interface, ERC20Interface {
     }
 
     function transferToAddress(address to, uint value, bytes data) private returns (bool) {
-        if (balanceOf(msg.sender) < value) revert();
+        if (balanceOf(msg.sender) < value) revert("You must have sufficent balance to perform this operation");
 
         _balances[msg.sender] = _balances[msg.sender].sub(value);
         _balances[to] = _balances[to].add(value);
@@ -193,7 +193,7 @@ contract AssetToken is ERC223Interface, ERC20Interface {
     }
 
     function transferToContract(address to, uint value, bytes data) private returns (bool) {
-        if (balanceOf(msg.sender) < value) revert();
+        if (balanceOf(msg.sender) < value) revert("You must have sufficent balance to perform this operation");
 
         _balances[msg.sender] = _balances[msg.sender].sub(value);
         _balances[to] = _balances[to].add(value);

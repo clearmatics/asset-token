@@ -39,13 +39,13 @@ contract('AssetPanicButton', (accounts) => {
         assert.strictEqual(actualError.toString(),"Error: VM Exception while processing transaction: revert");
     });
 
-    it('Panic Button: Attempt to Defund the contract owner', async () => {
+    it('Panic Button: Attempt to Defund when trading is deactivated', async () => {
         const totalSupplyBefore = await CONTRACT.totalSupply.call();
         const balanceRecipientBefore = await CONTRACT.balanceOf.call(addrOwner);
 
         await CONTRACT.switchTrading({ from: addrOwner });
         const status = await CONTRACT.getTradingStatus({ from: addrOwner });
-        tradeStatus = status.receipt.logs
+        const tradeStatus = status.receipt.logs
         assert.equal(tradeStatus[0].data, 0);
 
         let actualError = null;
@@ -64,5 +64,129 @@ contract('AssetPanicButton', (accounts) => {
         assert.strictEqual(actualError.toString(),"Error: VM Exception while processing transaction: revert");
     });
 
+    it('Panic Button: Attempt to transfer when trading is deactivated', async () => {
+        const addrSender = accounts[1];
+        const addrRecipient = accounts[2];
+
+        const totalSupplyStart = await CONTRACT.totalSupply.call();
+        const balanceSenderStart = await CONTRACT.balanceOf.call(addrSender);
+        const balanceRecipientStart = await CONTRACT.balanceOf.call(addrRecipient);
+
+        const fundVal = 100;
+        const fundRes = await CONTRACT.fund(addrSender, fundVal, { from: addrOwner });
+
+        const totalSupplyFund = await CONTRACT.totalSupply.call();
+        const balanceSenderFund = await CONTRACT.balanceOf.call(addrSender);
+        const balanceRecipientFund = await CONTRACT.balanceOf.call(addrRecipient);
+
+        await CONTRACT.switchTrading({ from: addrOwner });
+        const status = await CONTRACT.getTradingStatus({ from: addrOwner });
+        tradeStatus = status.receipt.logs
+        assert.equal(tradeStatus[0].data, 0);
+
+        let actualError = null;
+        try {
+            const transferVal = 50;
+            const transferRes = await CONTRACT.transfer(addrRecipient, transferVal, { from: addrSender });
+        } catch (error) {
+            actualError = error;
+        }
+
+        const totalSupplyAfterTransfer = await CONTRACT.totalSupply.call();
+        const balanceSenderAfterTransfer = await CONTRACT.balanceOf.call(addrSender);
+        const balanceRecipientAfterTransfer = await CONTRACT.balanceOf.call(addrOwner);
+
+        assert.strictEqual(totalSupplyStart.toNumber() + fundVal, totalSupplyFund.toNumber());
+        assert.strictEqual(balanceSenderStart.toNumber() + fundVal, balanceSenderFund.toNumber());
+        assert.strictEqual(balanceRecipientStart.toNumber(), balanceRecipientFund.toNumber());
+
+        assert.strictEqual(totalSupplyFund.toNumber(), totalSupplyAfterTransfer.toNumber());
+        assert.strictEqual(balanceSenderFund.toNumber(), balanceSenderAfterTransfer.toNumber());
+        assert.strictEqual(balanceRecipientFund.toNumber(), balanceRecipientAfterTransfer.toNumber());
+
+        assert.strictEqual(actualError.toString(),"Error: VM Exception while processing transaction: revert");
+
+    });
+
+    it('Panic Button: Deactivate trading attempt transfer, activate trading attempt transfer', async () => {
+        const addrSender = accounts[1];
+        const addrRecipient = accounts[2];
+        const transferVal = 50
+
+        const totalSupplyStart = await CONTRACT.totalSupply.call();
+        const balanceSenderStart = await CONTRACT.balanceOf.call(addrSender);
+        const balanceRecipientStart = await CONTRACT.balanceOf.call(addrRecipient);
+
+        const fundVal = 100;
+        const fundRes = await CONTRACT.fund(addrSender, fundVal, { from: addrOwner });
+
+        const totalSupplyFund = await CONTRACT.totalSupply.call();
+        const balanceSenderFund = await CONTRACT.balanceOf.call(addrSender);
+        const balanceRecipientFund = await CONTRACT.balanceOf.call(addrRecipient);
+
+        await CONTRACT.switchTrading({ from: addrOwner });
+        const switchStatusbefore = await CONTRACT.getTradingStatus({ from: addrOwner });
+        tradeStatusBefore = switchStatusbefore.receipt.logs
+        assert.equal(tradeStatusBefore[0].data, 0);
+
+        let actualError = null;
+        try {
+            const transferRes = await CONTRACT.transfer(addrRecipient, transferVal, { from: addrSender });
+        } catch (error) {
+            actualError = error;
+        }
+
+        const totalSupplyAfterTransfer = await CONTRACT.totalSupply.call();
+        const balanceSenderAfterTransfer = await CONTRACT.balanceOf.call(addrSender);
+        const balanceRecipientAfterTransfer = await CONTRACT.balanceOf.call(addrRecipient);
+
+        assert.strictEqual(totalSupplyStart.toNumber() + fundVal, totalSupplyFund.toNumber());
+        assert.strictEqual(balanceSenderStart.toNumber() + fundVal, balanceSenderFund.toNumber());
+        assert.strictEqual(balanceRecipientStart.toNumber(), balanceRecipientFund.toNumber());
+
+        assert.strictEqual(totalSupplyFund.toNumber(), totalSupplyAfterTransfer.toNumber());
+        assert.strictEqual(balanceSenderFund.toNumber(), balanceSenderAfterTransfer.toNumber());
+        assert.strictEqual(balanceRecipientFund.toNumber(), balanceRecipientAfterTransfer.toNumber());
+
+        assert.strictEqual(actualError.toString(),"Error: VM Exception while processing transaction: revert");
+
+        await CONTRACT.switchTrading({ from: addrOwner });
+        const switchStatusAfter = await CONTRACT.getTradingStatus({ from: addrOwner });
+        tradeStatusAfter = switchStatusAfter.receipt.logs
+        assert.notEqual(tradeStatusAfter[0].data, 0);
+
+        const totalSupplyAfter = await CONTRACT.totalSupply.call();
+        const balanceSenderAfter = await CONTRACT.balanceOf.call(addrSender);
+        const balanceRecipientAfter = await CONTRACT.balanceOf.call(addrRecipient);
+
+        const fundValAfter = 100;
+        const fundResAfter = await CONTRACT.fund(addrSender, fundVal, { from: addrOwner });
+
+        const totalSupplyFundAfter = await CONTRACT.totalSupply.call();
+        const balanceSenderFundAfter = await CONTRACT.balanceOf.call(addrSender);
+        const balanceRecipientFundAfter = await CONTRACT.balanceOf.call(addrRecipient);
+
+        actualError = null;
+        try {
+            const transferRes = await CONTRACT.transfer(addrRecipient, transferVal, { from: addrSender });
+        } catch (error) {
+            actualError = error;
+        }
+
+        const totalSupplyAfterSwitch = await CONTRACT.totalSupply.call();
+        const balanceSenderAfterSwitch = await CONTRACT.balanceOf.call(addrSender);
+        const balanceRecipientAfterSwitch = await CONTRACT.balanceOf.call(addrRecipient);
+
+        assert.strictEqual(totalSupplyAfter.toNumber() + fundVal, totalSupplyFundAfter.toNumber());
+        assert.strictEqual(balanceSenderAfter.toNumber() + fundVal, balanceSenderFundAfter.toNumber());
+        assert.strictEqual(balanceRecipientAfter.toNumber(), balanceRecipientFundAfter.toNumber());
+
+        assert.strictEqual(totalSupplyFundAfter.toNumber(), totalSupplyAfterSwitch.toNumber());
+        assert.strictEqual(balanceSenderFundAfter.toNumber(), balanceSenderAfterSwitch.toNumber() + transferVal);
+        assert.strictEqual(balanceRecipientFundAfter.toNumber(), balanceRecipientAfterSwitch.toNumber() - transferVal);
+
+        assert.strictEqual(actualError,null);
+
+    });
 
 });

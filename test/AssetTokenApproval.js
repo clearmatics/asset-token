@@ -56,6 +56,47 @@ contract('AssetTokenTransfer', (accounts) => {
         assert.strictEqual(balanceRecipientFund.toNumber() + transferVal, balanceRecipientAfterTransfer.toNumber());
     });
 
+    it('Approve: set an approved limit and then make a transfer for more than the current balance', async () => {
+        const addrSender = accounts[1];
+        const addrRecipient = accounts[2];
+        const addrProxy = accounts[3];
+
+        const totalSupplyStart = await CONTRACT.totalSupply.call();
+        const balanceSenderStart = await CONTRACT.balanceOf.call(addrSender);
+        const balanceRecipientStart = await CONTRACT.balanceOf.call(addrRecipient);
+
+        const fundVal = 100;
+        const fundRes = await CONTRACT.fund(addrSender, fundVal, { from: addrOwner });
+
+        const approvalRes = await CONTRACT.approve(addrProxy, fundVal, { from: addrSender });
+
+        const totalSupplyFund = await CONTRACT.totalSupply.call();
+        const balanceSenderFund = await CONTRACT.balanceOf.call(addrSender);
+        const balanceRecipientFund = await CONTRACT.balanceOf.call(addrRecipient);
+
+        const transferVal = balanceSenderFund.toNumber() + 50;
+        let actualError = null;
+        try {
+            const transferFail = await CONTRACT.transferFrom(addrSender, addrRecipient, transferVal, { from: addrProxy });
+        } catch (error) {
+            actualError = error;
+        }
+
+        const totalSupplyAfterTransfer = await CONTRACT.totalSupply.call();
+        const balanceSenderAfterTransfer = await CONTRACT.balanceOf.call(addrSender);
+        const balanceRecipientAfterTransfer = await CONTRACT.balanceOf.call(addrRecipient);
+
+        assert.strictEqual(totalSupplyStart.toNumber() + fundVal, totalSupplyFund.toNumber());
+        assert.strictEqual(balanceSenderStart.toNumber() + fundVal, balanceSenderFund.toNumber());
+        assert.strictEqual(balanceRecipientStart.toNumber(), balanceRecipientFund.toNumber());
+
+        assert.strictEqual(totalSupplyFund.toNumber(), totalSupplyAfterTransfer.toNumber());
+        assert.strictEqual(balanceSenderFund.toNumber(), balanceSenderAfterTransfer.toNumber());
+        assert.strictEqual(balanceRecipientFund.toNumber(), balanceRecipientAfterTransfer.toNumber());
+
+        assert(actualError.toString() == "Error: VM Exception while processing transaction: revert");
+    });
+
     it('Allowance: set an approved limit and check allowance matches', async () => {
         const addrSender = accounts[1];
         const addrRecipient = accounts[2];

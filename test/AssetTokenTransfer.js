@@ -12,7 +12,7 @@ contract('AssetTokenTransfer', (accounts) => {
         CONTRACT = await AssetToken.new("CLR", "Asset Token", { from: addrOwner });
     });
 
-    it('Can transfer tokens from EOA to EOA', async () => {
+    it('Can transfer tokens from External Owned Account(EOA) to EOA', async () => {
         const addrSender = accounts[1];
         const addrRecipient = accounts[2];
 

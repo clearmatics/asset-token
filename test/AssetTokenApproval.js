@@ -245,7 +245,7 @@ contract('AssetTokenTransfer', (accounts) => {
         const balanceRecipientFund = await CONTRACT.balanceOf.call(addrRecipient);
 
         const approvalVal = 50;
-        const approvalRes = await CONTRACT.approve(addrProxy, fundVal, { from: addrSender });
+        const approvalRes = await CONTRACT.approve(addrProxy, approvalVal, { from: addrSender });
 
         const decreaseApprovalRes = await CONTRACT.decreaseApproval(addrProxy, approvalVal, { from: addrSender });
 

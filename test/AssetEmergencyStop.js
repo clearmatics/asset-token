@@ -6,7 +6,7 @@ const AssetToken = artifacts.require('AssetToken');
 
 let CONTRACT;
 
-contract('AssetPanicButton', (accounts) => {
+contract('AssetEmergencyStop', (accounts) => {
     const addrOwner = accounts[0];
     beforeEach(async () => {
         CONTRACT = await AssetToken.new("CLP", "Asset Token", { from: addrOwner });
@@ -18,7 +18,7 @@ contract('AssetPanicButton', (accounts) => {
         const totalSupplyBefore = await CONTRACT.totalSupply.call();
         const balanceRecipientBefore = await CONTRACT.balanceOf.call(addrRecipient);
 
-        await CONTRACT.emergencySwitch({from: addrOwner});
+        await CONTRACT.emergencyStop({from: addrOwner});
         const status = await CONTRACT.getTradingStatus({ from: addrOwner });
         tradeStatus = status.receipt.logs
         assert.equal(tradeStatus[0].data, 0);
@@ -43,7 +43,7 @@ contract('AssetPanicButton', (accounts) => {
         const totalSupplyBefore = await CONTRACT.totalSupply.call();
         const balanceRecipientBefore = await CONTRACT.balanceOf.call(addrOwner);
 
-        await CONTRACT.emergencySwitch({ from: addrOwner });
+        await CONTRACT.emergencyStop({ from: addrOwner });
         const status = await CONTRACT.getTradingStatus({ from: addrOwner });
         const tradeStatus = status.receipt.logs
         assert.equal(tradeStatus[0].data, 0);
@@ -79,7 +79,7 @@ contract('AssetPanicButton', (accounts) => {
         const balanceSenderFund = await CONTRACT.balanceOf.call(addrSender);
         const balanceRecipientFund = await CONTRACT.balanceOf.call(addrRecipient);
 
-        await CONTRACT.emergencySwitch({ from: addrOwner });
+        await CONTRACT.emergencyStop({ from: addrOwner });
         const status = await CONTRACT.getTradingStatus({ from: addrOwner });
         tradeStatus = status.receipt.logs
         assert.equal(tradeStatus[0].data, 0);
@@ -124,7 +124,7 @@ contract('AssetPanicButton', (accounts) => {
         const balanceSenderFund = await CONTRACT.balanceOf.call(addrSender);
         const balanceRecipientFund = await CONTRACT.balanceOf.call(addrRecipient);
 
-        await CONTRACT.emergencySwitch({ from: addrOwner });
+        await CONTRACT.emergencyStop({ from: addrOwner });
         const switchStatusbefore = await CONTRACT.getTradingStatus({ from: addrOwner });
         tradeStatusBefore = switchStatusbefore.receipt.logs
         assert.equal(tradeStatusBefore[0].data, 0);
@@ -150,7 +150,7 @@ contract('AssetPanicButton', (accounts) => {
 
         assert.strictEqual(actualError.toString(),"Error: VM Exception while processing transaction: revert");
 
-        await CONTRACT.emergencySwitch({ from: addrOwner });
+        await CONTRACT.emergencyStart({ from: addrOwner });
         const switchStatusAfter = await CONTRACT.getTradingStatus({ from: addrOwner });
         tradeStatusAfter = switchStatusAfter.receipt.logs
         assert.notEqual(tradeStatusAfter[0].data, 0);

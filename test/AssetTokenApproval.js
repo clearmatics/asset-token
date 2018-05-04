@@ -270,4 +270,46 @@ contract('AssetTokenTransfer', (accounts) => {
         assert.strictEqual(balanceRecipientFund.toNumber(), balanceRecipientTrans.toNumber());
     });
 
+    it('Approve: set an approved limit, decrease more than the current limit and attempt a transfer for more than the new limit', async () => {
+        const addrSender = accounts[1];
+        const addrRecipient = accounts[2];
+        const addrProxy = accounts[3];
+
+        const totalSupplyStart = await CONTRACT.totalSupply.call();
+        const balanceSenderStart = await CONTRACT.balanceOf.call(addrSender);
+        const balanceRecipientStart = await CONTRACT.balanceOf.call(addrRecipient);
+
+        const fundVal = 100;
+        const fundRes = await CONTRACT.fund(addrSender, fundVal, { from: addrOwner });
+
+        const totalSupplyFund = await CONTRACT.totalSupply.call();
+        const balanceSenderFund = await CONTRACT.balanceOf.call(addrSender);
+        const balanceRecipientFund = await CONTRACT.balanceOf.call(addrRecipient);
+
+        const approvalVal = 50;
+        const approvalRes = await CONTRACT.approve(addrProxy, approvalVal, { from: addrSender });
+
+        const newApprovalVal = approvalVal + 10;
+        const decreaseApprovalRes = await CONTRACT.decreaseApproval(addrProxy, newApprovalVal, { from: addrSender });
+
+        let actualError = null;
+        try {
+          const transferFail = await CONTRACT.transferFrom(addrSender, addrRecipient, fundVal, { from: addrProxy });
+        } catch (error) {
+          actualError = error;
+        }
+        assert(actualError.toString() == "Error: VM Exception while processing transaction: revert");
+
+        const totalSupplyTrans = await CONTRACT.totalSupply.call();
+        const balanceSenderTrans = await CONTRACT.balanceOf.call(addrSender);
+        const balanceRecipientTrans = await CONTRACT.balanceOf.call(addrRecipient);
+
+        assert.strictEqual(totalSupplyStart.toNumber() + fundVal, totalSupplyFund.toNumber());
+        assert.strictEqual(balanceSenderStart.toNumber() + fundVal, balanceSenderFund.toNumber());
+        assert.strictEqual(balanceRecipientStart.toNumber(), balanceRecipientFund.toNumber());
+
+        assert.strictEqual(totalSupplyFund.toNumber(), totalSupplyTrans.toNumber());
+        assert.strictEqual(balanceSenderFund.toNumber(), balanceSenderTrans.toNumber());
+        assert.strictEqual(balanceRecipientFund.toNumber(), balanceRecipientTrans.toNumber());
+    });
 });

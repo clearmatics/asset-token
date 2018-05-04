@@ -56,6 +56,34 @@ contract('AssetTokenTransfer', (accounts) => {
         assert.strictEqual(balanceRecipientFund.toNumber() + transferVal, balanceRecipientAfterTransfer.toNumber());
     });
 
+    it('Allowance: set an approved limit and check allowance matches', async () => {
+        const addrSender = accounts[1];
+        const addrRecipient = accounts[2];
+        const addrProxy = accounts[3];
+
+        const totalSupplyStart = await CONTRACT.totalSupply.call();
+        const balanceSenderStart = await CONTRACT.balanceOf.call(addrSender);
+        const balanceRecipientStart = await CONTRACT.balanceOf.call(addrRecipient);
+
+        const fundVal = 100;
+        const fundRes = await CONTRACT.fund(addrSender, fundVal, { from: addrOwner });
+
+        const approvalRes = await CONTRACT.approve(addrProxy, fundVal, { from: addrSender });
+
+        const totalSupplyFund = await CONTRACT.totalSupply.call();
+        const balanceSenderFund = await CONTRACT.balanceOf.call(addrSender);
+        const balanceRecipientFund = await CONTRACT.balanceOf.call(addrRecipient);
+
+        const transferRes = await CONTRACT.allowance(addrSender, addrProxy);
+
+        assert.strictEqual(totalSupplyStart.toNumber() + fundVal, totalSupplyFund.toNumber());
+        assert.strictEqual(balanceSenderStart.toNumber() + fundVal, balanceSenderFund.toNumber());
+        assert.strictEqual(balanceRecipientStart.toNumber(), balanceRecipientFund.toNumber());
+
+        assert.strictEqual(transferRes.toNumber(), fundVal);
+    });
+
+
     it('Approve: set an approved limit and then make a transfer to address 0', async () => {
         const addrSender = accounts[1];
         const addrRecipient = 0;

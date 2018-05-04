@@ -12,13 +12,13 @@ contract('AssetPanicButton', (accounts) => {
         CONTRACT = await AssetToken.new("CLP", "Asset Token", { from: addrOwner });
     });
 
-    it('Panic Button: Attempt to Fund when trading is deactivated', async () => {
+    it('Emergency Switch: Attempt to Fund when trading is deactivated', async () => {
         const addrRecipient = accounts[1];
 
         const totalSupplyBefore = await CONTRACT.totalSupply.call();
         const balanceRecipientBefore = await CONTRACT.balanceOf.call(addrRecipient);
 
-        await CONTRACT.switchTrading({from: addrOwner});
+        await CONTRACT.emergencySwitch({from: addrOwner});
         const status = await CONTRACT.getTradingStatus({ from: addrOwner });
         tradeStatus = status.receipt.logs
         assert.equal(tradeStatus[0].data, 0);
@@ -39,11 +39,11 @@ contract('AssetPanicButton', (accounts) => {
         assert.strictEqual(actualError.toString(),"Error: VM Exception while processing transaction: revert");
     });
 
-    it('Panic Button: Attempt to Defund when trading is deactivated', async () => {
+    it('Emergency Switch: Attempt to Defund when trading is deactivated', async () => {
         const totalSupplyBefore = await CONTRACT.totalSupply.call();
         const balanceRecipientBefore = await CONTRACT.balanceOf.call(addrOwner);
 
-        await CONTRACT.switchTrading({ from: addrOwner });
+        await CONTRACT.emergencySwitch({ from: addrOwner });
         const status = await CONTRACT.getTradingStatus({ from: addrOwner });
         const tradeStatus = status.receipt.logs
         assert.equal(tradeStatus[0].data, 0);
@@ -64,7 +64,7 @@ contract('AssetPanicButton', (accounts) => {
         assert.strictEqual(actualError.toString(),"Error: VM Exception while processing transaction: revert");
     });
 
-    it('Panic Button: Attempt to transfer when trading is deactivated', async () => {
+    it('Emergency Switch: Attempt to transfer when trading is deactivated', async () => {
         const addrSender = accounts[1];
         const addrRecipient = accounts[2];
 
@@ -79,7 +79,7 @@ contract('AssetPanicButton', (accounts) => {
         const balanceSenderFund = await CONTRACT.balanceOf.call(addrSender);
         const balanceRecipientFund = await CONTRACT.balanceOf.call(addrRecipient);
 
-        await CONTRACT.switchTrading({ from: addrOwner });
+        await CONTRACT.emergencySwitch({ from: addrOwner });
         const status = await CONTRACT.getTradingStatus({ from: addrOwner });
         tradeStatus = status.receipt.logs
         assert.equal(tradeStatus[0].data, 0);
@@ -108,7 +108,7 @@ contract('AssetPanicButton', (accounts) => {
 
     });
 
-    it('Panic Button: Deactivate trading attempt transfer, activate trading attempt transfer', async () => {
+    it('Emergency Switch: Deactivate trading attempt transfer, activate trading attempt transfer', async () => {
         const addrSender = accounts[1];
         const addrRecipient = accounts[2];
         const transferVal = 50
@@ -124,7 +124,7 @@ contract('AssetPanicButton', (accounts) => {
         const balanceSenderFund = await CONTRACT.balanceOf.call(addrSender);
         const balanceRecipientFund = await CONTRACT.balanceOf.call(addrRecipient);
 
-        await CONTRACT.switchTrading({ from: addrOwner });
+        await CONTRACT.emergencySwitch({ from: addrOwner });
         const switchStatusbefore = await CONTRACT.getTradingStatus({ from: addrOwner });
         tradeStatusBefore = switchStatusbefore.receipt.logs
         assert.equal(tradeStatusBefore[0].data, 0);
@@ -150,7 +150,7 @@ contract('AssetPanicButton', (accounts) => {
 
         assert.strictEqual(actualError.toString(),"Error: VM Exception while processing transaction: revert");
 
-        await CONTRACT.switchTrading({ from: addrOwner });
+        await CONTRACT.emergencySwitch({ from: addrOwner });
         const switchStatusAfter = await CONTRACT.getTradingStatus({ from: addrOwner });
         tradeStatusAfter = switchStatusAfter.receipt.logs
         assert.notEqual(tradeStatusAfter[0].data, 0);

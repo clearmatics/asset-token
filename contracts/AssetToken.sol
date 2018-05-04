@@ -47,9 +47,10 @@ contract AssetToken is ERC223Interface, ERC20Interface {
         _;
     }
 
+    // @dev stops system when switched to false
     modifier checkActive() {
         if (_isActive != true) {
-            revert("Contract owner has deactivated trading");
+            revert("Contract emergency stop is activated");
         }
         _;
     }
@@ -85,7 +86,8 @@ contract AssetToken is ERC223Interface, ERC20Interface {
         return _balances[owner];
     }
 
-    function switchTrading() public onlyOwner {
+    // @dev toggles the _isActive boolean whcih starts/stops trading
+    function emergencySwitch() public onlyOwner {
         if (_isActive == false) {
           _isActive = true;
           emit Switch(true);

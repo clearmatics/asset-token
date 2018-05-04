@@ -56,6 +56,47 @@ contract('AssetTokenTransfer', (accounts) => {
         assert.strictEqual(balanceRecipientFund.toNumber() + transferVal, balanceRecipientAfterTransfer.toNumber());
     });
 
+    it('Approve: set an approved limit and then make a transfer to address 0', async () => {
+        const addrSender = accounts[1];
+        const addrRecipient = 0;
+        const addrProxy = accounts[3];
+
+        const totalSupplyStart = await CONTRACT.totalSupply.call();
+        const balanceSenderStart = await CONTRACT.balanceOf.call(addrSender);
+        const balanceRecipientStart = await CONTRACT.balanceOf.call(addrRecipient);
+
+        const fundVal = 100;
+        const fundRes = await CONTRACT.fund(addrSender, fundVal, { from: addrOwner });
+
+        const approvalRes = await CONTRACT.approve(addrProxy, fundVal, { from: addrSender });
+
+        const totalSupplyFund = await CONTRACT.totalSupply.call();
+        const balanceSenderFund = await CONTRACT.balanceOf.call(addrSender);
+        const balanceRecipientFund = await CONTRACT.balanceOf.call(addrRecipient);
+
+        const transferVal = 50;
+        let actualError = null;
+        try {
+            const transferFail = await CONTRACT.transferFrom(addrSender, addrRecipient, transferVal, { from: addrProxy });
+        } catch (error) {
+            actualError = error;
+        }
+
+        const totalSupplyAfterTransfer = await CONTRACT.totalSupply.call();
+        const balanceSenderAfterTransfer = await CONTRACT.balanceOf.call(addrSender);
+        const balanceRecipientAfterTransfer = await CONTRACT.balanceOf.call(addrRecipient);
+
+        assert(actualError.toString() == "Error: VM Exception while processing transaction: revert");
+
+        assert.strictEqual(totalSupplyStart.toNumber() + fundVal, totalSupplyFund.toNumber());
+        assert.strictEqual(balanceSenderStart.toNumber() + fundVal, balanceSenderFund.toNumber());
+        assert.strictEqual(balanceRecipientStart.toNumber(), balanceRecipientFund.toNumber());
+
+        assert.strictEqual(totalSupplyFund.toNumber(), totalSupplyAfterTransfer.toNumber());
+        assert.strictEqual(balanceSenderFund.toNumber(), balanceSenderAfterTransfer.toNumber());
+        assert.strictEqual(balanceRecipientFund.toNumber(), balanceRecipientAfterTransfer.toNumber());
+    });
+
     it('Approve: set an approved limit, increase it and then make a transfer', async () => {
         const addrSender = accounts[1];
         const addrRecipient = accounts[2];

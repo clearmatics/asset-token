@@ -97,7 +97,7 @@ contract('AssetTokenTransfer', (accounts) => {
         assert.strictEqual(balanceRecipientFund.toNumber(), balanceRecipientAfterTransfer.toNumber());
     });
 
-    it('Approve: set an approved limit, increase it and then make a transfer', async () => {
+    it('Approve: set an approved limit, increase it and then make a transfer for more than the new limit', async () => {
         const addrSender = accounts[1];
         const addrRecipient = accounts[2];
         const addrProxy = accounts[3];
@@ -159,7 +159,7 @@ contract('AssetTokenTransfer', (accounts) => {
         assert.strictEqual(balanceRecipientFund.toNumber() + fundVal, balanceRecipientAfterTransfer.toNumber());
     });
 
-    it('Approve: set an approved limit, decrease it and attempt a transfer', async () => {
+    it('Approve: set an approved limit, decrease it and attempt a transfer for more than the new limit', async () => {
         const addrSender = accounts[1];
         const addrRecipient = accounts[2];
         const addrProxy = accounts[3];

@@ -19,16 +19,19 @@ contract AssetToken is ERC223Interface, ERC20Interface {
     uint256 public totalSupply;
 
     address private _owner;
+    bool private _isActive;
     mapping(address => uint) private _balances;
     mapping (address => mapping (address => uint256)) private _allowed;
 
     event Fund(address indexed member, uint256 value, uint256 balance);
     event Defund(address indexed member, uint256 value, uint256 balance);
+    event Switch(bool balance);
 
     constructor(string _symbol, string _name) public {
         symbol = _symbol;
         name = _name;
         _owner = msg.sender;
+        _isActive = true;
         totalSupply = 0;
         decimals = 3;
     }
@@ -40,6 +43,14 @@ contract AssetToken is ERC223Interface, ERC20Interface {
     modifier onlyOwner() {
         if (msg.sender != _owner) {
             revert("Only the contract owner can perform this operation");
+        }
+        _;
+    }
+
+    // @dev stops system when switched to false
+    modifier checkActive() {
+        if (_isActive != true) {
+            revert("Contract emergency stop is activated");
         }
         _;
     }
@@ -75,14 +86,35 @@ contract AssetToken is ERC223Interface, ERC20Interface {
         return _balances[owner];
     }
 
-    function fund(address member, uint256 value) public onlyOwner noOwnerAsCounterparty(member) {
+    // @dev starts trading by switching _isActive to true
+    function emergencyStart() public onlyOwner {
+        if (_isActive == false) {
+          _isActive = true;
+        }
+        emit Switch(true);
+    }
+
+    // @dev stops trading by switching _isActive to false
+    function emergencyStop() public onlyOwner {
+        if (_isActive ==  true) {
+          _isActive = false;
+        }
+        emit Switch(false);
+    }
+
+    function getTradingStatus() public returns (bool) {
+      emit Switch(_isActive);
+      return _isActive;
+    }
+
+    function fund(address member, uint256 value) public onlyOwner checkActive noOwnerAsCounterparty(member) {
         _balances[member] = _balances[member].add(value);
         totalSupply = totalSupply.add(value);
 
         emit Fund(member, value, _balances[member]);
     }
 
-    function defund(uint256 value) public noOwnerAsCounterparty(msg.sender) {
+    function defund(uint256 value) public checkActive noOwnerAsCounterparty(msg.sender) {
         if (balanceOf(msg.sender) < value) revert("You must have sufficent balance to perform this operation");
 
         _balances[msg.sender] = _balances[msg.sender].sub(value);
@@ -91,19 +123,19 @@ contract AssetToken is ERC223Interface, ERC20Interface {
         emit Defund(msg.sender, value, _balances[msg.sender]);
     }
 
-    function approve(address spender, uint256 value) public returns (bool) {
+    function approve(address spender, uint256 value) public checkActive returns (bool) {
         _allowed[msg.sender][spender] = value;
         emit Approval(msg.sender, spender, value);
         return true;
     }
 
-    function increaseApproval(address spender, uint addedValue) public returns (bool) {
+    function increaseApproval(address spender, uint addedValue) public checkActive returns (bool) {
         _allowed[msg.sender][spender] = _allowed[msg.sender][spender].add(addedValue);
         emit Approval(msg.sender, spender, _allowed[msg.sender][spender]);
         return true;
     }
 
-    function decreaseApproval(address spender, uint subtractedValue) public returns (bool) {
+    function decreaseApproval(address spender, uint subtractedValue) public checkActive returns (bool) {
         uint oldValue = _allowed[msg.sender][spender];
         if (subtractedValue > oldValue) {
             _allowed[msg.sender][spender] = 0;
@@ -115,7 +147,7 @@ contract AssetToken is ERC223Interface, ERC20Interface {
     }
 
     function transferFrom(address from, address to, uint256 value)
-    public noOwnerAsCounterparty(from) noOwnerAsCounterparty(to) noOwnerAsCounterparty(msg.sender)
+    public checkActive noOwnerAsCounterparty(from) noOwnerAsCounterparty(to) noOwnerAsCounterparty(msg.sender)
     returns (bool) {
         require(to != address(0));
         require(value <= _balances[from]);
@@ -129,7 +161,7 @@ contract AssetToken is ERC223Interface, ERC20Interface {
     }
 
     function transfer(address to, uint value)
-    public noOwnerAsCounterparty(to) noOwnerAsCounterparty(msg.sender)
+    public checkActive noOwnerAsCounterparty(to) noOwnerAsCounterparty(msg.sender)
     returns (bool) {
         //standard function transfer similar to ERC20 transfer with no _data
         //added due to backwards compatibility reasons
@@ -142,7 +174,7 @@ contract AssetToken is ERC223Interface, ERC20Interface {
     }
 
     function transfer(address to, uint value, bytes data)
-    public noOwnerAsCounterparty(to) noOwnerAsCounterparty(msg.sender)
+    public checkActive noOwnerAsCounterparty(to) noOwnerAsCounterparty(msg.sender)
     returns (bool) {
         if (isContract(to)) {
             return transferToContract(to, value, data);
@@ -152,7 +184,7 @@ contract AssetToken is ERC223Interface, ERC20Interface {
     }
 
     function transfer(address to, uint value, bytes data, string customFallback)
-    public noOwnerAsCounterparty(to) noOwnerAsCounterparty(msg.sender)
+    public checkActive noOwnerAsCounterparty(to) noOwnerAsCounterparty(msg.sender)
     returns (bool) {
         if (isContract(to)) {
             if (balanceOf(msg.sender) < value) revert("You must have sufficent balance to perform this operation");
@@ -181,7 +213,7 @@ contract AssetToken is ERC223Interface, ERC20Interface {
         return (length > 0);
     }
 
-    function transferToAddress(address to, uint value, bytes data) private returns (bool) {
+    function transferToAddress(address to, uint value, bytes data) private checkActive returns (bool) {
         if (balanceOf(msg.sender) < value) revert("You must have sufficent balance to perform this operation");
 
         _balances[msg.sender] = _balances[msg.sender].sub(value);
@@ -192,7 +224,7 @@ contract AssetToken is ERC223Interface, ERC20Interface {
         return true;
     }
 
-    function transferToContract(address to, uint value, bytes data) private returns (bool) {
+    function transferToContract(address to, uint value, bytes data) private checkActive returns (bool) {
         if (balanceOf(msg.sender) < value) revert("You must have sufficent balance to perform this operation");
 
         _balances[msg.sender] = _balances[msg.sender].sub(value);

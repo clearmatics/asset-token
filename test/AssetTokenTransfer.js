@@ -198,4 +198,44 @@ contract('AssetTokenTransfer', (accounts) => {
         assert.strictEqual(balanceSenderFund.toNumber() - transferVal, balanceSenderAfterTransfer.toNumber());
         assert.strictEqual(balanceRecipientFund.toNumber() + transferVal, balanceRecipientAfterTransfer.toNumber());
     });
+
+    it('Can not transfer more tokens than an account has balance from External Owned Account(EOA) to a contract', async () => {
+	let mockReceivingContract = await MockReceivingContract.new({ from: addrOwner });
+
+        const addrSender = accounts[1];
+        const addrRecipient = mockReceivingContract.address;
+
+        const totalSupplyStart = await CONTRACT.totalSupply.call();
+        const balanceSenderStart = await CONTRACT.balanceOf.call(addrSender);
+        const balanceRecipientStart = await CONTRACT.balanceOf.call(addrRecipient);
+
+        const fundVal = 100;
+        const fundRes = await CONTRACT.fund(addrSender, fundVal, { from: addrOwner });
+
+        const totalSupplyFund = await CONTRACT.totalSupply.call();
+        const balanceSenderFund = await CONTRACT.balanceOf.call(addrSender);
+        const balanceRecipientFund = await CONTRACT.balanceOf.call(addrRecipient);
+
+        const transferVal = fundVal + 50;
+        let actualError = null;
+        try {
+            const transferRes = await CONTRACT.transfer(addrRecipient, transferVal, { from: addrSender });
+        } catch (error) {
+            actualError = error;
+        }
+
+        const totalSupplyAfterTransfer = await CONTRACT.totalSupply.call();
+        const balanceSenderAfterTransfer = await CONTRACT.balanceOf.call(addrSender);
+        const balanceRecipientAfterTransfer = await CONTRACT.balanceOf.call(addrRecipient);
+
+        assert.strictEqual(totalSupplyStart.toNumber() + fundVal, totalSupplyFund.toNumber());
+        assert.strictEqual(balanceSenderStart.toNumber() + fundVal, balanceSenderFund.toNumber());
+        assert.strictEqual(balanceRecipientStart.toNumber(), balanceRecipientFund.toNumber());
+
+        assert.strictEqual(totalSupplyFund.toNumber(), totalSupplyAfterTransfer.toNumber());
+        assert.strictEqual(balanceSenderFund.toNumber(), balanceSenderAfterTransfer.toNumber());
+        assert.strictEqual(balanceRecipientFund.toNumber(), balanceRecipientAfterTransfer.toNumber());
+
+        assert.strictEqual(actualError.toString(),"Error: VM Exception while processing transaction: revert");
+    });
 });

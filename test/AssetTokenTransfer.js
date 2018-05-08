@@ -174,6 +174,8 @@ contract('AssetTokenTransfer', (accounts) => {
         const balanceSenderFund = await CONTRACT.balanceOf.call(addrSender);
         const balanceRecipientFund = await CONTRACT.balanceOf.call(addrRecipient);
 
+	const mockReceivingEvents = mockReceivingContract.allEvents();
+
         const transferVal = 50;
         const transferRes = await CONTRACT.transfer(addrRecipient, transferVal, { from: addrSender });
 
@@ -198,6 +200,21 @@ contract('AssetTokenTransfer', (accounts) => {
         assert.strictEqual(totalSupplyFund.toNumber(), totalSupplyAfterTransfer.toNumber());
         assert.strictEqual(balanceSenderFund.toNumber() - transferVal, balanceSenderAfterTransfer.toNumber());
         assert.strictEqual(balanceRecipientFund.toNumber() + transferVal, balanceRecipientAfterTransfer.toNumber());
+
+	mockReceivingEvents.watch((error, response) => {
+		assert.strictEqual(error, null);
+
+		const calledEventFrom = response.args.from;
+		const calledEventData = response.args.data;
+		const calledEventValue = response.args.value.toNumber();
+
+		assert(response.event == "Called");
+		assert.strictEqual(calledEventFrom, addrSender);
+		assert.strictEqual(calledEventData, '0x');
+		assert.strictEqual(calledEventValue, transferVal);
+	});
+
+	mockReceivingEvents.stopWatching();
     });
 
     it('Can not transfer more tokens than an account has balance from External Owned Account(EOA) to a contract', async () => {

@@ -192,7 +192,7 @@ contract AssetToken is ERC223Interface, ERC20Interface {
             _balances[msg.sender] = _balances[msg.sender].sub(value);
             _balances[to] = _balances[to].add(value);
             // solhint-disable-next-line avoid-call-value
-            assert(to.call.value(0)(bytes4(keccak256(customFallback)), msg.sender, value, data));
+            assert(to.call.value(0)(bytes4(keccak256(bytes(customFallback))), msg.sender, value, data));
 
             emit Transfer(msg.sender, to, value, data);
 

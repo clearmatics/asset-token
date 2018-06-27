@@ -9,5 +9,6 @@ matrix:
       before_script:
         - yarn install
       script:
+        - yarn lint  
         - yarn coverage        
 

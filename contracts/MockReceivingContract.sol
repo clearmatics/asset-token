@@ -9,13 +9,15 @@ import "./ERC223ReceivingContract.sol";
 
 contract MockReceivingContract is ERC223ReceivingContract {
 
+    event Created();
     event Called(address from, uint value, bytes data);
 
     constructor() public {
+        emit Created();
     }
 
     function tokenFallback(address from, uint value, bytes data) public {
-	emit Called(from, value, data);
+        emit Called(from, value, data);
     }
 
 }

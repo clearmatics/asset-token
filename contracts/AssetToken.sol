@@ -89,22 +89,22 @@ contract AssetToken is ERC223Interface, ERC20Interface {
     // @dev starts trading by switching _isActive to true
     function emergencyStart() public onlyOwner {
         if (_isActive == false) {
-          _isActive = true;
+            _isActive = true;
         }
         emit Switch(true);
     }
 
     // @dev stops trading by switching _isActive to false
     function emergencyStop() public onlyOwner {
-        if (_isActive ==  true) {
-          _isActive = false;
+        if (_isActive == true) {
+            _isActive = false;
         }
         emit Switch(false);
     }
 
     function getTradingStatus() public returns (bool) {
-      emit Switch(_isActive);
-      return _isActive;
+        emit Switch(_isActive);
+        return _isActive;
     }
 
     function fund(address member, uint256 value) public onlyOwner checkActive noOwnerAsCounterparty(member) {

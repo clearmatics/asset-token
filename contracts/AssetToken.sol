@@ -2,7 +2,7 @@
 
 // SPDX-License-Identifier: LGPL-3.0+
 
-pragma solidity 0.4.23;
+pragma solidity 0.4.24;
 
 import "./SafeMath.sol";
 import "./ERC20Interface.sol";

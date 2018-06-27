@@ -107,6 +107,7 @@ contract AssetToken is ERC223Interface, ERC20Interface {
         return _isActive;
     }
 
+    // solhint-disable-next-line no-simple-event-func-name
     function fund(address member, uint256 value) public onlyOwner checkActive noOwnerAsCounterparty(member) {
         _balances[member] = _balances[member].add(value);
         totalSupply = totalSupply.add(value);
@@ -114,6 +115,7 @@ contract AssetToken is ERC223Interface, ERC20Interface {
         emit Fund(member, value, _balances[member]);
     }
 
+    // solhint-disable-next-line no-simple-event-func-name
     function defund(uint256 value) public checkActive noOwnerAsCounterparty(msg.sender) {
         if (balanceOf(msg.sender) < value) revert("You must have sufficent balance to perform this operation");
 

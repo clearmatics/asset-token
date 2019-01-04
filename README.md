@@ -38,7 +38,7 @@ npm install
 ./run_private_accounts_ganache.sh
 ```
 
-This will deploy Asset Token and fund accounts used on Wallet project
+This will deploy Asset Token and fund accounts
 
 [1]: https://github.com/ethereum/EIPs/issues/223
 [2]: http://truffleframework.com/

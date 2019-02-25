@@ -30,7 +30,7 @@ contract('AssetTokenTransfer', (accounts) => {
         const balanceRecipientFund = await CONTRACT.balanceOf.call(addrRecipient);
 
         const transferVal = 50;
-        const transferRes = await CONTRACT.transfer(addrRecipient, transferVal, { from: addrSender });
+        const transferRes = await CONTRACT.transferNoData(addrRecipient, transferVal, { from: addrSender });
 
         const totalSupplyAfterTransfer = await CONTRACT.totalSupply.call();
         const balanceSenderAfterTransfer = await CONTRACT.balanceOf.call(addrSender);
@@ -73,7 +73,7 @@ contract('AssetTokenTransfer', (accounts) => {
         let actualError = null;
         try {
             const transferVal = balanceSenderFund.toNumber() + 50;
-            const transferRes = await CONTRACT.transfer(addrRecipient, transferVal, { from: addrSender });
+            const transferRes = await CONTRACT.transferNoData(addrRecipient, transferVal, { from: addrSender });
         } catch (error) {
             actualError = error;
         }
@@ -104,7 +104,7 @@ contract('AssetTokenTransfer', (accounts) => {
         let actualError = null;
         try {
             const transferVal = 50;
-            const transferRes = await CONTRACT.transfer(addrRecipient, transferVal, { from: addrSender });
+            const transferRes = await CONTRACT.transferNoData(addrRecipient, transferVal, { from: addrSender });
         } catch (error) {
             actualError = error;
         }
@@ -136,7 +136,7 @@ contract('AssetTokenTransfer', (accounts) => {
         let actualError = null;
         try {
             const transferVal = 50;
-            const transferRes = await CONTRACT.transfer(addrRecipient, transferVal, { from: addrSender });
+            const transferRes = await CONTRACT.transferNoData(addrRecipient, transferVal, { from: addrSender });
         } catch (error) {
             actualError = error;
         }
@@ -177,7 +177,7 @@ contract('AssetTokenTransfer', (accounts) => {
 	const mockReceivingEvents = mockReceivingContract.allEvents();
 
         const transferVal = 50;
-        const transferRes = await CONTRACT.transfer(addrRecipient, transferVal, { from: addrSender });
+        const transferRes = await CONTRACT.transferNoData(addrRecipient, transferVal, { from: addrSender });
 
         const totalSupplyAfterTransfer = await CONTRACT.totalSupply.call();
         const balanceSenderAfterTransfer = await CONTRACT.balanceOf.call(addrSender);
@@ -237,7 +237,7 @@ contract('AssetTokenTransfer', (accounts) => {
         const transferVal = fundVal + 50;
         let actualError = null;
         try {
-            const transferRes = await CONTRACT.transfer(addrRecipient, transferVal, { from: addrSender });
+            const transferRes = await CONTRACT.transferNoData(addrRecipient, transferVal, { from: addrSender });
         } catch (error) {
             actualError = error;
         }
@@ -277,7 +277,7 @@ contract('AssetTokenTransfer', (accounts) => {
         const transferVal = 50;
         let actualError = null;
         try {
-            const transferRes = await CONTRACT.transfer(addrRecipient, transferVal, { from: addrSender });
+            const transferRes = await CONTRACT.transferNoData(addrRecipient, transferVal, { from: addrSender });
         } catch (error) {
             actualError = error;
         }

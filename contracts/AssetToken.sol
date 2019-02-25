@@ -238,4 +238,18 @@ contract AssetToken is ERC223Interface, ERC20Interface {
 
         return true;
     }
+
+    // These function wrap the overloaded transfer functions, so when we generate a Go wrapper (which does not 
+    // support function overloading) we can call the correct version
+    function transferWithDataAndFallback(address _to, uint _value, bytes _data, string _customFallback) public {
+        transfer(_to, _value, _data, _customFallback);
+    }
+
+    function transferWithData(address _to, uint _value, bytes _data) public {
+        transfer(_to, _value, _data);
+    }
+
+    function transferNoData(address _to, uint _value) public {
+        transfer(_to, _value);
+    }
 }

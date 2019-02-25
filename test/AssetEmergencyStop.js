@@ -87,7 +87,7 @@ contract('AssetEmergencyStop', (accounts) => {
         let actualError = null;
         try {
             const transferVal = 50;
-            const transferRes = await CONTRACT.transfer(addrRecipient, transferVal, { from: addrSender });
+            const transferRes = await CONTRACT.transferNoData(addrRecipient, transferVal, { from: addrSender });
         } catch (error) {
             actualError = error;
         }
@@ -131,7 +131,7 @@ contract('AssetEmergencyStop', (accounts) => {
 
         let actualError = null;
         try {
-            const transferRes = await CONTRACT.transfer(addrRecipient, transferVal, { from: addrSender });
+            const transferRes = await CONTRACT.transferNoData(addrRecipient, transferVal, { from: addrSender });
         } catch (error) {
             actualError = error;
         }
@@ -168,7 +168,7 @@ contract('AssetEmergencyStop', (accounts) => {
 
         actualError = null;
         try {
-            const transferRes = await CONTRACT.transfer(addrRecipient, transferVal, { from: addrSender });
+            const transferRes = await CONTRACT.transferNoData(addrRecipient, transferVal, { from: addrSender });
         } catch (error) {
             actualError = error;
         }

@@ -1,6 +1,6 @@
 # Asset Token
 
-[![Build Status](https://travis-ci.com/clearmatics/asset-token.svg?token=ybN3xFwE4whSpdqtVYux&branch=master)](https://travis-ci.com/clearmatics/asset-token)
+[![Build Status](https://travis-ci.org/clearmatics/asset-token.svg?branch=master)](https://travis-ci.org/clearmatics/asset-token)
 
 Designed to represent a fungible asset with offchain interaction as an [ERC223][1] token.
 
@@ -21,15 +21,15 @@ This will install all the required packages.
 Start `ganache` in a separate terminal tab or window.
 
     yarn ganache
-    
+
     # in separate window or tab
     yarn test
 
-This will compile the contract, deploy to the testrpc instance and run the tests. 
+This will compile the contract, deploy to the testrpc instance and run the tests.
 
     yarn coverage
 
-this will produce a test coverage report 
+this will produce a test coverage report
 
 ## Deploy Asset Token (ready to use with wallet)
 
@@ -46,6 +46,3 @@ This will deploy Asset Token and fund accounts
 [4]: https://yarnpkg.com/en/docs/install
 [5]: https://docs.npmjs.com/getting-started/installing-node
 [6]: https://www.npmjs.com/package/solidity-coverage
-
-
-

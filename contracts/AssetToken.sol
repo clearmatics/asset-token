@@ -2,7 +2,7 @@
 
 // SPDX-License-Identifier: LGPL-3.0+
 
-pragma solidity 0.4.24;
+pragma solidity 0.5.0;
 
 import "./SafeMath.sol";
 import "./ERC20Interface.sol";
@@ -13,10 +13,10 @@ import "./ERC223ReceivingContract.sol";
 contract AssetToken is ERC223Interface, ERC20Interface {
     using SafeMath for uint;
 
-    string public name;
-    string public symbol;
-    uint8 public decimals;
-    uint256 public totalSupply;
+    string public _name;
+    string public _symbol;
+    uint8 public _decimals;
+    uint256 public _totalSupply;
 
     address private _owner;
     bool private _isActive;
@@ -27,16 +27,16 @@ contract AssetToken is ERC223Interface, ERC20Interface {
     event Defund(address indexed member, uint256 value, uint256 balance);
     event Switch(bool balance);
 
-    constructor(string _symbol, string _name) public {
-        symbol = _symbol;
-        name = _name;
+    constructor(string memory symbol, string memory name) public {
+        _symbol = symbol;
+        _name = name;
         _owner = msg.sender;
         _isActive = true;
-        totalSupply = 0;
-        decimals = 3;
+        _totalSupply = 0;
+        _decimals = 3;
     }
 
-    function () public payable {
+    function () external payable {
         revert("This contract does not support ETH");
     }
 
@@ -66,20 +66,20 @@ contract AssetToken is ERC223Interface, ERC20Interface {
         return _allowed[owner][spender];
     }
 
-    function name() public view returns (string) {
-        return name;
+    function name() public view returns (string memory) {
+        return _name;
     }
 
-    function symbol() public view returns (string) {
-        return symbol;
+    function symbol() public view returns (string memory) {
+        return _symbol;
     }
 
     function decimals() public view returns (uint8) {
-        return decimals;
+        return _decimals;
     }
 
     function totalSupply() public view returns (uint256) {
-        return totalSupply;
+        return _totalSupply;
     }
 
     function balanceOf(address owner) public view returns (uint balance) {
@@ -110,7 +110,7 @@ contract AssetToken is ERC223Interface, ERC20Interface {
     // solhint-disable-next-line no-simple-event-func-name
     function fund(address member, uint256 value) public onlyOwner checkActive noOwnerAsCounterparty(member) {
         _balances[member] = _balances[member].add(value);
-        totalSupply = totalSupply.add(value);
+        _totalSupply = _totalSupply.add(value);
 
         emit Fund(member, value, _balances[member]);
     }
@@ -120,7 +120,7 @@ contract AssetToken is ERC223Interface, ERC20Interface {
         if (balanceOf(msg.sender) < value) revert("You must have sufficent balance to perform this operation");
 
         _balances[msg.sender] = _balances[msg.sender].sub(value);
-        totalSupply = totalSupply.sub(value);
+        _totalSupply = _totalSupply.sub(value);
 
         emit Defund(msg.sender, value, _balances[msg.sender]);
     }
@@ -175,7 +175,7 @@ contract AssetToken is ERC223Interface, ERC20Interface {
         }
     }
 
-    function transfer(address to, uint value, bytes data)
+    function transfer(address to, uint value, bytes memory data)
     public checkActive noOwnerAsCounterparty(to) noOwnerAsCounterparty(msg.sender)
     returns (bool) {
         if (isContract(to)) {
@@ -185,7 +185,7 @@ contract AssetToken is ERC223Interface, ERC20Interface {
         }
     }
 
-    function transfer(address to, uint value, bytes data, string customFallback)
+    function transfer(address to, uint value, bytes memory data, string memory customFallback)
     public checkActive noOwnerAsCounterparty(to) noOwnerAsCounterparty(msg.sender)
     returns (bool) {
         if (isContract(to)) {
@@ -193,8 +193,10 @@ contract AssetToken is ERC223Interface, ERC20Interface {
 
             _balances[msg.sender] = _balances[msg.sender].sub(value);
             _balances[to] = _balances[to].add(value);
-            // solhint-disable-next-line avoid-call-value
-            assert(to.call.value(0)(bytes4(keccak256(bytes(customFallback))), msg.sender, value, data));
+
+            bool success; bytes memory result;
+            (success, result) = to.call.value(0)(abi.encodeWithSignature(customFallback, msg.sender, value, data));
+            assert(success);
 
             emit Transfer(msg.sender, to, value, data);
 
@@ -206,11 +208,11 @@ contract AssetToken is ERC223Interface, ERC20Interface {
 
     // These function wrap the overloaded transfer functions, so when we generate a Go wrapper (which does not 
     // support function overloading) we can call the correct version
-    function transferWithDataAndFallback(address _to, uint _value, bytes _data, string _customFallback) public {
+    function transferWithDataAndFallback(address _to, uint _value, bytes memory _data, string memory _customFallback) public {
         transfer(_to, _value, _data, _customFallback);
     }
 
-    function transferWithData(address _to, uint _value, bytes _data) public {
+    function transferWithData(address _to, uint _value, bytes memory _data) public {
         transfer(_to, _value, _data);
     }
 
@@ -229,7 +231,7 @@ contract AssetToken is ERC223Interface, ERC20Interface {
         return (length > 0);
     }
 
-    function transferToAddress(address to, uint value, bytes data) private checkActive returns (bool) {
+    function transferToAddress(address to, uint value, bytes memory data) private checkActive returns (bool) {
         if (balanceOf(msg.sender) < value) revert("You must have sufficent balance to perform this operation");
 
         _balances[msg.sender] = _balances[msg.sender].sub(value);
@@ -240,7 +242,7 @@ contract AssetToken is ERC223Interface, ERC20Interface {
         return true;
     }
 
-    function transferToContract(address to, uint value, bytes data) private checkActive returns (bool) {
+    function transferToContract(address to, uint value, bytes memory data) private checkActive returns (bool) {
         if (balanceOf(msg.sender) < value) revert("You must have sufficent balance to perform this operation");
 
         _balances[msg.sender] = _balances[msg.sender].sub(value);

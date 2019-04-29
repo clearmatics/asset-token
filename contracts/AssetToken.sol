@@ -194,7 +194,9 @@ contract AssetToken is ERC223Interface, ERC20Interface {
             _balances[msg.sender] = _balances[msg.sender].sub(value);
             _balances[to] = _balances[to].add(value);
 
-            bool success; bytes memory result;
+            bool success; 
+            bytes memory result;
+            // solhint-disable-next-line avoid-call-value
             (success, result) = to.call.value(0)(abi.encodeWithSignature(customFallback, msg.sender, value, data));
             assert(success);
 
@@ -208,8 +210,8 @@ contract AssetToken is ERC223Interface, ERC20Interface {
 
     // These function wrap the overloaded transfer functions, so when we generate a Go wrapper (which does not 
     // support function overloading) we can call the correct version
-    function transferWithDataAndFallback(address _to, uint _value, bytes memory _data, string memory _customFallback) public {
-        transfer(_to, _value, _data, _customFallback);
+    function transferWithDataAndFallback(address to, uint value, bytes memory data, string memory fallback) public {
+        transfer(to, value, data, fallback);
     }
 
     function transferWithData(address _to, uint _value, bytes memory _data) public {

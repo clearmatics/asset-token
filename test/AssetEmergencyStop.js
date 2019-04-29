@@ -21,7 +21,7 @@ contract('AssetEmergencyStop', (accounts) => {
         await CONTRACT.emergencyStop({from: addrOwner});
         const status = await CONTRACT.getTradingStatus({ from: addrOwner });
         tradeStatus = status.receipt.logs
-        assert.equal(tradeStatus[0].data, 0);
+        assert.equal(tradeStatus[0].args.balance, false);
 
         let actualError = null;
         try {
@@ -36,7 +36,7 @@ contract('AssetEmergencyStop', (accounts) => {
 
         assert.strictEqual(totalSupplyBefore.toNumber(), totalSupplyAfter.toNumber());
         assert.strictEqual(balanceRecipientBefore.toNumber(), balanceRecipientAfter.toNumber());
-        assert.strictEqual(actualError.toString(),"Error: VM Exception while processing transaction: revert");
+        assert.strictEqual(actualError.toString(),"Error: Returned error: VM Exception while processing transaction: revert -- Reason given: Contract emergency stop is activated.");
     });
 
     it('Emergency Switch: Attempt to Defund when trading is deactivated', async () => {
@@ -46,7 +46,7 @@ contract('AssetEmergencyStop', (accounts) => {
         await CONTRACT.emergencyStop({ from: addrOwner });
         const status = await CONTRACT.getTradingStatus({ from: addrOwner });
         const tradeStatus = status.receipt.logs
-        assert.equal(tradeStatus[0].data, 0);
+        assert.equal(tradeStatus[0].args.balance, false);
 
         let actualError = null;
         try {
@@ -61,7 +61,7 @@ contract('AssetEmergencyStop', (accounts) => {
 
         assert.strictEqual(totalSupplyBefore.toNumber(), totalSupplyDefunded.toNumber());
         assert.strictEqual(balanceRecipientBefore.toNumber(), balanceRecipientDefunded.toNumber());
-        assert.strictEqual(actualError.toString(),"Error: VM Exception while processing transaction: revert");
+        assert.strictEqual(actualError.toString(),"Error: Returned error: VM Exception while processing transaction: revert -- Reason given: Contract emergency stop is activated.");
     });
 
     it('Emergency Switch: Attempt to transfer when trading is deactivated', async () => {
@@ -82,7 +82,7 @@ contract('AssetEmergencyStop', (accounts) => {
         await CONTRACT.emergencyStop({ from: addrOwner });
         const status = await CONTRACT.getTradingStatus({ from: addrOwner });
         tradeStatus = status.receipt.logs
-        assert.equal(tradeStatus[0].data, 0);
+        assert.equal(tradeStatus[0].args.balance, false);
 
         let actualError = null;
         try {
@@ -104,7 +104,7 @@ contract('AssetEmergencyStop', (accounts) => {
         assert.strictEqual(balanceSenderFund.toNumber(), balanceSenderAfterTransfer.toNumber());
         assert.strictEqual(balanceRecipientFund.toNumber(), balanceRecipientAfterTransfer.toNumber());
 
-        assert.strictEqual(actualError.toString(),"Error: VM Exception while processing transaction: revert");
+        assert.strictEqual(actualError.toString(),"Error: Returned error: VM Exception while processing transaction: revert -- Reason given: Contract emergency stop is activated.");
 
     });
 
@@ -127,7 +127,7 @@ contract('AssetEmergencyStop', (accounts) => {
         await CONTRACT.emergencyStop({ from: addrOwner });
         const switchStatusbefore = await CONTRACT.getTradingStatus({ from: addrOwner });
         tradeStatusBefore = switchStatusbefore.receipt.logs
-        assert.equal(tradeStatusBefore[0].data, 0);
+        assert.equal(tradeStatus[0].args.balance, false);
 
         let actualError = null;
         try {
@@ -148,12 +148,12 @@ contract('AssetEmergencyStop', (accounts) => {
         assert.strictEqual(balanceSenderFund.toNumber(), balanceSenderAfterTransfer.toNumber());
         assert.strictEqual(balanceRecipientFund.toNumber(), balanceRecipientAfterTransfer.toNumber());
 
-        assert.strictEqual(actualError.toString(),"Error: VM Exception while processing transaction: revert");
+        assert.strictEqual(actualError.toString(),"Error: Returned error: VM Exception while processing transaction: revert -- Reason given: Contract emergency stop is activated.");
 
         await CONTRACT.emergencyStart({ from: addrOwner });
         const switchStatusAfter = await CONTRACT.getTradingStatus({ from: addrOwner });
         tradeStatusAfter = switchStatusAfter.receipt.logs
-        assert.notEqual(tradeStatusAfter[0].data, 0);
+        assert.equal(tradeStatus[0].args.balance, false);
 
         const totalSupplyAfter = await CONTRACT.totalSupply.call();
         const balanceSenderAfter = await CONTRACT.balanceOf.call(addrSender);

@@ -41,7 +41,7 @@ contract('AssetTokenDefund', (accounts) => {
 
         assert.strictEqual(totalSupplyFunded.toNumber(), totalSupplyDefunded.toNumber());
         assert.strictEqual(balanceRecipientFunded.toNumber() , balanceRecipientDefunded.toNumber());
-        assert.strictEqual(actualError.toString(),"Error: VM Exception while processing transaction: revert");
+        assert.strictEqual(actualError.toString(),"Error: Returned error: VM Exception while processing transaction: revert -- Reason given: You must have sufficent balance to perform this operation.");
     });
 
     it('defund: Defund an account', async () => {
@@ -100,6 +100,6 @@ contract('AssetTokenDefund', (accounts) => {
 
         assert.strictEqual(totalSupplyBefore.toNumber(), totalSupplyDefunded.toNumber());
         assert.strictEqual(balanceRecipientBefore.toNumber(), balanceRecipientDefunded.toNumber());
-        assert.strictEqual(actualError.toString(),"Error: VM Exception while processing transaction: revert");
+        assert.strictEqual(actualError.toString(),"Error: Returned error: VM Exception while processing transaction: revert -- Reason given: The contract owner can not perform this operation.");
     });
 });

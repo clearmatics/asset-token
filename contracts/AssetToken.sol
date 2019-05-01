@@ -4,7 +4,7 @@
 
 pragma solidity 0.5.0;
 
-import "./SafeMath.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./ERC20Interface.sol";
 import "./ERC223Interface.sol";
 import "./ERC223ReceivingContract.sol";

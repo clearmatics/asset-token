@@ -2,7 +2,7 @@
 
 // SPDX-License-Identifier: LGPL-3.0+
 
-pragma solidity 0.4.24;
+pragma solidity 0.5.0;
 
 import "./ERC223ReceivingContract.sol";
 
@@ -16,7 +16,7 @@ contract MockReceivingContract is ERC223ReceivingContract {
         emit Created();
     }
 
-    function tokenFallback(address from, uint value, bytes data) public {
+    function tokenFallback(address from, uint value, bytes calldata data) external {
         emit Called(from, value, data);
     }
 

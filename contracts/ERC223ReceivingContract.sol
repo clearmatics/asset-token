@@ -2,9 +2,9 @@
 
 // SPDX-License-Identifier: LGPL-3.0+
 
-pragma solidity 0.4.24;
+pragma solidity 0.5.0;
 
 
 contract ERC223ReceivingContract {
-    function tokenFallback(address from, uint value, bytes data) public;
+    function tokenFallback(address from, uint value, bytes calldata data) external;
 }

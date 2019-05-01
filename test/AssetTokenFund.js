@@ -54,7 +54,7 @@ contract('AssetTokenFund', (accounts) => {
 
         assert.strictEqual(totalSupplyBefore.toNumber(), totalSupplyAfter.toNumber());
         assert.strictEqual(balanceRecipientBefore.toNumber(), balanceRecipientAfter.toNumber());
-        assert.strictEqual(actualError.toString(),"Error: VM Exception while processing transaction: revert");
+        assert.strictEqual(actualError.toString(),"Error: Returned error: VM Exception while processing transaction: revert -- Reason given: Only the contract owner can perform this operation.");
     });
 
     it('fund: Attempt to Fund the contract owner', async () => {
@@ -74,6 +74,6 @@ contract('AssetTokenFund', (accounts) => {
 
         assert.strictEqual(totalSupplyBefore.toNumber(), totalSupplyAfter.toNumber());
         assert.strictEqual(balanceRecipientBefore.toNumber(), balanceRecipientAfter.toNumber());
-        assert.strictEqual(actualError.toString(),"Error: VM Exception while processing transaction: revert");
+        assert.strictEqual(actualError.toString(),"Error: Returned error: VM Exception while processing transaction: revert -- Reason given: The contract owner can not perform this operation.");
     });
 });

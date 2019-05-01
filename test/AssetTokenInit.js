@@ -34,15 +34,15 @@ contract('AssetTokenInit', (accounts) => {
     });
 
     it('default: Attempt to send Eth to the contract', async () => {
-        const weiToSend = web3.toWei(1,"ether");
+        const weiToSend = web3.utils.toWei("1","ether");
 
         let actualError = null;
         try {
-            const result = await CONTRACT.sendTransaction({from:web3.eth.coinbase,value:weiToSend});
+            const result = await CONTRACT.sendTransaction({value:weiToSend});
         } catch (error) {
             actualError = error;
         }
 
-        assert.strictEqual(actualError.toString(), "Error: VM Exception while processing transaction: revert");
+        assert.strictEqual(actualError.toString(), "Error: Returned error: VM Exception while processing transaction: revert -- Reason given: This contract does not support ETH.");
     });
 });

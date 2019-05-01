@@ -90,7 +90,7 @@ contract('AssetTokenTransfer', (accounts) => {
         assert.strictEqual(balanceSenderFund.toNumber(), balanceSenderAfterTransfer.toNumber());
         assert.strictEqual(balanceRecipientFund.toNumber(), balanceRecipientAfterTransfer.toNumber());
 
-        assert.strictEqual(actualError.toString(),"Error: VM Exception while processing transaction: revert");
+        assert.strictEqual(actualError.toString(),"Error: Returned error: VM Exception while processing transaction: revert -- Reason given: You must have sufficent balance to perform this operation.");
     });
 
     it('Contract Owner cannot be the sender in a transfer', async () => {
@@ -114,7 +114,7 @@ contract('AssetTokenTransfer', (accounts) => {
 
         assert.strictEqual(totalSupplyStart.toNumber(), totalSupplyAfterTransfer.toNumber());
         assert.strictEqual(balanceRecipientStart.toNumber(), balanceRecipientAfterTransfer.toNumber());
-        assert.strictEqual(actualError.toString(),"Error: VM Exception while processing transaction: revert");
+        assert.strictEqual(actualError.toString(),"Error: Returned error: VM Exception while processing transaction: revert -- Reason given: The contract owner can not perform this operation.");
 
     });
 
@@ -153,7 +153,7 @@ contract('AssetTokenTransfer', (accounts) => {
         assert.strictEqual(balanceSenderFund.toNumber(), balanceSenderAfterTransfer.toNumber());
         assert.strictEqual(balanceRecipientFund.toNumber(), balanceRecipientAfterTransfer.toNumber());
 
-        assert.strictEqual(actualError.toString(),"Error: VM Exception while processing transaction: revert");
+        assert.strictEqual(actualError.toString(),"Error: Returned error: VM Exception while processing transaction: revert -- Reason given: The contract owner can not perform this operation.");
 
     });
 
@@ -173,8 +173,6 @@ contract('AssetTokenTransfer', (accounts) => {
         const totalSupplyFund = await CONTRACT.totalSupply.call();
         const balanceSenderFund = await CONTRACT.balanceOf.call(addrSender);
         const balanceRecipientFund = await CONTRACT.balanceOf.call(addrRecipient);
-
-	const mockReceivingEvents = mockReceivingContract.allEvents();
 
         const transferVal = 50;
         const transferRes = await CONTRACT.transferNoData(addrRecipient, transferVal, { from: addrSender });
@@ -200,21 +198,12 @@ contract('AssetTokenTransfer', (accounts) => {
         assert.strictEqual(totalSupplyFund.toNumber(), totalSupplyAfterTransfer.toNumber());
         assert.strictEqual(balanceSenderFund.toNumber() - transferVal, balanceSenderAfterTransfer.toNumber());
         assert.strictEqual(balanceRecipientFund.toNumber() + transferVal, balanceRecipientAfterTransfer.toNumber());
-
-	mockReceivingEvents.watch((error, response) => {
-		assert.strictEqual(error, null);
-
-		const calledEventFrom = response.args.from;
-		const calledEventData = response.args.data;
-		const calledEventValue = response.args.value.toNumber();
-
-		assert(response.event == "Called");
-		assert.strictEqual(calledEventFrom, addrSender);
-		assert.strictEqual(calledEventData, '0x');
-		assert.strictEqual(calledEventValue, transferVal);
-	});
-
-	mockReceivingEvents.stopWatching();
+	
+	const logs = await mockReceivingContract.getPastEvents("Called", {fromBlock: 0, toBlock: "latest"});
+	assert.strictEqual(logs[0].event, "Called");
+	assert.strictEqual(logs[0].returnValues.from, addrSender);
+	assert.strictEqual(logs[0].returnValues.data, null);
+	assert.strictEqual(logs[0].returnValues.value, transferVal.toString());
     });
 
     it('Can not transfer more tokens than an account has balance from External Owned Account(EOA) to a contract', async () => {
@@ -254,7 +243,7 @@ contract('AssetTokenTransfer', (accounts) => {
         assert.strictEqual(balanceSenderFund.toNumber(), balanceSenderAfterTransfer.toNumber());
         assert.strictEqual(balanceRecipientFund.toNumber(), balanceRecipientAfterTransfer.toNumber());
 
-        assert.strictEqual(actualError.toString(),"Error: VM Exception while processing transaction: revert");
+        assert.strictEqual(actualError.toString(),"Error: Returned error: VM Exception while processing transaction: revert -- Reason given: You must have sufficent balance to perform this operation.");
     });
 
     it('Can not transfer tokens from External Owned Account(EOA) to a contract without a recieving function', async () => {
@@ -294,7 +283,7 @@ contract('AssetTokenTransfer', (accounts) => {
         assert.strictEqual(balanceSenderFund.toNumber(), balanceSenderAfterTransfer.toNumber());
         assert.strictEqual(balanceRecipientFund.toNumber(), balanceRecipientAfterTransfer.toNumber());
 
-        assert.strictEqual(actualError.toString(),"Error: VM Exception while processing transaction: revert");
+        assert.strictEqual(actualError.toString(),"Error: Returned error: VM Exception while processing transaction: revert");
     });
 
 });

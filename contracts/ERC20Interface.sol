@@ -10,6 +10,6 @@ interface ERC20Interface {
     function approve(address spender, uint256 value) external returns (bool);
     function allowance(address owner, address spender) external view returns (uint256);
 
-    event Transfer(address indexed from, address indexed to, uint value);
+    event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }

@@ -11,7 +11,7 @@ import "./ERC223ReceivingContract.sol";
 
 
 contract AssetToken is ERC223Interface, ERC20Interface {
-    using SafeMath for uint;
+    using SafeMath for uint256;
 
     string public _name;
     string public _symbol;
@@ -20,7 +20,7 @@ contract AssetToken is ERC223Interface, ERC20Interface {
 
     address private _owner;
     bool private _isActive;
-    mapping(address => uint) private _balances;
+    mapping(address => uint256) private _balances;
     mapping (address => mapping (address => uint256)) private _allowed;
 
     event Fund(address indexed member, uint256 value, uint256 balance);
@@ -82,7 +82,7 @@ contract AssetToken is ERC223Interface, ERC20Interface {
         return _totalSupply;
     }
 
-    function balanceOf(address owner) public view returns (uint balance) {
+    function balanceOf(address owner) public view returns (uint256 balance) {
         return _balances[owner];
     }
 
@@ -131,14 +131,14 @@ contract AssetToken is ERC223Interface, ERC20Interface {
         return true;
     }
 
-    function increaseApproval(address spender, uint addedValue) public checkActive returns (bool) {
+    function increaseApproval(address spender, uint256 addedValue) public checkActive returns (bool) {
         _allowed[msg.sender][spender] = _allowed[msg.sender][spender].add(addedValue);
         emit Approval(msg.sender, spender, _allowed[msg.sender][spender]);
         return true;
     }
 
-    function decreaseApproval(address spender, uint subtractedValue) public checkActive returns (bool) {
-        uint oldValue = _allowed[msg.sender][spender];
+    function decreaseApproval(address spender, uint256 subtractedValue) public checkActive returns (bool) {
+        uint256 oldValue = _allowed[msg.sender][spender];
         if (subtractedValue > oldValue) {
             _allowed[msg.sender][spender] = 0;
         } else {
@@ -162,7 +162,7 @@ contract AssetToken is ERC223Interface, ERC20Interface {
         return true;
     }
 
-    function transfer(address to, uint value)
+    function transfer(address to, uint256 value)
     public checkActive noOwnerAsCounterparty(to) noOwnerAsCounterparty(msg.sender)
     returns (bool) {
         //standard function transfer similar to ERC20 transfer with no _data
@@ -175,7 +175,7 @@ contract AssetToken is ERC223Interface, ERC20Interface {
         }
     }
 
-    function transfer(address to, uint value, bytes memory data)
+    function transfer(address to, uint256 value, bytes memory data)
     public checkActive noOwnerAsCounterparty(to) noOwnerAsCounterparty(msg.sender)
     returns (bool) {
         if (isContract(to)) {
@@ -185,7 +185,7 @@ contract AssetToken is ERC223Interface, ERC20Interface {
         }
     }
 
-    function transfer(address to, uint value, bytes memory data, string memory customFallback)
+    function transfer(address to, uint256 value, bytes memory data, string memory customFallback)
     public checkActive noOwnerAsCounterparty(to) noOwnerAsCounterparty(msg.sender)
     returns (bool) {
         if (isContract(to)) {
@@ -210,20 +210,20 @@ contract AssetToken is ERC223Interface, ERC20Interface {
 
     // These function wrap the overloaded transfer functions, so when we generate a Go wrapper (which does not 
     // support function overloading) we can call the correct version
-    function transferWithDataAndFallback(address to, uint value, bytes memory data, string memory fallback) public {
+    function transferWithDataAndFallback(address to, uint256 value, bytes memory data, string memory fallback) public {
         transfer(to, value, data, fallback);
     }
 
-    function transferWithData(address _to, uint _value, bytes memory _data) public {
+    function transferWithData(address _to, uint256 _value, bytes memory _data) public {
         transfer(_to, _value, _data);
     }
 
-    function transferNoData(address _to, uint _value) public {
+    function transferNoData(address _to, uint256 _value) public {
         transfer(_to, _value);
     }
 
     function isContract(address addr) private view returns (bool) {
-        uint length;
+        uint256 length;
 
         // solhint-disable-next-line no-inline-assembly
         assembly {
@@ -233,7 +233,7 @@ contract AssetToken is ERC223Interface, ERC20Interface {
         return (length > 0);
     }
 
-    function transferToAddress(address to, uint value, bytes memory data) private checkActive returns (bool) {
+    function transferToAddress(address to, uint256 value, bytes memory data) private checkActive returns (bool) {
         if (balanceOf(msg.sender) < value) revert("You must have sufficent balance to perform this operation");
 
         _balances[msg.sender] = _balances[msg.sender].sub(value);
@@ -244,7 +244,7 @@ contract AssetToken is ERC223Interface, ERC20Interface {
         return true;
     }
 
-    function transferToContract(address to, uint value, bytes memory data) private checkActive returns (bool) {
+    function transferToContract(address to, uint256 value, bytes memory data) private checkActive returns (bool) {
         if (balanceOf(msg.sender) < value) revert("You must have sufficent balance to perform this operation");
 
         _balances[msg.sender] = _balances[msg.sender].sub(value);

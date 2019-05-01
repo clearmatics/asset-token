@@ -10,12 +10,12 @@ contract ERC223Interface {
     function symbol() public view returns (string memory);
     function decimals() public view returns (uint8);
     function totalSupply() public view returns (uint256);
-    function balanceOf(address addr) public view returns (uint);
+    function balanceOf(address addr) public view returns (uint256);
 
-    function transfer(address to, uint value) public returns (bool);
-    function transfer(address to, uint value, bytes memory data) public returns (bool);
-    function transfer(address to, uint value, bytes memory data, string memory customFallback) public returns (bool);
+    function transfer(address to, uint256 value) public returns (bool);
+    function transfer(address to, uint256 value, bytes memory data) public returns (bool);
+    function transfer(address to, uint256 value, bytes memory data, string memory customFallback) public returns (bool);
 
     // solhint-disable-next-line no-simple-event-func-name
-    event Transfer(address from, address to, uint value, bytes data);
+    event Transfer(address from, address to, uint256 value, bytes data);
 }

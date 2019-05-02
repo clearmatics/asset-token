@@ -43,6 +43,6 @@ contract('AssetTokenInit', (accounts) => {
             actualError = error;
         }
 
-        assert.strictEqual(actualError.toString(), "Error: Returned error: VM Exception while processing transaction: revert -- Reason given: This contract does not support ETH.");
+        assert.strictEqual(actualError.toString(), "Error: Returned error: VM Exception while processing transaction: revert This contract does not support ETH -- Reason given: This contract does not support ETH.");
     });
 });

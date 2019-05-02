@@ -10,7 +10,7 @@ import "./ERC223Interface.sol";
 import "./ERC223ReceivingContract.sol";
 
 
-contract AssetToken is ERC223Interface, ERC20Interface {
+contract AssetToken is ERC223Interface, IERC20 {
     using SafeMath for uint256;
 
     string public _name;

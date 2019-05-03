@@ -4,19 +4,20 @@
     "main": "index.js",
     "license": "MIT",
     "dependencies": {
-        "ganache-cli": "^6.2.5",
+        "ganache-cli": "6.2.5",
         "openzeppelin-solidity": "2.3.0-rc.1",
         "solhint": "2.0.0",
-        "solidity-coverage": "0.5.12-beta.0",
+        "solidity-coverage": "0.6.0-beta.5",
         "truffle": "5.0.14",
-        "web3": "^1.0.0-beta.34"
+        "web3": "1.0.0-beta.53"
     },
     "scripts": {
         "compile": "truffle compile",
         "deploy": "truffle deploy --network ci",
         "test": "truffle test --network development",
-        "coverage": "solidity-coverage",
+        "coverage": "cp -fr node_modules/openzeppelin-solidity .; solidity-coverage",
         "ganache": "ganache-cli --port 7545 --gasLimit 0xFFFFFFFF",
         "lint": "solhint contracts/**/*.sol"
     }
 }
+

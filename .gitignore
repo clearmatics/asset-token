@@ -1,7 +1,13 @@
+# Build
 node_modules
 build
 yarn-error.log
+
+# Coverage
 coverage
+coverageEnv
 coverage.json
 
+# Workaround for build
+openzeppelin-solidity
 

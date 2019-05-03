@@ -2,16 +2,16 @@
 
 // SPDX-License-Identifier: LGPL-3.0+
 
-pragma solidity 0.5.0;
+pragma solidity ^0.5.0;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "./ERC20Interface.sol";
+import "../openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "./ERC223Interface.sol";
 import "./ERC223ReceivingContract.sol";
 
 
-contract AssetToken is ERC223Interface, ERC20Interface {
-    using SafeMath for uint;
+contract AssetToken is ERC223Interface, IERC20 {
+    using SafeMath for uint256;
 
     string public _name;
     string public _symbol;
@@ -20,7 +20,7 @@ contract AssetToken is ERC223Interface, ERC20Interface {
 
     address private _owner;
     bool private _isActive;
-    mapping(address => uint) private _balances;
+    mapping(address => uint256) private _balances;
     mapping (address => mapping (address => uint256)) private _allowed;
 
     event Fund(address indexed member, uint256 value, uint256 balance);
@@ -62,28 +62,28 @@ contract AssetToken is ERC223Interface, ERC20Interface {
         _;
     }
 
-    function allowance(address owner, address spender) public view returns (uint256) {
+    function allowance(address owner, address spender) external view returns (uint256) {
         return _allowed[owner][spender];
     }
 
-    function name() public view returns (string memory) {
+    function name() external view returns (string memory) {
         return _name;
     }
 
-    function symbol() public view returns (string memory) {
+    function symbol() external view returns (string memory) {
         return _symbol;
     }
 
-    function decimals() public view returns (uint8) {
+    function decimals() external view returns (uint8) {
         return _decimals;
     }
 
-    function totalSupply() public view returns (uint256) {
+    function totalSupply() external view returns (uint256) {
         return _totalSupply;
     }
 
-    function balanceOf(address owner) public view returns (uint balance) {
-        return _balances[owner];
+    function balanceOf(address who) external view returns (uint256) {
+        return _balances[who];
     }
 
     // @dev starts trading by switching _isActive to true
@@ -117,7 +117,7 @@ contract AssetToken is ERC223Interface, ERC20Interface {
 
     // solhint-disable-next-line no-simple-event-func-name
     function defund(uint256 value) public checkActive noOwnerAsCounterparty(msg.sender) {
-        if (balanceOf(msg.sender) < value) revert("You must have sufficent balance to perform this operation");
+        if (this.balanceOf(msg.sender) < value) revert("You must have sufficent balance to perform this operation");
 
         _balances[msg.sender] = _balances[msg.sender].sub(value);
         _totalSupply = _totalSupply.sub(value);
@@ -125,20 +125,20 @@ contract AssetToken is ERC223Interface, ERC20Interface {
         emit Defund(msg.sender, value, _balances[msg.sender]);
     }
 
-    function approve(address spender, uint256 value) public checkActive returns (bool) {
+    function approve(address spender, uint256 value) external checkActive returns (bool) {
         _allowed[msg.sender][spender] = value;
         emit Approval(msg.sender, spender, value);
         return true;
     }
 
-    function increaseApproval(address spender, uint addedValue) public checkActive returns (bool) {
+    function increaseApproval(address spender, uint256 addedValue) public checkActive returns (bool) {
         _allowed[msg.sender][spender] = _allowed[msg.sender][spender].add(addedValue);
         emit Approval(msg.sender, spender, _allowed[msg.sender][spender]);
         return true;
     }
 
-    function decreaseApproval(address spender, uint subtractedValue) public checkActive returns (bool) {
-        uint oldValue = _allowed[msg.sender][spender];
+    function decreaseApproval(address spender, uint256 subtractedValue) public checkActive returns (bool) {
+        uint256 oldValue = _allowed[msg.sender][spender];
         if (subtractedValue > oldValue) {
             _allowed[msg.sender][spender] = 0;
         } else {
@@ -149,7 +149,7 @@ contract AssetToken is ERC223Interface, ERC20Interface {
     }
 
     function transferFrom(address from, address to, uint256 value)
-    public checkActive noOwnerAsCounterparty(from) noOwnerAsCounterparty(to) noOwnerAsCounterparty(msg.sender)
+    external checkActive noOwnerAsCounterparty(from) noOwnerAsCounterparty(to) noOwnerAsCounterparty(msg.sender)
     returns (bool) {
         require(to != address(0));
         require(value <= _balances[from]);
@@ -162,8 +162,27 @@ contract AssetToken is ERC223Interface, ERC20Interface {
         return true;
     }
 
-    function transfer(address to, uint value)
-    public checkActive noOwnerAsCounterparty(to) noOwnerAsCounterparty(msg.sender)
+    function transfer(address to, uint256 value)
+    external checkActive noOwnerAsCounterparty(to) noOwnerAsCounterparty(msg.sender)
+    returns (bool) {
+        return transferImpl(to, value);
+    }
+
+    function transfer(address to, uint256 value, bytes calldata data)
+    external checkActive noOwnerAsCounterparty(to) noOwnerAsCounterparty(msg.sender)
+    returns (bool) {
+        return transferImpl(to, value, data);
+    }
+
+    function transfer(address to, uint256 value, bytes calldata data, string calldata customFallback)
+    external checkActive noOwnerAsCounterparty(to) noOwnerAsCounterparty(msg.sender)
+    returns (bool) {
+        return transferImpl(to, value, data, customFallback);
+    }
+
+
+    function transferImpl(address to, uint256 value)
+    private checkActive noOwnerAsCounterparty(to) noOwnerAsCounterparty(msg.sender)
     returns (bool) {
         //standard function transfer similar to ERC20 transfer with no _data
         //added due to backwards compatibility reasons
@@ -175,8 +194,8 @@ contract AssetToken is ERC223Interface, ERC20Interface {
         }
     }
 
-    function transfer(address to, uint value, bytes memory data)
-    public checkActive noOwnerAsCounterparty(to) noOwnerAsCounterparty(msg.sender)
+    function transferImpl(address to, uint256 value, bytes memory data)
+    private checkActive noOwnerAsCounterparty(to) noOwnerAsCounterparty(msg.sender)
     returns (bool) {
         if (isContract(to)) {
             return transferToContract(to, value, data);
@@ -185,11 +204,11 @@ contract AssetToken is ERC223Interface, ERC20Interface {
         }
     }
 
-    function transfer(address to, uint value, bytes memory data, string memory customFallback)
-    public checkActive noOwnerAsCounterparty(to) noOwnerAsCounterparty(msg.sender)
+    function transferImpl(address to, uint256 value, bytes memory data, string memory customFallback)
+    private checkActive noOwnerAsCounterparty(to) noOwnerAsCounterparty(msg.sender)
     returns (bool) {
         if (isContract(to)) {
-            if (balanceOf(msg.sender) < value) revert("You must have sufficent balance to perform this operation");
+            if (this.balanceOf(msg.sender) < value) revert("You must have sufficent balance to perform this operation");
 
             _balances[msg.sender] = _balances[msg.sender].sub(value);
             _balances[to] = _balances[to].add(value);
@@ -210,20 +229,20 @@ contract AssetToken is ERC223Interface, ERC20Interface {
 
     // These function wrap the overloaded transfer functions, so when we generate a Go wrapper (which does not 
     // support function overloading) we can call the correct version
-    function transferWithDataAndFallback(address to, uint value, bytes memory data, string memory fallback) public {
-        transfer(to, value, data, fallback);
+    function transferWithDataAndFallback(address to, uint256 value, bytes memory data, string memory fallback) public {
+        transferImpl(to, value, data, fallback);
     }
 
-    function transferWithData(address _to, uint _value, bytes memory _data) public {
-        transfer(_to, _value, _data);
+    function transferWithData(address _to, uint256 _value, bytes memory _data) public {
+        transferImpl(_to, _value, _data);
     }
 
-    function transferNoData(address _to, uint _value) public {
-        transfer(_to, _value);
+    function transferNoData(address _to, uint256 _value) public {
+        transferImpl(_to, _value);
     }
 
     function isContract(address addr) private view returns (bool) {
-        uint length;
+        uint256 length;
 
         // solhint-disable-next-line no-inline-assembly
         assembly {
@@ -233,8 +252,8 @@ contract AssetToken is ERC223Interface, ERC20Interface {
         return (length > 0);
     }
 
-    function transferToAddress(address to, uint value, bytes memory data) private checkActive returns (bool) {
-        if (balanceOf(msg.sender) < value) revert("You must have sufficent balance to perform this operation");
+    function transferToAddress(address to, uint256 value, bytes memory data) private checkActive returns (bool) {
+        if (this.balanceOf(msg.sender) < value) revert("You must have sufficent balance to perform this operation");
 
         _balances[msg.sender] = _balances[msg.sender].sub(value);
         _balances[to] = _balances[to].add(value);
@@ -244,8 +263,8 @@ contract AssetToken is ERC223Interface, ERC20Interface {
         return true;
     }
 
-    function transferToContract(address to, uint value, bytes memory data) private checkActive returns (bool) {
-        if (balanceOf(msg.sender) < value) revert("You must have sufficent balance to perform this operation");
+    function transferToContract(address to, uint256 value, bytes memory data) private checkActive returns (bool) {
+        if (this.balanceOf(msg.sender) < value) revert("You must have sufficent balance to perform this operation");
 
         _balances[msg.sender] = _balances[msg.sender].sub(value);
         _balances[to] = _balances[to].add(value);

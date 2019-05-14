@@ -66,9 +66,10 @@ contract AssetToken is ERC223Interface, IERC20 {
     }
 
     modifier onlyEmergencyAccount(address who){
-      if(who != _emergencyDelegated || who != _owner){
-        revert("This account is not allowed to do this");
-      }
+        if(who != _emergencyDelegated && who != _owner){
+            revert("This account is not allowed to do this");
+        }
+        _;
     }
 
     function allowance(address owner, address spender) external view returns (uint256) {
@@ -96,12 +97,12 @@ contract AssetToken is ERC223Interface, IERC20 {
     }
 
 
-    function setEmergencyPermission(address who) public onlyOwner{
+    function setEmergencyPermission(address who) public onlyOwner {
         if(_emergencyDelegated != who){
-          _emergencyDelegated = who;
+            _emergencyDelegated = who;
         } else {
-          //i'm revoking him the permission
-          _emergencyDelegated = address(0);
+            //i'm revoking him the permission
+            _emergencyDelegated = address(0);
         }
 
         emit EmergencyDelegation(_emergencyDelegated);
@@ -116,7 +117,7 @@ contract AssetToken is ERC223Interface, IERC20 {
     }
 
     // @dev stops trading by switching _isActive to false
-    function emergencyStop() public onlyEmergencyAccount {
+    function emergencyStop() public onlyEmergencyAccount(msg.sender) {
         if (_isActive == true) {
             _isActive = false;
         }

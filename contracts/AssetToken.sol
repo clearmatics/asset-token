@@ -19,6 +19,7 @@ contract AssetToken is ERC223Interface, IERC20 {
     uint256 public _totalSupply;
 
     address private _owner;
+    address private _emergencyDelegated;
     bool private _isActive;
     mapping(address => uint256) private _balances;
     mapping (address => mapping (address => uint256)) private _allowed;
@@ -26,6 +27,7 @@ contract AssetToken is ERC223Interface, IERC20 {
     event Fund(address indexed member, uint256 value, uint256 balance);
     event Defund(address indexed member, uint256 value, uint256 balance);
     event Switch(bool balance);
+    event EmergencyDelegation(address indexed member);
 
     constructor(string memory symbol, string memory name) public {
         _symbol = symbol;
@@ -34,6 +36,7 @@ contract AssetToken is ERC223Interface, IERC20 {
         _isActive = true;
         _totalSupply = 0;
         _decimals = 3;
+        _emergencyDelegated = address(0);
     }
 
     function () external payable {
@@ -62,6 +65,12 @@ contract AssetToken is ERC223Interface, IERC20 {
         _;
     }
 
+    modifier onlyEmergencyAccount(address who){
+      if(who != _emergencyDelegated || who != _owner){
+        revert("This account is not allowed to do this");
+      }
+    }
+
     function allowance(address owner, address spender) external view returns (uint256) {
         return _allowed[owner][spender];
     }
@@ -86,6 +95,18 @@ contract AssetToken is ERC223Interface, IERC20 {
         return _balances[who];
     }
 
+
+    function setEmergencyPermission(address who) public onlyOwner{
+        if(_emergencyDelegated != who){
+          _emergencyDelegated = who;
+        } else {
+          //i'm revoking him the permission
+          _emergencyDelegated = address(0);
+        }
+
+        emit EmergencyDelegation(_emergencyDelegated);
+    }
+
     // @dev starts trading by switching _isActive to true
     function emergencyStart() public onlyOwner {
         if (_isActive == false) {
@@ -95,7 +116,7 @@ contract AssetToken is ERC223Interface, IERC20 {
     }
 
     // @dev stops trading by switching _isActive to false
-    function emergencyStop() public onlyOwner {
+    function emergencyStop() public onlyEmergencyAccount {
         if (_isActive == true) {
             _isActive = false;
         }
@@ -213,7 +234,7 @@ contract AssetToken is ERC223Interface, IERC20 {
             _balances[msg.sender] = _balances[msg.sender].sub(value);
             _balances[to] = _balances[to].add(value);
 
-            bool success; 
+            bool success;
             bytes memory result;
             // solhint-disable-next-line avoid-call-value
             (success, result) = to.call.value(0)(abi.encodeWithSignature(customFallback, msg.sender, value, data));
@@ -227,7 +248,7 @@ contract AssetToken is ERC223Interface, IERC20 {
         }
     }
 
-    // These function wrap the overloaded transfer functions, so when we generate a Go wrapper (which does not 
+    // These function wrap the overloaded transfer functions, so when we generate a Go wrapper (which does not
     // support function overloading) we can call the correct version
     function transferWithDataAndFallback(address to, uint256 value, bytes memory data, string memory fallback) public {
         transferImpl(to, value, data, fallback);

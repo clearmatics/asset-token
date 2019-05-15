@@ -19,7 +19,8 @@ contract AssetToken is ERC223Interface, IERC20 {
     uint256 public _totalSupply;
 
     address private _owner;
-    address private _emergencyDelegated;
+    address private _emergencyDelegate;
+    address private _fundingDelegate;
     bool private _isActive;
     mapping(address => uint256) private _balances;
     mapping (address => mapping (address => uint256)) private _allowed;
@@ -28,6 +29,7 @@ contract AssetToken is ERC223Interface, IERC20 {
     event Defund(address indexed member, uint256 value, uint256 balance);
     event Switch(bool balance);
     event EmergencyDelegation(address indexed member);
+    event FundingDelegation(address indexed member);
 
     constructor(string memory symbol, string memory name) public {
         _symbol = symbol;
@@ -36,7 +38,8 @@ contract AssetToken is ERC223Interface, IERC20 {
         _isActive = true;
         _totalSupply = 0;
         _decimals = 3;
-        _emergencyDelegated = address(0);
+        _emergencyDelegate = _owner;
+        _fundingDelegate = _owner;
     }
 
     function () external payable {
@@ -66,7 +69,14 @@ contract AssetToken is ERC223Interface, IERC20 {
     }
 
     modifier onlyEmergencyAccount(address who){
-        if(who != _emergencyDelegated && who != _owner){
+        if(who != _emergencyDelegate){
+            revert("This account is not allowed to do this");
+        }
+        _;
+    }
+
+    modifier onlyFundingAccount(address who){
+        if(who != _fundingDelegate){
             revert("This account is not allowed to do this");
         }
         _;
@@ -98,14 +108,23 @@ contract AssetToken is ERC223Interface, IERC20 {
 
 
     function setEmergencyPermission(address who) public onlyOwner {
-        if(_emergencyDelegated != who){
-            _emergencyDelegated = who;
-        } else {
-            //i'm revoking him the permission
-            _emergencyDelegated = address(0);
-        }
+        _emergencyDelegate = who;
+        emit EmergencyDelegation(_emergencyDelegate);
+    }
 
-        emit EmergencyDelegation(_emergencyDelegated);
+    function revokeEmergencyPermission() public onlyOwner {
+        _emergencyDelegate = _owner;
+        emit EmergencyDelegation(_emergencyDelegate);
+    }
+
+    function setFundingPermission(address who) public onlyOwner {
+        _fundingDelegate = who;
+        emit FundingDelegation(_fundingDelegate);
+    }
+
+    function revokeFundingPermission() public onlyOwner{
+        _fundingDelegate = _owner;
+        emit FundingDelegation(_fundingDelegate);
     }
 
     // @dev starts trading by switching _isActive to true
@@ -130,7 +149,8 @@ contract AssetToken is ERC223Interface, IERC20 {
     }
 
     // solhint-disable-next-line no-simple-event-func-name
-    function fund(address member, uint256 value) public onlyOwner checkActive noOwnerAsCounterparty(member) {
+    function fund(address member, uint256 value) public onlyFundingAccount(msg.sender) checkActive
+    noOwnerAsCounterparty(member) {
         _balances[member] = _balances[member].add(value);
         _totalSupply = _totalSupply.add(value);
 
@@ -209,7 +229,7 @@ contract AssetToken is ERC223Interface, IERC20 {
         //standard function transfer similar to ERC20 transfer with no _data
         //added due to backwards compatibility reasons
         bytes memory empty;
-        if (isContract(to)) {
+        if (isContract(to)){
             return transferToContract(to, value, empty);
         } else {
             return transferToAddress(to, value, empty);

@@ -190,11 +190,11 @@ contract('AssetEmergencyStop', (accounts) => {
     });
 
     it("Emergency Stop Delegation: Delegated account is able to stop an operation", async () => {
-      const delegated = accounts[3];
+      const delegate = accounts[3];
 
-      await CONTRACT.setEmergencyPermission(delegated, {from: addrOwner});
+      await CONTRACT.setEmergencyPermission(delegate, {from: addrOwner});
 
-      await CONTRACT.emergencyStop({ from: delegated });
+      await CONTRACT.emergencyStop({ from: delegate });
       const status = await CONTRACT.getTradingStatus({ from: addrOwner });
       tradeStatus = status.receipt.logs
       assert.equal(tradeStatus[0].args.balance, false);
@@ -202,17 +202,35 @@ contract('AssetEmergencyStop', (accounts) => {
     })
 
     it("Emergency Stop Delegation: Permission is correctly revoked", async () => {
-      const delegated = accounts[3];
-
-      await CONTRACT.setEmergencyPermission(delegated, {from: addrOwner});
-      //the second time will revoke his permission
-      await CONTRACT.setEmergencyPermission(delegated, {from: addrOwner});
+      const delegate = accounts[3];
+      let error = null;
+      await CONTRACT.setEmergencyPermission(delegate, {from: addrOwner});
+      await CONTRACT.revokeEmergencyPermission({from: addrOwner});
 
       try{
-          await CONTRACT.emergencyStop({ from: delegated });
-      } catch (error) {
-        assert.strictEqual(error.toString(),"Error: Returned error: VM Exception while processing transaction: revert This account is not allowed to do this -- Reason given: This account is not allowed to do this.");
+          await CONTRACT.emergencyStop({ from: delegate });
+      } catch (err) {
+          error = err;
       }
+
+      assert.strictEqual(error.toString(),"Error: Returned error: VM Exception while processing transaction: revert This account is not allowed to do this -- Reason given: This account is not allowed to do this.");
+
+
+    })
+
+    it("Emergency Stop Delegation: Owner is not able to stop once has delegated", async () => {
+      const delegate = accounts[3];
+      let error = null;
+      await CONTRACT.setEmergencyPermission(delegate, {from: addrOwner});
+
+      try{
+          await CONTRACT.emergencyStop({ from: addrOwner });
+      } catch (err) {
+          error = err;
+      }
+
+      assert.strictEqual(error.toString(),"Error: Returned error: VM Exception while processing transaction: revert This account is not allowed to do this -- Reason given: This account is not allowed to do this.");
+
 
     })
 

@@ -10,8 +10,11 @@ coverageEnv
 coverage.json
 
 # Workaround for build
-openzeppelin-solidity
 openzeppelin-eth
 
-
+.eslintignore
 .zos.session
+
+
+#zeppelin os network session params
+zos.dev-*

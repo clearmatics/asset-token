@@ -2,7 +2,7 @@
 node_modules
 build
 yarn-error.log
-npm-debug.log 
+npm-debug.log
 
 # Coverage
 coverage
@@ -11,4 +11,7 @@ coverage.json
 
 # Workaround for build
 openzeppelin-solidity
+openzeppelin-eth
 
+
+.zos.session

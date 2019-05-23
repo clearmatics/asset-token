@@ -2017,6 +2017,11 @@ onetime@^2.0.0:
   dependencies:
     mimic-fn "^1.0.0"
 
+openzeppelin-eth@^2.1.3:
+  version "2.1.3"
+  resolved "https://registry.yarnpkg.com/openzeppelin-eth/-/openzeppelin-eth-2.1.3.tgz#d9a4d7830ca8e4c3bc44164179a661112655e8b2"
+  integrity sha512-k1Yv3V7u369ERXV0xf+ru3TH+ZopFYY0E1M+4O32Q+0b4XLm2acVBaUvbuuqYMkUjKhSfu8HuPpXL7OWMEJWRw==
+
 openzeppelin-solidity@2.3.0-rc.1:
   version "2.3.0-rc.1"
   resolved "https://registry.yarnpkg.com/openzeppelin-solidity/-/openzeppelin-solidity-2.3.0-rc.1.tgz#c8f0afc4cb328adc91eb048569f5a6b6e07ffb0a"

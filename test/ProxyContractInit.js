@@ -10,23 +10,30 @@ ZWeb3.initialize(web3.currentProvider);
 const UpgradeableAssetToken = Contracts.getFromLocal("UpgradeableAssetToken"); //need to build first
 
 let PROXY, PROJECT;
+let proxyAdminAddress;
 
-contract("Proxy token init", accounts => {
+contract("Proxy to upgradable token", accounts => {
   const owner = accounts[0];
+
   beforeEach(async () => {
+    //contains all zos structure - implementations, dependencies and proxyAdmin contracts
     PROJECT = await TestHelper({ from: owner });
 
+    //contains logic implementation contract
     PROXY = await PROJECT.createProxy(UpgradeableAssetToken, {
       initMethod: "initialize",
       initArgs: ["CLR", "Asset Token"]
     });
+
+    proxyAdminAddress = await PROJECT.proxyAdmin.address;
   });
 
-  it("correctly proxies to implementation contract", async () => {
+  it("proxies to implementation contract", async () => {
     const name = await PROXY.methods.name().call();
     const symbol = await PROXY.methods.symbol().call();
     const decimal = await PROXY.methods.decimals().call();
     const value = web3.utils.toWei("1", "ether");
+    const logicAddress = PROJECT.implementations.UpgradeableAssetToken.address;
 
     let errMsg;
     try {
@@ -46,17 +53,10 @@ contract("Proxy token init", accounts => {
     assert.equal(name, "Asset Token");
     assert.equal(decimal, 3);
     assert.equal(symbol, "CLR");
+    assert.notEqual(PROXY.address, logicAddress);
   });
 
-  // TODO:
-  /*
-  it("Sets specified account as proxy admin", async () => {
-    console.log(await PROJECT.getAdminAddress());
-    await PROJECT.changeProxyAdmin(PROXY.address.toString(), owner.toString());
-    console.log(await PROJECT.getAdminAddress());
-  });*/
-
-  it("create two different proxies", async () => {
+  it("creates distinct proxies to same logic", async () => {
     const secondProxy = await PROJECT.createProxy(UpgradeableAssetToken, {
       initMethod: "initialize",
       initArgs: ["CLR", "Asset Token"]
@@ -67,16 +67,4 @@ contract("Proxy token init", accounts => {
     assert.equal(name, "Asset Token");
     assert.notEqual(PROXY.address, secondProxy.address);
   });
-
-  //TODO
-  /*
-  it("Updates implementation contract", async () => {
-    const oldAddress = await PROXY.address;
-
-    console.log(await PROJECT.upgradeProxy(PROXY, UpdatedToken));
-
-    const newAddress = await PROXY.address;
-
-    assert.notEqual(oldAddress, newAddress);
-  }); */
 });

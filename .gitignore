@@ -13,8 +13,7 @@ coverage.json
 openzeppelin-eth
 
 .eslintignore
+
+# ZeppelinOS
+zos.dev-*.json
 .zos.session
-
-
-#zeppelin os network session params
-zos.dev-*

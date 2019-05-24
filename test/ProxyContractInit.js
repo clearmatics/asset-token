@@ -13,22 +13,20 @@ let PROXY, PROJECT;
 let proxyAdminAddress;
 
 contract("Proxy to upgradable token", accounts => {
-  const owner = accounts[0];
+  const owner = accounts[1];
 
   beforeEach(async () => {
     //contains all zos structure - implementations, dependencies and proxyAdmin contracts
     PROJECT = await TestHelper({ from: owner });
 
-    //contains logic implementation contract
+    //contains logic contract
     PROXY = await PROJECT.createProxy(UpgradeableAssetToken, {
       initMethod: "initialize",
       initArgs: ["CLR", "Asset Token"]
     });
-
-    proxyAdminAddress = await PROJECT.proxyAdmin.address;
   });
 
-  it("proxies to implementation contract", async () => {
+  it("Proxies to implementation contract", async () => {
     const name = await PROXY.methods.name().call();
     const symbol = await PROXY.methods.symbol().call();
     const decimal = await PROXY.methods.decimals().call();
@@ -56,7 +54,7 @@ contract("Proxy to upgradable token", accounts => {
     assert.notEqual(PROXY.address, logicAddress);
   });
 
-  it("creates distinct proxies to same logic", async () => {
+  it("Creates distinct proxies to same logic", async () => {
     const secondProxy = await PROJECT.createProxy(UpgradeableAssetToken, {
       initMethod: "initialize",
       initArgs: ["CLR", "Asset Token"]

@@ -10,7 +10,9 @@
     "solhint": "2.0.0",
     "solidity-coverage": "0.6.0-beta.5",
     "truffle": "5.0.14",
-    "web3": "1.0.0-beta.53"
+    "web3": "1.0.0-beta.53",
+    "zos": "3.5.2",
+    "zos-lib": "3.5.2"
   },
   "scripts": {
     "compile": "truffle compile",

@@ -2,104 +2,181 @@
 
 // SPDX-License-Identifier: LGPL-3.0+
 
-const AssetToken = artifacts.require('AssetToken');
+const { TestHelper } = require("zos"); //function to retrieve zos project structure object
+const { Contracts, ZWeb3 } = require("zos-lib"); //to retrieve compiled contract artifacts
+
+ZWeb3.initialize(web3.currentProvider);
+
+const UpgradeableAssetToken = Contracts.getFromLocal("UpgradeableAssetToken");
 
 let CONTRACT;
 
-contract('AssetTokenDefund', (accounts) => {
-    const addrOwner = accounts[0];
-    beforeEach(async () => {
-        CONTRACT = await AssetToken.new("CLR", "Asset Token", { from: addrOwner });
+contract("AssetTokenDefund", accounts => {
+  const addrOwner = accounts[0];
+  const proxyOwner = accounts[1];
+  beforeEach(async () => {
+    PROJECT = await TestHelper({ from: proxyOwner });
+
+    //contains logic contract
+    PROXY = await PROJECT.createProxy(UpgradeableAssetToken, {
+      initMethod: "initialize",
+      initArgs: ["CLR", "Asset Token", addrOwner]
     });
 
-    it('defund: Defund more tokens than in the account', async () => {
-        const addrRecipient = accounts[1];
+    CONTRACT = PROXY.methods;
+  });
 
-        const totalSupplyBefore = await CONTRACT.totalSupply.call();
-        const balanceRecipientBefore = await CONTRACT.balanceOf.call(addrRecipient);
+  it("defund: Defund more tokens than in the account", async () => {
+    const addrRecipient = accounts[2];
 
-        const fundVal = 100;
-        const fundRes = await CONTRACT.fund(addrRecipient, fundVal, { from: addrOwner });
+    const totalSupplyBefore = await CONTRACT.totalSupply().call();
+    const balanceRecipientBefore = await CONTRACT.balanceOf(
+      addrRecipient
+    ).call();
 
-        const totalSupplyFunded = await CONTRACT.totalSupply.call();
-        const balanceRecipientFunded = await CONTRACT.balanceOf.call(addrRecipient);
-
-
-        let actualError = null;
-        try {
-            const defundVal = balanceRecipientFunded.toNumber() + 50;
-            const defundRes = await CONTRACT.defund(defundVal, { from: addrRecipient });
-        } catch (error) {
-            actualError = error;
-        }
-
-        const totalSupplyDefunded = await CONTRACT.totalSupply.call();
-        const balanceRecipientDefunded = await CONTRACT.balanceOf.call(addrRecipient);
-
-        assert.strictEqual(totalSupplyBefore.toNumber() + fundVal, totalSupplyFunded.toNumber());
-        assert.strictEqual(balanceRecipientBefore.toNumber() + fundVal, balanceRecipientFunded.toNumber());
-
-        assert.strictEqual(totalSupplyFunded.toNumber(), totalSupplyDefunded.toNumber());
-        assert.strictEqual(balanceRecipientFunded.toNumber() , balanceRecipientDefunded.toNumber());
-        assert.strictEqual(actualError.toString(),"Error: Returned error: VM Exception while processing transaction: revert You must have sufficent balance to perform this operation -- Reason given: You must have sufficent balance to perform this operation.");
+    const fundVal = 100;
+    const fundRes = await CONTRACT.fund(addrRecipient, fundVal).send({
+      from: addrOwner
     });
 
-    it('defund: Defund an account', async () => {
-        const addrRecipient = accounts[1];
+    const totalSupplyFunded = await CONTRACT.totalSupply().call();
+    const balanceRecipientFunded = await CONTRACT.balanceOf(
+      addrRecipient
+    ).call();
 
-        const totalSupplyBefore = await CONTRACT.totalSupply.call();
-        const balanceRecipientBefore = await CONTRACT.balanceOf.call(addrRecipient);
+    let actualError = null;
+    try {
+      const defundVal = parseInt(balanceRecipientFunded) + 50;
+      const defundRes = await CONTRACT.defund(defundVal).send({
+        from: addrRecipient
+      });
+    } catch (error) {
+      actualError = error;
+    }
 
-        const fundVal = 100;
-        const fundRes = await CONTRACT.fund(addrRecipient, fundVal, { from: addrOwner });
+    const totalSupplyDefunded = await CONTRACT.totalSupply().call();
+    const balanceRecipientDefunded = await CONTRACT.balanceOf(
+      addrRecipient
+    ).call();
 
-        const fundEvent = fundRes.logs.filter((log) => log.event === 'Fund')[0]
-        const fundEventVal = fundEvent.args.value.toNumber()
-        const fundEventBalance = fundEvent.args.balance.toNumber()
+    assert.strictEqual(
+      parseInt(totalSupplyBefore) + fundVal,
+      parseInt(totalSupplyFunded)
+    );
+    assert.strictEqual(
+      parseInt(balanceRecipientBefore) + fundVal,
+      parseInt(balanceRecipientFunded)
+    );
 
-        const totalSupplyFunded = await CONTRACT.totalSupply.call();
-        const balanceRecipientFunded = await CONTRACT.balanceOf.call(addrRecipient);
+    assert.strictEqual(
+      parseInt(totalSupplyFunded),
+      parseInt(totalSupplyDefunded)
+    );
+    assert.strictEqual(
+      parseInt(balanceRecipientFunded),
+      parseInt(balanceRecipientDefunded)
+    );
+    assert.strictEqual(
+      actualError.toString(),
+      "Error: Returned error: VM Exception while processing transaction: revert You must have sufficent balance to perform this operation"
+    );
+  });
 
-        const defundVal = 50;
-        const defundRes = await CONTRACT.defund(defundVal, { from: addrRecipient });
+  it("defund: Defund an account", async () => {
+    const addrRecipient = accounts[2];
 
-        const defundEvent = defundRes.logs.filter((log) => log.event === 'Defund')[0]
-        const defundEventVal = defundEvent.args.value.toNumber()
-        const defundEventBalance = defundEvent.args.balance.toNumber()
+    const totalSupplyBefore = await CONTRACT.totalSupply().call();
+    const balanceRecipientBefore = await CONTRACT.balanceOf(
+      addrRecipient
+    ).call();
 
-        const totalSupplyDefunded = await CONTRACT.totalSupply.call();
-        const balanceRecipientDefunded = await CONTRACT.balanceOf.call(addrRecipient);
-
-        assert(fundEvent != null)
-        assert.strictEqual(fundVal, fundEventVal)
-        assert.strictEqual(balanceRecipientBefore.toNumber() + fundVal, fundEventBalance)
-        assert.strictEqual(totalSupplyBefore.toNumber() + fundVal, totalSupplyFunded.toNumber());
-        assert.strictEqual(balanceRecipientBefore.toNumber() + fundVal, balanceRecipientFunded.toNumber());
-
-        assert(defundEvent != null)
-        assert.strictEqual(defundVal, defundEventVal)
-        assert.strictEqual(balanceRecipientFunded.toNumber() - defundVal, defundEventBalance)
-        assert.strictEqual(totalSupplyFunded.toNumber() - defundVal, totalSupplyDefunded.toNumber());
-        assert.strictEqual(balanceRecipientFunded.toNumber() - defundVal, balanceRecipientDefunded.toNumber());
+    const fundVal = 100;
+    const fundRes = await CONTRACT.fund(addrRecipient, fundVal).send({
+      from: addrOwner
     });
 
-    it('defund: Attempt to Defund the contract owner', async () => {
-        const totalSupplyBefore = await CONTRACT.totalSupply.call();
-        const balanceRecipientBefore = await CONTRACT.balanceOf.call(addrOwner);
+    const fundEvent = fundRes.events.Fund;
+    const fundEventVal = parseInt(fundEvent.returnValues.value);
+    const fundEventBalance = parseInt(fundEvent.returnValues.balance);
 
-        let actualError = null;
-        try {
-            const defundVal = 50;
-            const defundRes = await CONTRACT.defund(defundVal, { from: addrOwner });
-        } catch (error) {
-            actualError = error;
-        }
+    const totalSupplyFunded = await CONTRACT.totalSupply().call();
+    const balanceRecipientFunded = await CONTRACT.balanceOf(
+      addrRecipient
+    ).call();
 
-        const totalSupplyDefunded = await CONTRACT.totalSupply.call();
-        const balanceRecipientDefunded = await CONTRACT.balanceOf.call(addrOwner);
-
-        assert.strictEqual(totalSupplyBefore.toNumber(), totalSupplyDefunded.toNumber());
-        assert.strictEqual(balanceRecipientBefore.toNumber(), balanceRecipientDefunded.toNumber());
-        assert.strictEqual(actualError.toString(),"Error: Returned error: VM Exception while processing transaction: revert The contract owner can not perform this operation -- Reason given: The contract owner can not perform this operation.");
+    const defundVal = 50;
+    const defundRes = await CONTRACT.defund(defundVal).send({
+      from: addrRecipient
     });
+
+    const defundEvent = defundRes.events.Defund;
+    const defundEventVal = parseInt(defundEvent.returnValues.value);
+    const defundEventBalance = parseInt(defundEvent.returnValues.balance);
+
+    const totalSupplyDefunded = await CONTRACT.totalSupply().call();
+    const balanceRecipientDefunded = await CONTRACT.balanceOf(
+      addrRecipient
+    ).call();
+
+    assert(fundEvent != null);
+    assert.strictEqual(fundVal, fundEventVal);
+    assert.strictEqual(
+      parseInt(balanceRecipientBefore) + fundVal,
+      parseInt(fundEventBalance)
+    );
+    assert.strictEqual(
+      parseInt(totalSupplyBefore) + fundVal,
+      parseInt(totalSupplyFunded)
+    );
+    assert.strictEqual(
+      parseInt(balanceRecipientBefore) + fundVal,
+      parseInt(balanceRecipientFunded)
+    );
+
+    assert(defundEvent != null);
+    assert.strictEqual(defundVal, defundEventVal);
+    assert.strictEqual(
+      parseInt(balanceRecipientFunded) - defundVal,
+      parseInt(defundEventBalance)
+    );
+    assert.strictEqual(
+      parseInt(totalSupplyFunded) - defundVal,
+      parseInt(totalSupplyDefunded)
+    );
+    assert.strictEqual(
+      parseInt(balanceRecipientFunded) - defundVal,
+      parseInt(balanceRecipientDefunded)
+    );
+  });
+
+  it("defund: Attempt to Defund the contract owner", async () => {
+    const totalSupplyBefore = await CONTRACT.totalSupply().call();
+    const balanceRecipientBefore = await CONTRACT.balanceOf(addrOwner).call();
+
+    let actualError = null;
+    try {
+      const defundVal = 50;
+      const defundRes = await CONTRACT.defund(defundVal).send({
+        from: addrOwner
+      });
+    } catch (error) {
+      actualError = error;
+    }
+
+    const totalSupplyDefunded = await CONTRACT.totalSupply().call();
+    const balanceRecipientDefunded = await CONTRACT.balanceOf(addrOwner).call();
+
+    assert.strictEqual(
+      parseInt(totalSupplyBefore),
+      parseInt(totalSupplyDefunded)
+    );
+    assert.strictEqual(
+      parseInt(balanceRecipientBefore),
+      parseInt(balanceRecipientDefunded)
+    );
+    assert.strictEqual(
+      actualError.toString(),
+      "Error: Returned error: VM Exception while processing transaction: revert The contract owner can not perform this operation"
+    );
+  });
 });

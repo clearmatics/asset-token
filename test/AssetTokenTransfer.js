@@ -1,289 +1,512 @@
 // Copyright (c) 2017-2018 Clearmatics Technologies Ltd
 
 // SPDX-License-Identifier: LGPL-3.0+
+const { TestHelper } = require("zos"); //function to retrieve zos project structure object
+const { Contracts, ZWeb3 } = require("zos-lib"); //to retrieve compiled contract artifacts
 
-const AssetToken = artifacts.require('AssetToken');
+ZWeb3.initialize(web3.currentProvider);
+
+const UpgradeableAssetToken = Contracts.getFromLocal("UpgradeableAssetToken");
 const MockReceivingContract = artifacts.require(`MockReceivingContract`);
 const NotAReceivingContract = artifacts.require(`NotAReceivingContract`);
 
 let CONTRACT;
 
-contract('AssetTokenTransfer', (accounts) => {
-    const addrOwner = accounts[0];
-    beforeEach(async () => {
-        CONTRACT = await AssetToken.new("CLR", "Asset Token", { from: addrOwner });
+contract("AssetTokenTransfer", accounts => {
+  const addrOwner = accounts[0];
+  const proxyOwner = accounts[1];
+  beforeEach(async () => {
+    PROJECT = await TestHelper({ from: proxyOwner });
+
+    //contains logic contract
+    PROXY = await PROJECT.createProxy(UpgradeableAssetToken, {
+      initMethod: "initialize",
+      initArgs: ["CLR", "Asset Token", addrOwner]
     });
 
-    it('Can transfer tokens from External Owned Account(EOA) to EOA', async () => {
-        const addrSender = accounts[1];
-        const addrRecipient = accounts[2];
+    CONTRACT = PROXY.methods;
+  });
 
-        const totalSupplyStart = await CONTRACT.totalSupply.call();
-        const balanceSenderStart = await CONTRACT.balanceOf.call(addrSender);
-        const balanceRecipientStart = await CONTRACT.balanceOf.call(addrRecipient);
+  it("Can transfer tokens from External Owned Account(EOA) to EOA", async () => {
+    const addrSender = accounts[2];
+    const addrRecipient = accounts[3];
 
-        const fundVal = 100;
-        const fundRes = await CONTRACT.fund(addrSender, fundVal, { from: addrOwner });
+    const totalSupplyStart = await CONTRACT.totalSupply().call();
+    const balanceSenderStart = await CONTRACT.balanceOf(addrSender).call();
+    const balanceRecipientStart = await CONTRACT.balanceOf(
+      addrRecipient
+    ).call();
 
-        const totalSupplyFund = await CONTRACT.totalSupply.call();
-        const balanceSenderFund = await CONTRACT.balanceOf.call(addrSender);
-        const balanceRecipientFund = await CONTRACT.balanceOf.call(addrRecipient);
-
-        const transferVal = 50;
-        const transferRes = await CONTRACT.transferNoData(addrRecipient, transferVal, { from: addrSender });
-
-        const totalSupplyAfterTransfer = await CONTRACT.totalSupply.call();
-        const balanceSenderAfterTransfer = await CONTRACT.balanceOf.call(addrSender);
-        const balanceRecipientAfterTransfer = await CONTRACT.balanceOf.call(addrRecipient);
-
-        const transferEvent = transferRes.logs.find(element => element.event.match('Transfer'));
-        const transferEventFrom = transferEvent.args.from;
-        const transferEventTo = transferEvent.args.to;
-        const transferEventValue = transferEvent.args.value.toNumber()
-
-        assert(transferEvent != null);
-        assert.strictEqual(transferEventFrom, addrSender);
-        assert.strictEqual(transferEventTo, addrRecipient);
-        assert.strictEqual(transferEventValue, transferVal);
-
-        assert.strictEqual(totalSupplyStart.toNumber() + fundVal, totalSupplyFund.toNumber());
-        assert.strictEqual(balanceSenderStart.toNumber() + fundVal, balanceSenderFund.toNumber());
-        assert.strictEqual(balanceRecipientStart.toNumber(), balanceRecipientFund.toNumber());
-
-        assert.strictEqual(totalSupplyFund.toNumber(), totalSupplyAfterTransfer.toNumber());
-        assert.strictEqual(balanceSenderFund.toNumber() - transferVal, balanceSenderAfterTransfer.toNumber());
-        assert.strictEqual(balanceRecipientFund.toNumber() + transferVal, balanceRecipientAfterTransfer.toNumber());
+    const fundVal = 100;
+    const fundRes = await CONTRACT.fund(addrSender, fundVal).send({
+      from: addrOwner
     });
 
-    it('Cannot transfer more tokens than in the account', async () => {
-        const addrSender = accounts[1];
-        const addrRecipient = accounts[2];
+    const totalSupplyFund = await CONTRACT.totalSupply().call();
+    const balanceSenderFund = await CONTRACT.balanceOf(addrSender).call();
+    const balanceRecipientFund = await CONTRACT.balanceOf(addrRecipient).call();
 
-        const totalSupplyStart = await CONTRACT.totalSupply.call();
-        const balanceSenderStart = await CONTRACT.balanceOf.call(addrSender);
-        const balanceRecipientStart = await CONTRACT.balanceOf.call(addrRecipient);
+    const transferVal = 50;
+    const transferRes = await CONTRACT.transferNoData(
+      addrRecipient,
+      transferVal
+    ).send({ from: addrSender });
 
-        const fundVal = 100;
-        const fundRes = await CONTRACT.fund(addrSender, fundVal, { from: addrOwner });
+    const totalSupplyAfterTransfer = await CONTRACT.totalSupply().call();
+    const balanceSenderAfterTransfer = await CONTRACT.balanceOf(
+      addrSender
+    ).call();
+    const balanceRecipientAfterTransfer = await CONTRACT.balanceOf(
+      addrRecipient
+    ).call();
 
-        const totalSupplyFund = await CONTRACT.totalSupply.call();
-        const balanceSenderFund = await CONTRACT.balanceOf.call(addrSender);
-        const balanceRecipientFund = await CONTRACT.balanceOf.call(addrRecipient);
+    const transferEvent = transferRes.events.Transfer;
+    const transferEventFrom = transferEvent.returnValues.from;
+    const transferEventTo = transferEvent.returnValues.to;
+    const transferEventValue = parseInt(transferEvent.returnValues.value);
 
-        let actualError = null;
-        try {
-            const transferVal = balanceSenderFund.toNumber() + 50;
-            const transferRes = await CONTRACT.transferNoData(addrRecipient, transferVal, { from: addrSender });
-        } catch (error) {
-            actualError = error;
-        }
+    assert(transferEvent != null);
+    assert.strictEqual(transferEventFrom, addrSender);
+    assert.strictEqual(transferEventTo, addrRecipient);
+    assert.strictEqual(transferEventValue, transferVal);
 
-        const totalSupplyAfterTransfer = await CONTRACT.totalSupply.call();
-        const balanceSenderAfterTransfer = await CONTRACT.balanceOf.call(addrSender);
-        const balanceRecipientAfterTransfer = await CONTRACT.balanceOf.call(addrRecipient);
+    assert.strictEqual(
+      parseInt(totalSupplyStart) + fundVal,
+      parseInt(totalSupplyFund)
+    );
+    assert.strictEqual(
+      parseInt(balanceSenderStart) + fundVal,
+      parseInt(balanceSenderFund)
+    );
+    assert.strictEqual(
+      parseInt(balanceRecipientStart),
+      parseInt(balanceRecipientFund)
+    );
 
-        assert.strictEqual(totalSupplyStart.toNumber() + fundVal, totalSupplyFund.toNumber());
-        assert.strictEqual(balanceSenderStart.toNumber() + fundVal, balanceSenderFund.toNumber());
-        assert.strictEqual(balanceRecipientStart.toNumber(), balanceRecipientFund.toNumber());
+    assert.strictEqual(
+      parseInt(totalSupplyFund),
+      parseInt(totalSupplyAfterTransfer)
+    );
+    assert.strictEqual(
+      parseInt(balanceSenderFund) - transferVal,
+      parseInt(balanceSenderAfterTransfer)
+    );
+    assert.strictEqual(
+      parseInt(balanceRecipientFund) + transferVal,
+      parseInt(balanceRecipientAfterTransfer)
+    );
+  });
 
-        assert.strictEqual(totalSupplyFund.toNumber(), totalSupplyAfterTransfer.toNumber());
-        assert.strictEqual(balanceSenderFund.toNumber(), balanceSenderAfterTransfer.toNumber());
-        assert.strictEqual(balanceRecipientFund.toNumber(), balanceRecipientAfterTransfer.toNumber());
+  it("Cannot transfer more tokens than in the account", async () => {
+    const addrSender = accounts[2];
+    const addrRecipient = accounts[3];
 
-        assert.strictEqual(actualError.toString(),"Error: Returned error: VM Exception while processing transaction: revert You must have sufficent balance to perform this operation -- Reason given: You must have sufficent balance to perform this operation.");
+    const totalSupplyStart = await CONTRACT.totalSupply().call();
+    const balanceSenderStart = await CONTRACT.balanceOf(addrSender).call();
+    const balanceRecipientStart = await CONTRACT.balanceOf(
+      addrRecipient
+    ).call();
+
+    const fundVal = 100;
+    const fundRes = await CONTRACT.fund(addrSender, fundVal).send({
+      from: addrOwner
     });
 
-    it('Contract Owner cannot be the sender in a transfer', async () => {
-        const addrSender = addrOwner;
-        const addrRecipient = accounts[1];
+    const totalSupplyFund = await CONTRACT.totalSupply().call();
+    const balanceSenderFund = await CONTRACT.balanceOf(addrSender).call();
+    const balanceRecipientFund = await CONTRACT.balanceOf(addrRecipient).call();
 
-        const totalSupplyStart = await CONTRACT.totalSupply.call();
-        const balanceSenderStart = await CONTRACT.balanceOf.call(addrSender);
-        const balanceRecipientStart = await CONTRACT.balanceOf.call(addrRecipient);
+    let actualError = null;
+    try {
+      const transferVal = parseInt(balanceSenderFund) + 50;
+      const transferRes = await CONTRACT.transferNoData(
+        addrRecipient,
+        transferVal
+      ).send({ from: addrSender });
+    } catch (error) {
+      actualError = error;
+    }
 
-        let actualError = null;
-        try {
-            const transferVal = 50;
-            const transferRes = await CONTRACT.transferNoData(addrRecipient, transferVal, { from: addrSender });
-        } catch (error) {
-            actualError = error;
-        }
+    const totalSupplyAfterTransfer = await CONTRACT.totalSupply().call();
+    const balanceSenderAfterTransfer = await CONTRACT.balanceOf(
+      addrSender
+    ).call();
+    const balanceRecipientAfterTransfer = await CONTRACT.balanceOf(
+      addrRecipient
+    ).call();
 
-        const totalSupplyAfterTransfer = await CONTRACT.totalSupply.call();
-        const balanceRecipientAfterTransfer = await CONTRACT.balanceOf.call(addrOwner);
+    assert.strictEqual(
+      parseInt(totalSupplyStart) + fundVal,
+      parseInt(totalSupplyFund)
+    );
+    assert.strictEqual(
+      parseInt(balanceSenderStart) + fundVal,
+      parseInt(balanceSenderFund)
+    );
+    assert.strictEqual(
+      parseInt(balanceRecipientStart),
+      parseInt(balanceRecipientFund)
+    );
 
-        assert.strictEqual(totalSupplyStart.toNumber(), totalSupplyAfterTransfer.toNumber());
-        assert.strictEqual(balanceRecipientStart.toNumber(), balanceRecipientAfterTransfer.toNumber());
-        assert.strictEqual(actualError.toString(),"Error: Returned error: VM Exception while processing transaction: revert The contract owner can not perform this operation -- Reason given: The contract owner can not perform this operation.");
+    assert.strictEqual(
+      parseInt(totalSupplyFund),
+      parseInt(totalSupplyAfterTransfer)
+    );
+    assert.strictEqual(
+      parseInt(balanceSenderFund),
+      parseInt(balanceSenderAfterTransfer)
+    );
+    assert.strictEqual(
+      parseInt(balanceRecipientFund),
+      parseInt(balanceRecipientAfterTransfer)
+    );
 
+    assert.strictEqual(
+      actualError.toString(),
+      "Error: Returned error: VM Exception while processing transaction: revert You must have sufficent balance to perform this operation"
+    );
+  });
+
+  it("Contract Owner cannot be the sender in a transfer", async () => {
+    const addrSender = addrOwner;
+    const addrRecipient = accounts[2];
+
+    const totalSupplyStart = await CONTRACT.totalSupply().call();
+    const balanceSenderStart = await CONTRACT.balanceOf(addrSender).call();
+    const balanceRecipientStart = await CONTRACT.balanceOf(
+      addrRecipient
+    ).call();
+
+    let actualError = null;
+    try {
+      const transferVal = 50;
+      const transferRes = await CONTRACT.transferNoData(
+        addrRecipient,
+        transferVal
+      ).send({ from: addrSender });
+    } catch (error) {
+      actualError = error;
+    }
+
+    const totalSupplyAfterTransfer = await CONTRACT.totalSupply().call();
+    const balanceRecipientAfterTransfer = await CONTRACT.balanceOf(
+      addrOwner
+    ).call();
+
+    assert.strictEqual(
+      parseInt(totalSupplyStart),
+      parseInt(totalSupplyAfterTransfer)
+    );
+
+    assert.strictEqual(
+      parseInt(balanceRecipientStart),
+      parseInt(balanceRecipientAfterTransfer)
+    );
+
+    assert.strictEqual(
+      actualError.toString(),
+      "Error: Returned error: VM Exception while processing transaction: revert The contract owner can not perform this operation"
+    );
+  });
+
+  it("Contract Owner cannot be the recipient in a transfer", async () => {
+    const addrSender = accounts[2];
+    const addrRecipient = addrOwner;
+
+    const totalSupplyStart = await CONTRACT.totalSupply().call();
+    const balanceSenderStart = await CONTRACT.balanceOf(addrSender).call();
+    const balanceRecipientStart = await CONTRACT.balanceOf(
+      addrRecipient
+    ).call();
+
+    const fundVal = 100;
+    const fundRes = await CONTRACT.fund(addrSender, fundVal).send({
+      from: addrOwner
     });
 
-    it('Contract Owner cannot be the recipient in a transfer', async () => {
-        const addrSender = accounts[1];
-        const addrRecipient = addrOwner;
+    const totalSupplyFund = await CONTRACT.totalSupply().call();
+    const balanceSenderFund = await CONTRACT.balanceOf(addrSender).call();
+    const balanceRecipientFund = await CONTRACT.balanceOf(addrRecipient).call();
 
-        const totalSupplyStart = await CONTRACT.totalSupply.call();
-        const balanceSenderStart = await CONTRACT.balanceOf.call(addrSender);
-        const balanceRecipientStart = await CONTRACT.balanceOf.call(addrRecipient);
+    let actualError = null;
+    try {
+      const transferVal = 50;
+      const transferRes = await CONTRACT.transferNoData(
+        addrRecipient,
+        transferVal
+      ).send({ from: addrSender });
+    } catch (error) {
+      actualError = error;
+    }
 
-        const fundVal = 100;
-        const fundRes = await CONTRACT.fund(addrSender, fundVal, { from: addrOwner });
+    const totalSupplyAfterTransfer = await CONTRACT.totalSupply().call();
+    const balanceSenderAfterTransfer = await CONTRACT.balanceOf(
+      addrSender
+    ).call();
+    const balanceRecipientAfterTransfer = await CONTRACT.balanceOf(
+      addrOwner
+    ).call();
 
-        const totalSupplyFund = await CONTRACT.totalSupply.call();
-        const balanceSenderFund = await CONTRACT.balanceOf.call(addrSender);
-        const balanceRecipientFund = await CONTRACT.balanceOf.call(addrRecipient);
+    assert.strictEqual(
+      parseInt(totalSupplyStart) + fundVal,
+      parseInt(totalSupplyFund)
+    );
+    assert.strictEqual(
+      parseInt(balanceSenderStart) + fundVal,
+      parseInt(balanceSenderFund)
+    );
+    assert.strictEqual(
+      parseInt(balanceRecipientStart),
+      parseInt(balanceRecipientFund)
+    );
 
-        let actualError = null;
-        try {
-            const transferVal = 50;
-            const transferRes = await CONTRACT.transferNoData(addrRecipient, transferVal, { from: addrSender });
-        } catch (error) {
-            actualError = error;
-        }
+    assert.strictEqual(
+      parseInt(totalSupplyFund),
+      parseInt(totalSupplyAfterTransfer)
+    );
+    assert.strictEqual(
+      parseInt(balanceSenderFund),
+      parseInt(balanceSenderAfterTransfer)
+    );
+    assert.strictEqual(
+      parseInt(balanceRecipientFund),
+      parseInt(balanceRecipientAfterTransfer)
+    );
 
-        const totalSupplyAfterTransfer = await CONTRACT.totalSupply.call();
-        const balanceSenderAfterTransfer = await CONTRACT.balanceOf.call(addrSender);
-        const balanceRecipientAfterTransfer = await CONTRACT.balanceOf.call(addrOwner);
+    assert.strictEqual(
+      actualError.toString(),
+      "Error: Returned error: VM Exception while processing transaction: revert The contract owner can not perform this operation"
+    );
+  });
 
-        assert.strictEqual(totalSupplyStart.toNumber() + fundVal, totalSupplyFund.toNumber());
-        assert.strictEqual(balanceSenderStart.toNumber() + fundVal, balanceSenderFund.toNumber());
-        assert.strictEqual(balanceRecipientStart.toNumber(), balanceRecipientFund.toNumber());
-
-        assert.strictEqual(totalSupplyFund.toNumber(), totalSupplyAfterTransfer.toNumber());
-        assert.strictEqual(balanceSenderFund.toNumber(), balanceSenderAfterTransfer.toNumber());
-        assert.strictEqual(balanceRecipientFund.toNumber(), balanceRecipientAfterTransfer.toNumber());
-
-        assert.strictEqual(actualError.toString(),"Error: Returned error: VM Exception while processing transaction: revert The contract owner can not perform this operation -- Reason given: The contract owner can not perform this operation.");
-
+  it("Can transfer tokens from External Owned Account(EOA) to a contract", async () => {
+    let mockReceivingContract = await MockReceivingContract.new({
+      from: addrOwner
     });
 
-    it('Can transfer tokens from External Owned Account(EOA) to a contract', async () => {
-	let mockReceivingContract = await MockReceivingContract.new({ from: addrOwner });
+    const addrSender = accounts[2];
+    const addrRecipient = mockReceivingContract.address;
 
-        const addrSender = accounts[1];
-        const addrRecipient = mockReceivingContract.address;
+    const totalSupplyStart = await CONTRACT.totalSupply().call();
+    const balanceSenderStart = await CONTRACT.balanceOf(addrSender).call();
+    const balanceRecipientStart = await CONTRACT.balanceOf(
+      addrRecipient
+    ).call();
 
-        const totalSupplyStart = await CONTRACT.totalSupply.call();
-        const balanceSenderStart = await CONTRACT.balanceOf.call(addrSender);
-        const balanceRecipientStart = await CONTRACT.balanceOf.call(addrRecipient);
-
-        const fundVal = 100;
-        const fundRes = await CONTRACT.fund(addrSender, fundVal, { from: addrOwner });
-
-        const totalSupplyFund = await CONTRACT.totalSupply.call();
-        const balanceSenderFund = await CONTRACT.balanceOf.call(addrSender);
-        const balanceRecipientFund = await CONTRACT.balanceOf.call(addrRecipient);
-
-        const transferVal = 50;
-        const transferRes = await CONTRACT.transferNoData(addrRecipient, transferVal, { from: addrSender });
-
-        const totalSupplyAfterTransfer = await CONTRACT.totalSupply.call();
-        const balanceSenderAfterTransfer = await CONTRACT.balanceOf.call(addrSender);
-        const balanceRecipientAfterTransfer = await CONTRACT.balanceOf.call(addrRecipient);
-
-        const transferEvent = transferRes.logs.find(element => element.event.match('Transfer'));
-        const transferEventFrom = transferEvent.args.from;
-        const transferEventTo = transferEvent.args.to;
-        const transferEventValue = transferEvent.args.value.toNumber()
-
-        assert(transferEvent != null);
-        assert.strictEqual(transferEventFrom, addrSender);
-        assert.strictEqual(transferEventTo, addrRecipient);
-        assert.strictEqual(transferEventValue, transferVal);
-
-        assert.strictEqual(totalSupplyStart.toNumber() + fundVal, totalSupplyFund.toNumber());
-        assert.strictEqual(balanceSenderStart.toNumber() + fundVal, balanceSenderFund.toNumber());
-        assert.strictEqual(balanceRecipientStart.toNumber(), balanceRecipientFund.toNumber());
-
-        assert.strictEqual(totalSupplyFund.toNumber(), totalSupplyAfterTransfer.toNumber());
-        assert.strictEqual(balanceSenderFund.toNumber() - transferVal, balanceSenderAfterTransfer.toNumber());
-        assert.strictEqual(balanceRecipientFund.toNumber() + transferVal, balanceRecipientAfterTransfer.toNumber());
-	
-	const logs = await mockReceivingContract.getPastEvents("Called", {fromBlock: 0, toBlock: "latest"});
-	assert.strictEqual(logs[0].event, "Called");
-	assert.strictEqual(logs[0].returnValues.from, addrSender);
-	assert.strictEqual(logs[0].returnValues.data, null);
-	assert.strictEqual(logs[0].returnValues.value, transferVal.toString());
+    const fundVal = 100;
+    const fundRes = await CONTRACT.fund(addrSender, fundVal).send({
+      from: addrOwner
     });
 
-    it('Can not transfer more tokens than an account has balance from External Owned Account(EOA) to a contract', async () => {
-	let mockReceivingContract = await MockReceivingContract.new({ from: addrOwner });
+    const totalSupplyFund = await CONTRACT.totalSupply().call();
+    const balanceSenderFund = await CONTRACT.balanceOf(addrSender).call();
+    const balanceRecipientFund = await CONTRACT.balanceOf(addrRecipient).call();
 
-        const addrSender = accounts[1];
-        const addrRecipient = mockReceivingContract.address;
+    const transferVal = 50;
+    const transferRes = await CONTRACT.transferNoData(
+      addrRecipient,
+      transferVal
+    ).send({ from: addrSender });
 
-        const totalSupplyStart = await CONTRACT.totalSupply.call();
-        const balanceSenderStart = await CONTRACT.balanceOf.call(addrSender);
-        const balanceRecipientStart = await CONTRACT.balanceOf.call(addrRecipient);
+    const totalSupplyAfterTransfer = await CONTRACT.totalSupply().call();
+    const balanceSenderAfterTransfer = await CONTRACT.balanceOf(
+      addrSender
+    ).call();
+    const balanceRecipientAfterTransfer = await CONTRACT.balanceOf(
+      addrRecipient
+    ).call();
 
-        const fundVal = 100;
-        const fundRes = await CONTRACT.fund(addrSender, fundVal, { from: addrOwner });
+    const transferEvent = transferRes.events.Transfer;
+    const transferEventFrom = transferEvent.returnValues.from;
+    const transferEventTo = transferEvent.returnValues.to;
+    const transferEventValue = parseInt(transferEvent.returnValues.value);
 
-        const totalSupplyFund = await CONTRACT.totalSupply.call();
-        const balanceSenderFund = await CONTRACT.balanceOf.call(addrSender);
-        const balanceRecipientFund = await CONTRACT.balanceOf.call(addrRecipient);
+    assert(transferEvent != null);
+    assert.strictEqual(transferEventFrom, addrSender);
+    assert.strictEqual(transferEventTo, addrRecipient);
+    assert.strictEqual(transferEventValue, transferVal);
 
-        const transferVal = fundVal + 50;
-        let actualError = null;
-        try {
-            const transferRes = await CONTRACT.transferNoData(addrRecipient, transferVal, { from: addrSender });
-        } catch (error) {
-            actualError = error;
-        }
+    assert.strictEqual(
+      parseInt(totalSupplyStart) + fundVal,
+      parseInt(totalSupplyFund)
+    );
+    assert.strictEqual(
+      parseInt(balanceSenderStart) + fundVal,
+      parseInt(balanceSenderFund)
+    );
+    assert.strictEqual(
+      parseInt(balanceRecipientStart),
+      parseInt(balanceRecipientFund)
+    );
 
-        const totalSupplyAfterTransfer = await CONTRACT.totalSupply.call();
-        const balanceSenderAfterTransfer = await CONTRACT.balanceOf.call(addrSender);
-        const balanceRecipientAfterTransfer = await CONTRACT.balanceOf.call(addrRecipient);
+    assert.strictEqual(
+      parseInt(totalSupplyFund),
+      parseInt(totalSupplyAfterTransfer)
+    );
+    assert.strictEqual(
+      parseInt(balanceSenderFund) - transferVal,
+      parseInt(balanceSenderAfterTransfer)
+    );
+    assert.strictEqual(
+      parseInt(balanceRecipientFund) + transferVal,
+      parseInt(balanceRecipientAfterTransfer)
+    );
 
-        assert.strictEqual(totalSupplyStart.toNumber() + fundVal, totalSupplyFund.toNumber());
-        assert.strictEqual(balanceSenderStart.toNumber() + fundVal, balanceSenderFund.toNumber());
-        assert.strictEqual(balanceRecipientStart.toNumber(), balanceRecipientFund.toNumber());
+    const logs = await mockReceivingContract.getPastEvents("Called", {
+      fromBlock: 0,
+      toBlock: "latest"
+    });
+    assert.strictEqual(logs[0].event, "Called");
+    assert.strictEqual(logs[0].returnValues.from, addrSender);
+    assert.strictEqual(logs[0].returnValues.data, null);
+    assert.strictEqual(logs[0].returnValues.value, transferVal.toString());
+  });
 
-        assert.strictEqual(totalSupplyFund.toNumber(), totalSupplyAfterTransfer.toNumber());
-        assert.strictEqual(balanceSenderFund.toNumber(), balanceSenderAfterTransfer.toNumber());
-        assert.strictEqual(balanceRecipientFund.toNumber(), balanceRecipientAfterTransfer.toNumber());
-
-        assert.strictEqual(actualError.toString(),"Error: Returned error: VM Exception while processing transaction: revert You must have sufficent balance to perform this operation -- Reason given: You must have sufficent balance to perform this operation.");
+  it("Can not transfer more tokens than an account has balance from External Owned Account(EOA) to a contract", async () => {
+    let mockReceivingContract = await MockReceivingContract.new({
+      from: addrOwner
     });
 
-    it('Can not transfer tokens from External Owned Account(EOA) to a contract without a recieving function', async () => {
-	let notAReceivingContract = await NotAReceivingContract.new({ from: addrOwner });
+    const addrSender = accounts[2];
+    const addrRecipient = mockReceivingContract.address;
 
-        const addrSender = accounts[1];
-        const addrRecipient = notAReceivingContract.address;
+    const totalSupplyStart = await CONTRACT.totalSupply().call();
+    const balanceSenderStart = await CONTRACT.balanceOf(addrSender).call();
+    const balanceRecipientStart = await CONTRACT.balanceOf(
+      addrRecipient
+    ).call();
 
-        const totalSupplyStart = await CONTRACT.totalSupply.call();
-        const balanceSenderStart = await CONTRACT.balanceOf.call(addrSender);
-        const balanceRecipientStart = await CONTRACT.balanceOf.call(addrRecipient);
-
-        const fundVal = 100;
-        const fundRes = await CONTRACT.fund(addrSender, fundVal, { from: addrOwner });
-
-        const totalSupplyFund = await CONTRACT.totalSupply.call();
-        const balanceSenderFund = await CONTRACT.balanceOf.call(addrSender);
-        const balanceRecipientFund = await CONTRACT.balanceOf.call(addrRecipient);
-
-        const transferVal = 50;
-        let actualError = null;
-        try {
-            const transferRes = await CONTRACT.transferNoData(addrRecipient, transferVal, { from: addrSender });
-        } catch (error) {
-            actualError = error;
-        }
-
-        const totalSupplyAfterTransfer = await CONTRACT.totalSupply.call();
-        const balanceSenderAfterTransfer = await CONTRACT.balanceOf.call(addrSender);
-        const balanceRecipientAfterTransfer = await CONTRACT.balanceOf.call(addrRecipient);
-
-        assert.strictEqual(totalSupplyStart.toNumber() + fundVal, totalSupplyFund.toNumber());
-        assert.strictEqual(balanceSenderStart.toNumber() + fundVal, balanceSenderFund.toNumber());
-        assert.strictEqual(balanceRecipientStart.toNumber(), balanceRecipientFund.toNumber());
-
-        assert.strictEqual(totalSupplyFund.toNumber(), totalSupplyAfterTransfer.toNumber());
-        assert.strictEqual(balanceSenderFund.toNumber(), balanceSenderAfterTransfer.toNumber());
-        assert.strictEqual(balanceRecipientFund.toNumber(), balanceRecipientAfterTransfer.toNumber());
-
-        assert.strictEqual(actualError.toString(),"Error: Returned error: VM Exception while processing transaction: revert");
+    const fundVal = 100;
+    const fundRes = await CONTRACT.fund(addrSender, fundVal).send({
+      from: addrOwner
     });
 
+    const totalSupplyFund = await CONTRACT.totalSupply().call();
+    const balanceSenderFund = await CONTRACT.balanceOf(addrSender).call();
+    const balanceRecipientFund = await CONTRACT.balanceOf(addrRecipient).call();
+
+    const transferVal = fundVal + 50;
+    let actualError = null;
+    try {
+      const transferRes = await CONTRACT.transferNoData(
+        addrRecipient,
+        transferVal
+      ).send({ from: addrSender });
+    } catch (error) {
+      actualError = error;
+    }
+
+    const totalSupplyAfterTransfer = await CONTRACT.totalSupply().call();
+    const balanceSenderAfterTransfer = await CONTRACT.balanceOf(
+      addrSender
+    ).call();
+    const balanceRecipientAfterTransfer = await CONTRACT.balanceOf(
+      addrRecipient
+    ).call();
+
+    assert.strictEqual(
+      parseInt(totalSupplyStart) + fundVal,
+      parseInt(totalSupplyFund)
+    );
+    assert.strictEqual(
+      parseInt(balanceSenderStart) + fundVal,
+      parseInt(balanceSenderFund)
+    );
+    assert.strictEqual(
+      parseInt(balanceRecipientStart),
+      parseInt(balanceRecipientFund)
+    );
+
+    assert.strictEqual(
+      parseInt(totalSupplyFund),
+      parseInt(totalSupplyAfterTransfer)
+    );
+    assert.strictEqual(
+      parseInt(balanceSenderFund),
+      parseInt(balanceSenderAfterTransfer)
+    );
+    assert.strictEqual(
+      parseInt(balanceRecipientFund),
+      parseInt(balanceRecipientAfterTransfer)
+    );
+
+    assert.strictEqual(
+      actualError.toString(),
+      "Error: Returned error: VM Exception while processing transaction: revert You must have sufficent balance to perform this operation"
+    );
+  });
+
+  it("Can not transfer tokens from External Owned Account(EOA) to a contract without a recieving function", async () => {
+    let notAReceivingContract = await NotAReceivingContract.new({
+      from: addrOwner
+    });
+
+    const addrSender = accounts[2];
+    const addrRecipient = notAReceivingContract.address;
+
+    const totalSupplyStart = await CONTRACT.totalSupply().call();
+    const balanceSenderStart = await CONTRACT.balanceOf(addrSender).call();
+    const balanceRecipientStart = await CONTRACT.balanceOf(
+      addrRecipient
+    ).call();
+
+    const fundVal = 100;
+    const fundRes = await CONTRACT.fund(addrSender, fundVal).send({
+      from: addrOwner
+    });
+
+    const totalSupplyFund = await CONTRACT.totalSupply().call();
+    const balanceSenderFund = await CONTRACT.balanceOf(addrSender).call();
+    const balanceRecipientFund = await CONTRACT.balanceOf(addrRecipient).call();
+
+    const transferVal = 50;
+    let actualError = null;
+    try {
+      const transferRes = await CONTRACT.transferNoData(
+        addrRecipient,
+        transferVal
+      ).send({ from: addrSender });
+    } catch (error) {
+      actualError = error;
+    }
+
+    const totalSupplyAfterTransfer = await CONTRACT.totalSupply().call();
+    const balanceSenderAfterTransfer = await CONTRACT.balanceOf(
+      addrSender
+    ).call();
+    const balanceRecipientAfterTransfer = await CONTRACT.balanceOf(
+      addrRecipient
+    ).call();
+
+    assert.strictEqual(
+      parseInt(totalSupplyStart) + fundVal,
+      parseInt(totalSupplyFund)
+    );
+    assert.strictEqual(
+      parseInt(balanceSenderStart) + fundVal,
+      parseInt(balanceSenderFund)
+    );
+    assert.strictEqual(
+      parseInt(balanceRecipientStart),
+      parseInt(balanceRecipientFund)
+    );
+
+    assert.strictEqual(
+      parseInt(totalSupplyFund),
+      parseInt(totalSupplyAfterTransfer)
+    );
+    assert.strictEqual(
+      parseInt(balanceSenderFund),
+      parseInt(balanceSenderAfterTransfer)
+    );
+    assert.strictEqual(
+      parseInt(balanceRecipientFund),
+      parseInt(balanceRecipientAfterTransfer)
+    );
+
+    assert.strictEqual(
+      actualError.toString(),
+      "Error: Returned error: VM Exception while processing transaction: revert"
+    );
+  });
 });

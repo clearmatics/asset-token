@@ -1,237 +1,361 @@
 // Copyright (c) 2017-2018 Clearmatics Technologies Ltd
 
 // SPDX-License-Identifier: LGPL-3.0+
+const { TestHelper } = require("zos"); //function to retrieve zos project structure object
+const { Contracts, ZWeb3 } = require("zos-lib"); //to retrieve compiled contract artifacts
 
-const AssetToken = artifacts.require('AssetToken');
+ZWeb3.initialize(web3.currentProvider);
+
+const UpgradeableAssetToken = Contracts.getFromLocal("UpgradeableAssetToken");
 
 let CONTRACT;
 
-contract('AssetEmergencyStop', (accounts) => {
-    const addrOwner = accounts[0];
-    beforeEach(async () => {
-        CONTRACT = await AssetToken.new("CLP", "Asset Token", { from: addrOwner });
+contract("AssetEmergencyStop", accounts => {
+  const addrOwner = accounts[0];
+  const proxyOwner = accounts[1];
+  beforeEach(async () => {
+    PROJECT = await TestHelper({ from: proxyOwner });
+
+    //contains logic contract
+    PROXY = await PROJECT.createProxy(UpgradeableAssetToken, {
+      initMethod: "initialize",
+      initArgs: ["CLR", "Asset Token", addrOwner]
     });
 
-    it('Emergency Switch: Attempt to Fund when trading is deactivated', async () => {
-        const addrRecipient = accounts[1];
+    CONTRACT = PROXY.methods;
+  });
 
-        const totalSupplyBefore = await CONTRACT.totalSupply.call();
-        const balanceRecipientBefore = await CONTRACT.balanceOf.call(addrRecipient);
+  it("Emergency Switch: Attempt to Fund when trading is deactivated", async () => {
+    const addrRecipient = accounts[2];
 
-        await CONTRACT.emergencyStop({from: addrOwner});
-        const status = await CONTRACT.getTradingStatus({ from: addrOwner });
-        tradeStatus = status.receipt.logs
-        assert.equal(tradeStatus[0].args.balance, false);
+    const totalSupplyBefore = await CONTRACT.totalSupply().call();
+    const balanceRecipientBefore = await CONTRACT.balanceOf(
+      addrRecipient
+    ).call();
 
-        let actualError = null;
-        try {
-            const fundVal = 100;
-            const fundRes = await CONTRACT.fund(addrRecipient, fundVal, { from: addrOwner });
-        } catch (error) {
-            actualError = error;
-        }
+    await CONTRACT.emergencyStop().send({ from: addrOwner });
+    const status = await CONTRACT.getTradingStatus().send({ from: addrOwner });
+    assert.equal(status.events.Switch.returnValues[0], false);
 
-        const totalSupplyAfter = await CONTRACT.totalSupply.call();
-        const balanceRecipientAfter = await CONTRACT.balanceOf.call(addrRecipient);
+    let actualError = null;
+    try {
+      const fundVal = 100;
+      const fundRes = await CONTRACT.fund(addrRecipient, fundVal).send({
+        from: addrOwner
+      });
+    } catch (error) {
+      actualError = error;
+    }
 
-        assert.strictEqual(totalSupplyBefore.toNumber(), totalSupplyAfter.toNumber());
-        assert.strictEqual(balanceRecipientBefore.toNumber(), balanceRecipientAfter.toNumber());
-        assert.strictEqual(actualError.toString(),"Error: Returned error: VM Exception while processing transaction: revert Contract emergency stop is activated -- Reason given: Contract emergency stop is activated.");
+    const totalSupplyAfter = await CONTRACT.totalSupply().call();
+    const balanceRecipientAfter = await CONTRACT.balanceOf(
+      addrRecipient
+    ).call();
+
+    assert.strictEqual(totalSupplyBefore, totalSupplyAfter);
+    assert.strictEqual(balanceRecipientBefore, balanceRecipientAfter);
+    assert.strictEqual(
+      actualError.toString(),
+      "Error: Returned error: VM Exception while processing transaction: revert Contract emergency stop is activated"
+    );
+  });
+
+  it("Emergency Switch: Attempt to Defund when trading is deactivated", async () => {
+    const totalSupplyBefore = await CONTRACT.totalSupply().call();
+    const balanceRecipientBefore = await CONTRACT.balanceOf(addrOwner).call();
+
+    await CONTRACT.emergencyStop().send({ from: addrOwner });
+    const status = await CONTRACT.getTradingStatus().send({ from: addrOwner });
+    assert.equal(status.events.Switch.returnValues[0], false);
+
+    let actualError = null;
+    try {
+      const defundVal = 50;
+      const defundRes = await CONTRACT.defund(defundVal).send({
+        from: addrOwner
+      });
+    } catch (error) {
+      actualError = error;
+    }
+
+    const totalSupplyDefunded = await CONTRACT.totalSupply().call();
+    const balanceRecipientDefunded = await CONTRACT.balanceOf(addrOwner).call();
+
+    assert.strictEqual(totalSupplyBefore, totalSupplyDefunded);
+    assert.strictEqual(balanceRecipientBefore, balanceRecipientDefunded);
+    assert.strictEqual(
+      actualError.toString(),
+      "Error: Returned error: VM Exception while processing transaction: revert Contract emergency stop is activated"
+    );
+  });
+
+  it("Emergency Switch: Attempt to transfer when trading is deactivated", async () => {
+    const addrSender = accounts[2];
+    const addrRecipient = accounts[3];
+
+    const totalSupplyStart = await CONTRACT.totalSupply().call();
+    const balanceSenderStart = await CONTRACT.balanceOf(addrSender).call();
+    const balanceRecipientStart = await CONTRACT.balanceOf(
+      addrRecipient
+    ).call();
+
+    const fundVal = 100;
+    try {
+      const fundRes = await CONTRACT.fund(addrSender, fundVal).send({
+        from: addrOwner
+      });
+    } catch (err) {
+      console.log(err);
+    }
+
+    const totalSupplyFund = await CONTRACT.totalSupply().call();
+    const balanceSenderFund = await CONTRACT.balanceOf(addrSender).call();
+    const balanceRecipientFund = await CONTRACT.balanceOf(addrRecipient).call();
+
+    await CONTRACT.emergencyStop().send({ from: addrOwner });
+    const status = await CONTRACT.getTradingStatus().send({ from: addrOwner });
+    assert.equal(status.events.Switch.returnValues[0], false);
+
+    let actualError = null;
+    try {
+      const transferVal = 50;
+      const transferRes = await CONTRACT.transferNoData(
+        addrRecipient,
+        transferVal
+      ).send({ from: addrSender });
+    } catch (error) {
+      actualError = error;
+    }
+
+    const totalSupplyAfterTransfer = await CONTRACT.totalSupply().call();
+    const balanceSenderAfterTransfer = await CONTRACT.balanceOf(
+      addrSender
+    ).call();
+    const balanceRecipientAfterTransfer = await CONTRACT.balanceOf(
+      addrOwner
+    ).call();
+
+    assert.strictEqual(
+      parseInt(totalSupplyStart) + parseInt(fundVal),
+      parseInt(totalSupplyFund)
+    );
+    assert.strictEqual(
+      parseInt(balanceSenderStart) + parseInt(fundVal),
+      parseInt(balanceSenderFund)
+    );
+    assert.strictEqual(
+      parseInt(balanceRecipientStart),
+      parseInt(balanceRecipientFund)
+    );
+
+    assert.strictEqual(
+      parseInt(totalSupplyFund),
+      parseInt(totalSupplyAfterTransfer)
+    );
+    assert.strictEqual(
+      parseInt(balanceSenderFund),
+      parseInt(balanceSenderAfterTransfer)
+    );
+    assert.strictEqual(
+      parseInt(balanceRecipientFund),
+      parseInt(balanceRecipientAfterTransfer)
+    );
+
+    assert.strictEqual(
+      actualError.toString(),
+      "Error: Returned error: VM Exception while processing transaction: revert Contract emergency stop is activated"
+    );
+  });
+
+  it("Emergency Switch: Deactivate trading attempt transfer, activate trading attempt transfer", async () => {
+    const addrSender = accounts[2];
+    const addrRecipient = accounts[3];
+    const transferVal = 50;
+
+    const totalSupplyStart = await CONTRACT.totalSupply().call();
+    const balanceSenderStart = await CONTRACT.balanceOf(addrSender).call();
+    const balanceRecipientStart = await CONTRACT.balanceOf(
+      addrRecipient
+    ).call();
+
+    const fundVal = 100;
+    const fundRes = await CONTRACT.fund(addrSender, fundVal).send({
+      from: addrOwner
     });
 
-    it('Emergency Switch: Attempt to Defund when trading is deactivated', async () => {
-        const totalSupplyBefore = await CONTRACT.totalSupply.call();
-        const balanceRecipientBefore = await CONTRACT.balanceOf.call(addrOwner);
+    const totalSupplyFund = await CONTRACT.totalSupply().call();
+    const balanceSenderFund = await CONTRACT.balanceOf(addrSender).call();
+    const balanceRecipientFund = await CONTRACT.balanceOf(addrRecipient).call();
 
-        await CONTRACT.emergencyStop({ from: addrOwner });
-        const status = await CONTRACT.getTradingStatus({ from: addrOwner });
-        const tradeStatus = status.receipt.logs
-        assert.equal(tradeStatus[0].args.balance, false);
+    await CONTRACT.emergencyStop().send({ from: addrOwner });
+    const switchStatusbefore = await CONTRACT.getTradingStatus().send({
+      from: addrOwner
+    });
+    assert.equal(switchStatusbefore.events.Switch.returnValues[0], false);
 
-        let actualError = null;
-        try {
-            const defundVal = 50;
-            const defundRes = await CONTRACT.defund(defundVal, { from: addrOwner });
-        } catch (error) {
-            actualError = error;
-        }
+    let actualError = null;
+    try {
+      const transferRes = await CONTRACT.transferNoData(
+        addrRecipient,
+        transferVal
+      ).send({ from: addrSender });
+    } catch (error) {
+      actualError = error;
+    }
 
-        const totalSupplyDefunded = await CONTRACT.totalSupply.call();
-        const balanceRecipientDefunded = await CONTRACT.balanceOf.call(addrOwner);
+    const totalSupplyAfterTransfer = await CONTRACT.totalSupply().call();
+    const balanceSenderAfterTransfer = await CONTRACT.balanceOf(
+      addrSender
+    ).call();
+    const balanceRecipientAfterTransfer = await CONTRACT.balanceOf(
+      addrRecipient
+    ).call();
 
-        assert.strictEqual(totalSupplyBefore.toNumber(), totalSupplyDefunded.toNumber());
-        assert.strictEqual(balanceRecipientBefore.toNumber(), balanceRecipientDefunded.toNumber());
-        assert.strictEqual(actualError.toString(),"Error: Returned error: VM Exception while processing transaction: revert Contract emergency stop is activated -- Reason given: Contract emergency stop is activated.");
+    assert.strictEqual(
+      parseInt(totalSupplyStart) + parseInt(fundVal),
+      parseInt(totalSupplyFund)
+    );
+    assert.strictEqual(
+      parseInt(balanceSenderStart) + parseInt(fundVal),
+      parseInt(balanceSenderFund)
+    );
+    assert.strictEqual(
+      parseInt(balanceRecipientStart),
+      parseInt(balanceRecipientFund)
+    );
+
+    assert.strictEqual(
+      parseInt(totalSupplyFund),
+      parseInt(totalSupplyAfterTransfer)
+    );
+    assert.strictEqual(
+      parseInt(balanceSenderFund),
+      parseInt(balanceSenderAfterTransfer)
+    );
+    assert.strictEqual(
+      parseInt(balanceRecipientFund),
+      parseInt(balanceRecipientAfterTransfer)
+    );
+
+    assert.strictEqual(
+      actualError.toString(),
+      "Error: Returned error: VM Exception while processing transaction: revert Contract emergency stop is activated"
+    );
+
+    await CONTRACT.emergencyStart().send({ from: addrOwner });
+    const switchStatusAfter = await CONTRACT.getTradingStatus().send({
+      from: addrOwner
+    });
+    assert.equal(switchStatusAfter.events.Switch.returnValues[0], true);
+
+    const totalSupplyAfter = await CONTRACT.totalSupply().call();
+    const balanceSenderAfter = await CONTRACT.balanceOf(addrSender).call();
+    const balanceRecipientAfter = await CONTRACT.balanceOf(
+      addrRecipient
+    ).call();
+
+    const fundValAfter = 100;
+    const fundResAfter = await CONTRACT.fund(addrSender, fundVal).send({
+      from: addrOwner
     });
 
-    it('Emergency Switch: Attempt to transfer when trading is deactivated', async () => {
-        const addrSender = accounts[1];
-        const addrRecipient = accounts[2];
+    const totalSupplyFundAfter = await CONTRACT.totalSupply().call();
+    const balanceSenderFundAfter = await CONTRACT.balanceOf(addrSender).call();
+    const balanceRecipientFundAfter = await CONTRACT.balanceOf(
+      addrRecipient
+    ).call();
 
-        const totalSupplyStart = await CONTRACT.totalSupply.call();
-        const balanceSenderStart = await CONTRACT.balanceOf.call(addrSender);
-        const balanceRecipientStart = await CONTRACT.balanceOf.call(addrRecipient);
+    actualError = null;
+    try {
+      const transferRes = await CONTRACT.transferNoData(
+        addrRecipient,
+        transferVal
+      ).send({ from: addrSender });
+    } catch (error) {
+      actualError = error;
+    }
 
-        const fundVal = 100;
-        const fundRes = await CONTRACT.fund(addrSender, fundVal, { from: addrOwner });
+    const totalSupplyAfterSwitch = await CONTRACT.totalSupply().call();
+    const balanceSenderAfterSwitch = await CONTRACT.balanceOf(
+      addrSender
+    ).call();
+    const balanceRecipientAfterSwitch = await CONTRACT.balanceOf(
+      addrRecipient
+    ).call();
 
-        const totalSupplyFund = await CONTRACT.totalSupply.call();
-        const balanceSenderFund = await CONTRACT.balanceOf.call(addrSender);
-        const balanceRecipientFund = await CONTRACT.balanceOf.call(addrRecipient);
+    assert.strictEqual(
+      parseInt(totalSupplyAfter) + parseInt(fundVal),
+      parseInt(totalSupplyFundAfter)
+    );
+    assert.strictEqual(
+      parseInt(balanceSenderAfter) + parseInt(fundVal),
+      parseInt(balanceSenderFundAfter)
+    );
+    assert.strictEqual(
+      parseInt(balanceRecipientAfter),
+      parseInt(balanceRecipientFundAfter)
+    );
 
-        await CONTRACT.emergencyStop({ from: addrOwner });
-        const status = await CONTRACT.getTradingStatus({ from: addrOwner });
-        tradeStatus = status.receipt.logs
-        assert.equal(tradeStatus[0].args.balance, false);
+    assert.strictEqual(
+      parseInt(totalSupplyFundAfter),
+      parseInt(totalSupplyAfterSwitch)
+    );
+    assert.strictEqual(
+      parseInt(balanceSenderFundAfter),
+      parseInt(balanceSenderAfterSwitch) + parseInt(transferVal)
+    );
+    assert.strictEqual(
+      parseInt(balanceRecipientFundAfter),
+      parseInt(balanceRecipientAfterSwitch) - parseInt(transferVal)
+    );
 
-        let actualError = null;
-        try {
-            const transferVal = 50;
-            const transferRes = await CONTRACT.transferNoData(addrRecipient, transferVal, { from: addrSender });
-        } catch (error) {
-            actualError = error;
-        }
+    assert.strictEqual(actualError, null);
+  });
 
-        const totalSupplyAfterTransfer = await CONTRACT.totalSupply.call();
-        const balanceSenderAfterTransfer = await CONTRACT.balanceOf.call(addrSender);
-        const balanceRecipientAfterTransfer = await CONTRACT.balanceOf.call(addrOwner);
+  it("Emergency Stop Delegation: Delegated account is able to stop an operation", async () => {
+    const delegate = accounts[3];
 
-        assert.strictEqual(totalSupplyStart.toNumber() + fundVal, totalSupplyFund.toNumber());
-        assert.strictEqual(balanceSenderStart.toNumber() + fundVal, balanceSenderFund.toNumber());
-        assert.strictEqual(balanceRecipientStart.toNumber(), balanceRecipientFund.toNumber());
+    await CONTRACT.setEmergencyPermission(delegate).send({ from: addrOwner });
 
-        assert.strictEqual(totalSupplyFund.toNumber(), totalSupplyAfterTransfer.toNumber());
-        assert.strictEqual(balanceSenderFund.toNumber(), balanceSenderAfterTransfer.toNumber());
-        assert.strictEqual(balanceRecipientFund.toNumber(), balanceRecipientAfterTransfer.toNumber());
-
-        assert.strictEqual(actualError.toString(),"Error: Returned error: VM Exception while processing transaction: revert Contract emergency stop is activated -- Reason given: Contract emergency stop is activated.");
-
+    await CONTRACT.emergencyStop().send({ from: delegate });
+    const status = await CONTRACT.getTradingStatus().send({
+      from: addrOwner
     });
+    assert.equal(status.events.Switch.returnValues[0], false);
+  });
 
-    it('Emergency Switch: Deactivate trading attempt transfer, activate trading attempt transfer', async () => {
-        const addrSender = accounts[1];
-        const addrRecipient = accounts[2];
-        const transferVal = 50
+  it("Emergency Stop Delegation: Permission is correctly revoked", async () => {
+    const delegate = accounts[3];
+    let error = null;
+    await CONTRACT.setEmergencyPermission(delegate).send({ from: addrOwner });
+    await CONTRACT.revokeEmergencyPermission().send({ from: addrOwner });
 
-        const totalSupplyStart = await CONTRACT.totalSupply.call();
-        const balanceSenderStart = await CONTRACT.balanceOf.call(addrSender);
-        const balanceRecipientStart = await CONTRACT.balanceOf.call(addrRecipient);
+    try {
+      await CONTRACT.emergencyStop().send({ from: delegate });
+    } catch (err) {
+      error = err;
+    }
 
-        const fundVal = 100;
-        const fundRes = await CONTRACT.fund(addrSender, fundVal, { from: addrOwner });
+    assert.strictEqual(
+      error.toString(),
+      "Error: Returned error: VM Exception while processing transaction: revert This account is not allowed to do this"
+    );
+  });
 
-        const totalSupplyFund = await CONTRACT.totalSupply.call();
-        const balanceSenderFund = await CONTRACT.balanceOf.call(addrSender);
-        const balanceRecipientFund = await CONTRACT.balanceOf.call(addrRecipient);
+  it("Emergency Stop Delegation: Owner is not able to stop once has delegated", async () => {
+    const delegate = accounts[3];
+    let error = null;
+    await CONTRACT.setEmergencyPermission(delegate).send({ from: addrOwner });
 
-        await CONTRACT.emergencyStop({ from: addrOwner });
-        const switchStatusbefore = await CONTRACT.getTradingStatus({ from: addrOwner });
-        tradeStatusBefore = switchStatusbefore.receipt.logs
-        assert.equal(tradeStatus[0].args.balance, false);
+    try {
+      await CONTRACT.emergencyStop().send({ from: addrOwner });
+    } catch (err) {
+      error = err;
+    }
 
-        let actualError = null;
-        try {
-            const transferRes = await CONTRACT.transferNoData(addrRecipient, transferVal, { from: addrSender });
-        } catch (error) {
-            actualError = error;
-        }
-
-        const totalSupplyAfterTransfer = await CONTRACT.totalSupply.call();
-        const balanceSenderAfterTransfer = await CONTRACT.balanceOf.call(addrSender);
-        const balanceRecipientAfterTransfer = await CONTRACT.balanceOf.call(addrRecipient);
-
-        assert.strictEqual(totalSupplyStart.toNumber() + fundVal, totalSupplyFund.toNumber());
-        assert.strictEqual(balanceSenderStart.toNumber() + fundVal, balanceSenderFund.toNumber());
-        assert.strictEqual(balanceRecipientStart.toNumber(), balanceRecipientFund.toNumber());
-
-        assert.strictEqual(totalSupplyFund.toNumber(), totalSupplyAfterTransfer.toNumber());
-        assert.strictEqual(balanceSenderFund.toNumber(), balanceSenderAfterTransfer.toNumber());
-        assert.strictEqual(balanceRecipientFund.toNumber(), balanceRecipientAfterTransfer.toNumber());
-
-        assert.strictEqual(actualError.toString(),"Error: Returned error: VM Exception while processing transaction: revert Contract emergency stop is activated -- Reason given: Contract emergency stop is activated.");
-
-        await CONTRACT.emergencyStart({ from: addrOwner });
-        const switchStatusAfter = await CONTRACT.getTradingStatus({ from: addrOwner });
-        tradeStatusAfter = switchStatusAfter.receipt.logs
-        assert.equal(tradeStatus[0].args.balance, false);
-
-        const totalSupplyAfter = await CONTRACT.totalSupply.call();
-        const balanceSenderAfter = await CONTRACT.balanceOf.call(addrSender);
-        const balanceRecipientAfter = await CONTRACT.balanceOf.call(addrRecipient);
-
-        const fundValAfter = 100;
-        const fundResAfter = await CONTRACT.fund(addrSender, fundVal, { from: addrOwner });
-
-        const totalSupplyFundAfter = await CONTRACT.totalSupply.call();
-        const balanceSenderFundAfter = await CONTRACT.balanceOf.call(addrSender);
-        const balanceRecipientFundAfter = await CONTRACT.balanceOf.call(addrRecipient);
-
-        actualError = null;
-        try {
-            const transferRes = await CONTRACT.transferNoData(addrRecipient, transferVal, { from: addrSender });
-        } catch (error) {
-            actualError = error;
-        }
-
-        const totalSupplyAfterSwitch = await CONTRACT.totalSupply.call();
-        const balanceSenderAfterSwitch = await CONTRACT.balanceOf.call(addrSender);
-        const balanceRecipientAfterSwitch = await CONTRACT.balanceOf.call(addrRecipient);
-
-        assert.strictEqual(totalSupplyAfter.toNumber() + fundVal, totalSupplyFundAfter.toNumber());
-        assert.strictEqual(balanceSenderAfter.toNumber() + fundVal, balanceSenderFundAfter.toNumber());
-        assert.strictEqual(balanceRecipientAfter.toNumber(), balanceRecipientFundAfter.toNumber());
-
-        assert.strictEqual(totalSupplyFundAfter.toNumber(), totalSupplyAfterSwitch.toNumber());
-        assert.strictEqual(balanceSenderFundAfter.toNumber(), balanceSenderAfterSwitch.toNumber() + transferVal);
-        assert.strictEqual(balanceRecipientFundAfter.toNumber(), balanceRecipientAfterSwitch.toNumber() - transferVal);
-
-        assert.strictEqual(actualError,null);
-
-    });
-
-    it("Emergency Stop Delegation: Delegated account is able to stop an operation", async () => {
-      const delegate = accounts[3];
-
-      await CONTRACT.setEmergencyPermission(delegate, {from: addrOwner});
-
-      await CONTRACT.emergencyStop({ from: delegate });
-      const status = await CONTRACT.getTradingStatus({ from: addrOwner });
-      tradeStatus = status.receipt.logs
-      assert.equal(tradeStatus[0].args.balance, false);
-
-    })
-
-    it("Emergency Stop Delegation: Permission is correctly revoked", async () => {
-      const delegate = accounts[3];
-      let error = null;
-      await CONTRACT.setEmergencyPermission(delegate, {from: addrOwner});
-      await CONTRACT.revokeEmergencyPermission({from: addrOwner});
-
-      try{
-          await CONTRACT.emergencyStop({ from: delegate });
-      } catch (err) {
-          error = err;
-      }
-
-      assert.strictEqual(error.toString(),"Error: Returned error: VM Exception while processing transaction: revert This account is not allowed to do this -- Reason given: This account is not allowed to do this.");
-
-
-    })
-
-    it("Emergency Stop Delegation: Owner is not able to stop once has delegated", async () => {
-      const delegate = accounts[3];
-      let error = null;
-      await CONTRACT.setEmergencyPermission(delegate, {from: addrOwner});
-
-      try{
-          await CONTRACT.emergencyStop({ from: addrOwner });
-      } catch (err) {
-          error = err;
-      }
-
-      assert.strictEqual(error.toString(),"Error: Returned error: VM Exception while processing transaction: revert This account is not allowed to do this -- Reason given: This account is not allowed to do this.");
-
-
-    })
-
+    assert.strictEqual(
+      error.toString(),
+      "Error: Returned error: VM Exception while processing transaction: revert This account is not allowed to do this"
+    );
+  });
 });

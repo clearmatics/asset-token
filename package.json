@@ -9,7 +9,7 @@
     "openzeppelin-solidity": "2.3.0-rc.1",
     "solhint": "2.0.0",
     "solidity-coverage": "0.6.0-beta.5",
-    "truffle": "5.0.14",
+    "truffle": "5.0.19",
     "web3": "1.0.0-beta.53",
     "zos": "2.2.3",
     "zos-lib": "2.2.3"

@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2018 Clearmatics Technologies Ltd
+// Copyright (c) 2019 Clearmatics Technologies Ltd
 
 // SPDX-License-Identifier: LGPL-3.0+
 
@@ -42,10 +42,10 @@ contract UpgradeableAssetToken is Initializable, ERC223Interface, IERC20 {
         for every new update - as a constructor
     */
 
-    function initialize(string memory symbol, string memory name) public initializer {
+    function initialize(string memory symbol, string memory name, address owner) public initializer {
         _symbol = symbol;
         _name = name;
-        _owner = msg.sender;
+        _owner = owner;
         _isActive = true;
         _totalSupply = 0;
         _decimals = 3;
@@ -59,7 +59,7 @@ contract UpgradeableAssetToken is Initializable, ERC223Interface, IERC20 {
 
     modifier onlyOwner() {
         if (msg.sender != _owner) {
-            revert("Only the contract owner can perform this operation");
+            revert("Only the contracttransfer owner can perform this operation");
         }
         _;
     }
@@ -67,7 +67,7 @@ contract UpgradeableAssetToken is Initializable, ERC223Interface, IERC20 {
     // @dev stops system when switched to false
     modifier checkActive() {
         if (_isActive != true) {
-            revert("Contract emergency stop ERC223Interfaceis activated");
+            revert("Contract emergency stop is activated");
         }
         _;
     }

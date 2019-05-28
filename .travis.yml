@@ -10,6 +10,6 @@ matrix:
         - yarn install
       script:
         - yarn lint
-        - yarn ganache
+        - yarn ganache &
         - truffle compile
         - yarn test

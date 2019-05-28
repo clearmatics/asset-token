@@ -1,4 +1,4 @@
-// Copyright (c) 2019-2020 Clearmatics Technologies Ltd
+// Copyright (c) 2019 Clearmatics Technologies Ltd
 
 // SPDX-License-Identifier: LGPL-3.0+
 
@@ -22,7 +22,7 @@ contract("Proxy to upgradable token", accounts => {
     //contains logic contract
     PROXY = await PROJECT.createProxy(UpgradeableAssetToken, {
       initMethod: "initialize",
-      initArgs: ["CLR", "Asset Token"]
+      initArgs: ["CLR", "Asset Token", owner]
     });
   });
 
@@ -57,7 +57,7 @@ contract("Proxy to upgradable token", accounts => {
   it("Creates distinct proxies to same logic", async () => {
     const secondProxy = await PROJECT.createProxy(UpgradeableAssetToken, {
       initMethod: "initialize",
-      initArgs: ["CLR", "Asset Token"]
+      initArgs: ["CLR", "Asset Token", owner]
     });
 
     const name = await secondProxy.methods.name().call();

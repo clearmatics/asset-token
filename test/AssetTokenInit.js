@@ -2,47 +2,68 @@
 
 // SPDX-License-Identifier: LGPL-3.0+
 
-const AssetToken = artifacts.require('AssetToken');
+const { TestHelper } = require("zos"); //function to retrieve zos project structure object
+const { Contracts, ZWeb3 } = require("zos-lib"); //to retrieve compiled contract artifacts
+
+ZWeb3.initialize(web3.currentProvider);
+
+const UpgradeableAssetToken = Contracts.getFromLocal("UpgradeableAssetToken");
 
 let CONTRACT;
 
-contract('AssetTokenInit', (accounts) => {
-    const addrOwner = accounts[0];
-    beforeEach(async () => {
-        CONTRACT = await AssetToken.new("CLR", "Asset Token", { from: addrOwner });
+contract("AssetTokenInit", accounts => {
+  const addrOwner = accounts[0];
+  const proxyOwner = accounts[1];
+  beforeEach(async () => {
+    PROJECT = await TestHelper({ from: proxyOwner });
+
+    //contains logic contract
+    PROXY = await PROJECT.createProxy(UpgradeableAssetToken, {
+      initMethod: "initialize",
+      initArgs: ["CLR", "Asset Token", addrOwner]
     });
 
-    it('name: Check the name of the token', async () => {
-        const actualName = await CONTRACT.name.call();
-        const expectedName = "Asset Token";
+    CONTRACT = PROXY.methods;
+  });
 
-        assert.strictEqual(actualName, expectedName);
-    });
+  it("name: Check the name of the token", async () => {
+    const actualName = await CONTRACT.name().call();
+    const expectedName = "Asset Token";
 
-    it('symbol: Check the tokens symbol', async () => {
-        const actualSymbol = await CONTRACT.symbol.call();
-        const expectedSymbol = "CLR";
+    assert.strictEqual(actualName, expectedName);
+  });
 
-        assert.strictEqual(actualSymbol, expectedSymbol);
-    });
+  it("symbol: Check the tokens symbol", async () => {
+    const actualSymbol = await CONTRACT.symbol().call();
+    const expectedSymbol = "CLR";
 
-    it('decimals: Check the number of decimal place in the tokens', async () => {
-        const actualDecimals = await CONTRACT.decimals.call();
-        const expectedDecimals = 3;
+    assert.strictEqual(actualSymbol, expectedSymbol);
+  });
 
-        assert.strictEqual(actualDecimals.toNumber(), expectedDecimals);
-    });
+  it("decimals: Check the number of decimal place in the tokens", async () => {
+    const actualDecimals = await CONTRACT.decimals().call();
+    const expectedDecimals = 3;
 
-    it('default: Attempt to send Eth to the contract', async () => {
-        const weiToSend = web3.utils.toWei("1","ether");
+    assert.strictEqual(parseInt(actualDecimals), expectedDecimals);
+  });
 
-        let actualError = null;
-        try {
-            const result = await CONTRACT.sendTransaction({value:weiToSend});
-        } catch (error) {
-            actualError = error;
-        }
+  it("default: Attempt to send Eth to the contract", async () => {
+    const weiToSend = web3.utils.toWei("1", "ether");
 
-        assert.strictEqual(actualError.toString(), "Error: Returned error: VM Exception while processing transaction: revert This contract does not support ETH -- Reason given: This contract does not support ETH.");
-    });
+    let actualError = null;
+    try {
+      const result = await web3.eth.sendTransaction({
+        to: PROXY.address,
+        value: weiToSend,
+        from: addrOwner
+      });
+    } catch (error) {
+      actualError = error;
+    }
+
+    assert.strictEqual(
+      actualError.toString(),
+      "Error: Returned error: VM Exception while processing transaction: revert This contract does not support ETH"
+    );
+  });
 });

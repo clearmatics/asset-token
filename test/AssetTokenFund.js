@@ -2,144 +2,208 @@
 
 // SPDX-License-Identifier: LGPL-3.0+
 
-const AssetToken = artifacts.require('AssetToken');
+const { TestHelper } = require("zos"); //function to retrieve zos project structure object
+const { Contracts, ZWeb3 } = require("zos-lib"); //to retrieve compiled contract artifacts
+
+ZWeb3.initialize(web3.currentProvider);
+
+const UpgradeableAssetToken = Contracts.getFromLocal("UpgradeableAssetToken");
 
 let CONTRACT;
 
-contract('AssetTokenFund', (accounts) => {
-    const addrOwner = accounts[0];
-    beforeEach(async () => {
-        CONTRACT = await AssetToken.new("CLP", "Asset Token", { from: addrOwner });
+contract("AssetTokenFund", accounts => {
+  const addrOwner = accounts[0];
+  const proxyOwner = accounts[1];
+  beforeEach(async () => {
+    PROJECT = await TestHelper({ from: proxyOwner });
+
+    //contains logic contract
+    PROXY = await PROJECT.createProxy(UpgradeableAssetToken, {
+      initMethod: "initialize",
+      initArgs: ["CLR", "Asset Token", addrOwner]
     });
 
-    it('fund: Fund an account', async () => {
-        const addrRecipient = accounts[1];
+    CONTRACT = PROXY.methods;
+  });
 
-        const totalSupplyBefore = await CONTRACT.totalSupply.call();
-        const balanceRecipientBefore = await CONTRACT.balanceOf.call(addrRecipient);
+  it("fund: Fund an account", async () => {
+    const addrRecipient = accounts[2];
 
-        const fundVal = 100;
-        const fundRes = await CONTRACT.fund(addrRecipient, fundVal, { from: addrOwner });
+    const totalSupplyBefore = await CONTRACT.totalSupply().call();
+    const balanceRecipientBefore = await CONTRACT.balanceOf(
+      addrRecipient
+    ).call();
 
-        const fundEvent = fundRes.logs.filter((log) => log.event === 'Fund')[0];
-        const fundEventVal = fundEvent.args.value.toNumber();
-        const fundEventBalance = fundEvent.args.balance.toNumber();
-
-        const totalSupplyAfter = await CONTRACT.totalSupply.call();
-        const balanceRecipientAfter = await CONTRACT.balanceOf.call(addrRecipient);
-
-        assert(fundEvent != null);
-        assert.strictEqual(fundVal, fundEventVal);
-        assert.strictEqual(balanceRecipientBefore.toNumber() + fundVal, fundEventBalance);
-        assert.strictEqual(totalSupplyBefore.toNumber() + fundVal, totalSupplyAfter.toNumber());
-        assert.strictEqual(balanceRecipientBefore.toNumber() + fundVal, balanceRecipientAfter.toNumber());
+    const fundVal = 100;
+    const fundRes = await CONTRACT.fund(addrRecipient, fundVal).send({
+      from: addrOwner
     });
 
-    it('fund: Attempt to Fund when not the contract owner nor delegated one', async () => {
-        const addrRecipient = accounts[1];
+    const fundEvent = fundRes.events.Fund;
+    const fundEventVal = parseInt(fundEvent.returnValues.value);
+    const fundEventBalance = parseInt(fundEvent.returnValues.balance);
 
-        const totalSupplyBefore = await CONTRACT.totalSupply.call();
-        const balanceRecipientBefore = await CONTRACT.balanceOf.call(addrRecipient);
+    const totalSupplyAfter = await CONTRACT.totalSupply().call();
+    const balanceRecipientAfter = await CONTRACT.balanceOf(
+      addrRecipient
+    ).call();
 
-        let actualError = null;
-        try {
-            const fundVal = 100;
-            const fundRes = await CONTRACT.fund(addrRecipient, fundVal, { from: addrRecipient });
-        } catch (error) {
-            actualError = error;
-        }
+    assert(fundEvent != null);
+    assert.strictEqual(fundVal, fundEventVal);
+    assert.strictEqual(
+      parseInt(balanceRecipientBefore) + fundVal,
+      fundEventBalance
+    );
+    assert.strictEqual(
+      parseInt(totalSupplyBefore) + fundVal,
+      parseInt(totalSupplyAfter)
+    );
+    assert.strictEqual(
+      parseInt(balanceRecipientBefore) + fundVal,
+      parseInt(balanceRecipientAfter)
+    );
+  });
 
-        const totalSupplyAfter = await CONTRACT.totalSupply.call();
-        const balanceRecipientAfter = await CONTRACT.balanceOf.call(addrRecipient);
+  it("fund: Attempt to Fund when not the contract owner nor delegated one", async () => {
+    const addrRecipient = accounts[2];
 
-        assert.strictEqual(totalSupplyBefore.toNumber(), totalSupplyAfter.toNumber());
-        assert.strictEqual(balanceRecipientBefore.toNumber(), balanceRecipientAfter.toNumber());
-        assert.strictEqual(actualError.toString(),"Error: Returned error: VM Exception while processing transaction: revert This account is not allowed to do this -- Reason given: This account is not allowed to do this.");
-    });
+    const totalSupplyBefore = await CONTRACT.totalSupply().call();
+    const balanceRecipientBefore = await CONTRACT.balanceOf(
+      addrRecipient
+    ).call();
 
-    it('fund: Attempt to Fund the contract owner', async () => {
-        const totalSupplyBefore = await CONTRACT.totalSupply.call();
-        const balanceRecipientBefore = await CONTRACT.balanceOf.call(addrOwner);
-
-        let actualError = null;
-        try {
-            const fundVal = 100;
-            const fundRes = await CONTRACT.fund(addrOwner, fundVal, { from: addrOwner });
-        } catch (error) {
-            actualError = error;
-        }
-
-        const totalSupplyAfter = await CONTRACT.totalSupply.call();
-        const balanceRecipientAfter = await CONTRACT.balanceOf.call(addrOwner);
-
-        assert.strictEqual(totalSupplyBefore.toNumber(), totalSupplyAfter.toNumber());
-        assert.strictEqual(balanceRecipientBefore.toNumber(), balanceRecipientAfter.toNumber());
-        assert.strictEqual(actualError.toString(),"Error: Returned error: VM Exception while processing transaction: revert The contract owner can not perform this operation -- Reason given: The contract owner can not perform this operation.");
-    });
-
-    it("Delegate fund operation: Delegated account is able to fund", async () => {
-        const delegate = accounts[1];
-        const addrRecipient = accounts[2];
-
-        await CONTRACT.setFundingPermission(delegate, {from:addrOwner});
-
-        const totalSupplyBefore = await CONTRACT.totalSupply.call();
-        const balanceRecipientBefore = await CONTRACT.balanceOf.call(addrRecipient);
-
-        const fundVal = 100;
-        const fundRes = await CONTRACT.fund(addrRecipient, fundVal, { from: delegate });
-
-        const fundEvent = fundRes.logs.filter((log) => log.event === 'Fund')[0];
-        const fundEventVal = fundEvent.args.value.toNumber();
-        const fundEventBalance = fundEvent.args.balance.toNumber();
-
-        const totalSupplyAfter = await CONTRACT.totalSupply.call();
-        const balanceRecipientAfter = await CONTRACT.balanceOf.call(addrRecipient);
-
-        assert(fundEvent != null);
-        assert.strictEqual(fundVal, fundEventVal);
-        assert.strictEqual(balanceRecipientBefore.toNumber() + fundVal, fundEventBalance);
-        assert.strictEqual(totalSupplyBefore.toNumber() + fundVal, totalSupplyAfter.toNumber());
-        assert.strictEqual(balanceRecipientBefore.toNumber() + fundVal, balanceRecipientAfter.toNumber());
-    })
-
-    it("Delegate Fund Operation: Revoked account is not able to fund", async() => {
-      const delegate = accounts[1];
-      const addrRecipient = accounts[2];
+    let actualError = null;
+    try {
       const fundVal = 100;
-      let error = null;
+      const fundRes = await CONTRACT.fund(addrRecipient, fundVal).send({
+        from: addrRecipient
+      });
+    } catch (error) {
+      actualError = error;
+    }
 
-      await CONTRACT.setFundingPermission(delegate, {from:addrOwner});
-      await CONTRACT.revokeFundingPermission({from:addrOwner});
+    const totalSupplyAfter = await CONTRACT.totalSupply().call();
+    const balanceRecipientAfter = await CONTRACT.balanceOf(
+      addrRecipient
+    ).call();
 
-      try{
-        await CONTRACT.fund(addrRecipient, fundVal, {from:delegate});
-      }catch (err){
-        error = err;
-      }
+    assert.strictEqual(parseInt(totalSupplyBefore), parseInt(totalSupplyAfter));
+    assert.strictEqual(
+      parseInt(balanceRecipientBefore),
+      parseInt(balanceRecipientAfter)
+    );
+    assert.strictEqual(
+      actualError.toString(),
+      "Error: Returned error: VM Exception while processing transaction: revert This account is not allowed to do this"
+    );
+  });
 
-      assert.strictEqual(error.toString(),"Error: Returned error: VM Exception while processing transaction: revert This account is not allowed to do this -- Reason given: This account is not allowed to do this.");
+  it("fund: Attempt to Fund the contract owner", async () => {
+    const totalSupplyBefore = await CONTRACT.totalSupply().call();
+    const balanceRecipientBefore = await CONTRACT.balanceOf(addrOwner).call();
 
-    })
-
-    it("Delegate Fund Operation: Owner is not able to fund once has delegated", async () => {
-      const delegate = accounts[1];
-      const addrRecipient = accounts[2];
+    let actualError = null;
+    try {
       const fundVal = 100;
-      let error = null;
-      await CONTRACT.setFundingPermission(delegate, {from:addrOwner});
+      const fundRes = await CONTRACT.fund(addrOwner, fundVal).send({
+        from: addrOwner
+      });
+    } catch (error) {
+      actualError = error;
+    }
 
-      try{
-        await CONTRACT.fund(addrRecipient, fundVal, {from:addrOwner});
-      }catch (err){
-        error = err;
-      }
+    const totalSupplyAfter = await CONTRACT.totalSupply().call();
+    const balanceRecipientAfter = await CONTRACT.balanceOf(addrOwner).call();
 
-      assert.strictEqual(error.toString(),"Error: Returned error: VM Exception while processing transaction: revert This account is not allowed to do this -- Reason given: This account is not allowed to do this.");
+    assert.strictEqual(parseInt(totalSupplyBefore), parseInt(totalSupplyAfter));
+    assert.strictEqual(
+      parseInt(balanceRecipientBefore),
+      parseInt(balanceRecipientAfter)
+    );
+    assert.strictEqual(
+      actualError.toString(),
+      "Error: Returned error: VM Exception while processing transaction: revert The contract owner can not perform this operation"
+    );
+  });
 
+  it("Delegate fund operation: Delegated account is able to fund", async () => {
+    const delegate = accounts[2];
+    const addrRecipient = accounts[3];
 
+    await CONTRACT.setFundingPermission(delegate).send({ from: addrOwner });
 
-    })
+    const totalSupplyBefore = await CONTRACT.totalSupply().call();
+    const balanceRecipientBefore = await CONTRACT.balanceOf(
+      addrRecipient
+    ).call();
 
+    const fundVal = 100;
+    const fundRes = await CONTRACT.fund(addrRecipient, fundVal).send({
+      from: delegate
+    });
 
+    const fundEvent = fundRes.events.Fund;
+    const fundEventVal = parseInt(fundEvent.returnValues.value);
+    const fundEventBalance = parseInt(fundEvent.returnValues.balance);
+
+    const totalSupplyAfter = await CONTRACT.totalSupply().call();
+    const balanceRecipientAfter = await CONTRACT.balanceOf(
+      addrRecipient
+    ).call();
+
+    assert(fundEvent != null);
+    assert.strictEqual(fundVal, fundEventVal);
+    assert.strictEqual(
+      parseInt(totalSupplyBefore) + fundVal,
+      parseInt(totalSupplyAfter)
+    );
+    assert.strictEqual(
+      parseInt(balanceRecipientBefore) + fundVal,
+      parseInt(balanceRecipientAfter)
+    );
+    assert.strictEqual(
+      parseInt(balanceRecipientBefore) + fundVal,
+      parseInt(fundEventBalance)
+    );
+  });
+
+  it("Delegate Fund Operation: Revoked account is not able to fund", async () => {
+    const delegate = accounts[2];
+    const addrRecipient = accounts[3];
+    const fundVal = 100;
+    let error = null;
+
+    await CONTRACT.setFundingPermission(delegate).send({ from: addrOwner });
+    await CONTRACT.revokeFundingPermission().send({ from: addrOwner });
+
+    try {
+      await CONTRACT.fund(addrRecipient, fundVal).send({ from: delegate });
+    } catch (err) {
+      error = err;
+    }
+
+    assert.strictEqual(
+      error.toString(),
+      "Error: Returned error: VM Exception while processing transaction: revert This account is not allowed to do this"
+    );
+  });
+
+  it("Delegate Fund Operation: Owner is not able to fund once has delegated", async () => {
+    const delegate = accounts[2];
+    const addrRecipient = accounts[3];
+    const fundVal = 100;
+    let error = null;
+    await CONTRACT.setFundingPermission(delegate).send({ from: addrOwner });
+
+    try {
+      await CONTRACT.fund(addrRecipient, fundVal).send({ from: addrOwner });
+    } catch (err) {
+      error = err;
+    }
+
+    assert.strictEqual(
+      error.toString(),
+      "Error: Returned error: VM Exception while processing transaction: revert This account is not allowed to do this"
+    );
+  });
 });

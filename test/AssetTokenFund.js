@@ -26,7 +26,6 @@ contract("AssetTokenFund", accounts => {
     CONTRACT = PROXY.methods;
   });
 
-  /*
   it("fund: Fund an account", async () => {
     const addrRecipient = accounts[2];
 
@@ -64,7 +63,7 @@ contract("AssetTokenFund", accounts => {
       parseInt(balanceRecipientAfter)
     );
   });
-  */
+
   it("fund: Attempt to Fund when not the contract owner nor delegated one", async () => {
     const addrRecipient = accounts[2];
 
@@ -127,7 +126,6 @@ contract("AssetTokenFund", accounts => {
     );
   });
 
-  /*
   it("Delegate fund operation: Delegated account is able to fund", async () => {
     const delegate = accounts[2];
     const addrRecipient = accounts[3];
@@ -169,7 +167,6 @@ contract("AssetTokenFund", accounts => {
       parseInt(fundEventBalance)
     );
   });
-  */
 
   it("Delegate Fund Operation: Revoked account is not able to fund", async () => {
     const delegate = accounts[2];

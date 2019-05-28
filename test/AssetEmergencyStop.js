@@ -89,7 +89,6 @@ contract("AssetEmergencyStop", accounts => {
     );
   });
 
-  /*
   it("Emergency Switch: Attempt to transfer when trading is deactivated", async () => {
     const addrSender = accounts[2];
     const addrRecipient = accounts[3];
@@ -308,7 +307,6 @@ contract("AssetEmergencyStop", accounts => {
 
     assert.strictEqual(actualError, null);
   });
-  */
 
   it("Emergency Stop Delegation: Delegated account is able to stop an operation", async () => {
     const delegate = accounts[3];

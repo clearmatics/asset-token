@@ -117,7 +117,6 @@ contract UpgradeableAssetToken is Initializable, ERC223Interface, IERC20 {
         return _balances[who];
     }
 
-
     function setEmergencyPermission(address who) public onlyOwner {
         _emergencyDelegate = who;
         emit EmergencyDelegation(_emergencyDelegate);

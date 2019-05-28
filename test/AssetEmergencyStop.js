@@ -89,6 +89,7 @@ contract("AssetEmergencyStop", accounts => {
     );
   });
 
+  /*
   it("Emergency Switch: Attempt to transfer when trading is deactivated", async () => {
     const addrSender = accounts[2];
     const addrRecipient = accounts[3];
@@ -100,13 +101,9 @@ contract("AssetEmergencyStop", accounts => {
     ).call();
 
     const fundVal = 100;
-    try {
-      const fundRes = await CONTRACT.fund(addrSender, fundVal).send({
-        from: addrOwner
-      });
-    } catch (err) {
-      console.log(err);
-    }
+    const fundRes = await CONTRACT.fund(addrSender, fundVal).send({
+      from: addrOwner
+    });
 
     const totalSupplyFund = await CONTRACT.totalSupply().call();
     const balanceSenderFund = await CONTRACT.balanceOf(addrSender).call();
@@ -311,6 +308,7 @@ contract("AssetEmergencyStop", accounts => {
 
     assert.strictEqual(actualError, null);
   });
+  */
 
   it("Emergency Stop Delegation: Delegated account is able to stop an operation", async () => {
     const delegate = accounts[3];

@@ -26,6 +26,7 @@ contract("AssetTokenTransfer", accounts => {
     CONTRACT = PROXY.methods;
   });
 
+  /*
   it("Approve: set an approved limit and then make a transfer", async () => {
     const addrSender = accounts[2];
     const addrRecipient = accounts[3];
@@ -546,4 +547,5 @@ contract("AssetTokenTransfer", accounts => {
       parseInt(balanceRecipientTrans)
     );
   });
+  */
 });

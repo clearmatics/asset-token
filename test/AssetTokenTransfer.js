@@ -27,6 +27,49 @@ contract("AssetTokenTransfer", accounts => {
     CONTRACT = PROXY.methods;
   });
 
+  it("Contract Owner cannot be the sender in a transfer", async () => {
+    const addrSender = addrOwner;
+    const addrRecipient = accounts[2];
+
+    const totalSupplyStart = await CONTRACT.totalSupply().call();
+    const balanceSenderStart = await CONTRACT.balanceOf(addrSender).call();
+    const balanceRecipientStart = await CONTRACT.balanceOf(
+      addrRecipient
+    ).call();
+
+    let actualError = null;
+    try {
+      const transferVal = 50;
+      const transferRes = await CONTRACT.transferNoData(
+        addrRecipient,
+        transferVal
+      ).send({ from: addrSender });
+    } catch (error) {
+      actualError = error;
+    }
+
+    const totalSupplyAfterTransfer = await CONTRACT.totalSupply().call();
+    const balanceRecipientAfterTransfer = await CONTRACT.balanceOf(
+      addrOwner
+    ).call();
+
+    assert.strictEqual(
+      parseInt(totalSupplyStart),
+      parseInt(totalSupplyAfterTransfer)
+    );
+
+    assert.strictEqual(
+      parseInt(balanceRecipientStart),
+      parseInt(balanceRecipientAfterTransfer)
+    );
+
+    assert.strictEqual(
+      actualError.toString(),
+      "Error: Returned error: VM Exception while processing transaction: revert The contract owner can not perform this operation"
+    );
+  });
+
+  /*
   it("Can transfer tokens from External Owned Account(EOA) to EOA", async () => {
     const addrSender = accounts[2];
     const addrRecipient = accounts[3];
@@ -167,47 +210,7 @@ contract("AssetTokenTransfer", accounts => {
     );
   });
 
-  it("Contract Owner cannot be the sender in a transfer", async () => {
-    const addrSender = addrOwner;
-    const addrRecipient = accounts[2];
 
-    const totalSupplyStart = await CONTRACT.totalSupply().call();
-    const balanceSenderStart = await CONTRACT.balanceOf(addrSender).call();
-    const balanceRecipientStart = await CONTRACT.balanceOf(
-      addrRecipient
-    ).call();
-
-    let actualError = null;
-    try {
-      const transferVal = 50;
-      const transferRes = await CONTRACT.transferNoData(
-        addrRecipient,
-        transferVal
-      ).send({ from: addrSender });
-    } catch (error) {
-      actualError = error;
-    }
-
-    const totalSupplyAfterTransfer = await CONTRACT.totalSupply().call();
-    const balanceRecipientAfterTransfer = await CONTRACT.balanceOf(
-      addrOwner
-    ).call();
-
-    assert.strictEqual(
-      parseInt(totalSupplyStart),
-      parseInt(totalSupplyAfterTransfer)
-    );
-
-    assert.strictEqual(
-      parseInt(balanceRecipientStart),
-      parseInt(balanceRecipientAfterTransfer)
-    );
-
-    assert.strictEqual(
-      actualError.toString(),
-      "Error: Returned error: VM Exception while processing transaction: revert The contract owner can not perform this operation"
-    );
-  });
 
   it("Contract Owner cannot be the recipient in a transfer", async () => {
     const addrSender = accounts[2];
@@ -509,4 +512,5 @@ contract("AssetTokenTransfer", accounts => {
       "Error: Returned error: VM Exception while processing transaction: revert"
     );
   });
+  */
 });

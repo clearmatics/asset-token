@@ -26,7 +26,6 @@ contract("AssetTokenDefund", accounts => {
     CONTRACT = PROXY.methods;
   });
 
-  /*
   it("defund: Defund more tokens than in the account", async () => {
     const addrRecipient = accounts[2];
 
@@ -149,7 +148,6 @@ contract("AssetTokenDefund", accounts => {
       parseInt(balanceRecipientDefunded)
     );
   });
-  */
 
   it("defund: Attempt to Defund the contract owner", async () => {
     const totalSupplyBefore = await CONTRACT.totalSupply().call();

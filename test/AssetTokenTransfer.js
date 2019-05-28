@@ -69,7 +69,6 @@ contract("AssetTokenTransfer", accounts => {
     );
   });
 
-  /*
   it("Can transfer tokens from External Owned Account(EOA) to EOA", async () => {
     const addrSender = accounts[2];
     const addrRecipient = accounts[3];
@@ -209,8 +208,6 @@ contract("AssetTokenTransfer", accounts => {
       "Error: Returned error: VM Exception while processing transaction: revert You must have sufficent balance to perform this operation"
     );
   });
-
-
 
   it("Contract Owner cannot be the recipient in a transfer", async () => {
     const addrSender = accounts[2];
@@ -512,5 +509,4 @@ contract("AssetTokenTransfer", accounts => {
       "Error: Returned error: VM Exception while processing transaction: revert"
     );
   });
-  */
 });

@@ -11,5 +11,6 @@ matrix:
       script:
         - yarn lint
         - yarn ganache &
-        - truffle compile
+        - npx zos session --network development
+        - npx zos push --deploy-dependencies
         - yarn test

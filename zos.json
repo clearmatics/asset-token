@@ -3,7 +3,7 @@
   "name": "UpgradableAssetToken",
   "version": "0.1.0",
   "contracts": {
-    "UpgradeableAssetToken": "UpgradeableAssetToken"
+    "AssetToken": "UpgradeableAssetToken"
   },
   "dependencies": {
     "openzeppelin-eth": "^2.1.3"

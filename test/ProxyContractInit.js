@@ -7,7 +7,7 @@ const { Contracts, ZWeb3 } = require("zos-lib"); //to retrieve compiled contract
 
 ZWeb3.initialize(web3.currentProvider);
 
-const UpgradeableAssetToken = Contracts.getFromLocal("UpgradeableAssetToken"); //need to build first
+const AssetToken = Contracts.getFromLocal("AssetToken"); //need to build first
 
 let PROXY, PROJECT;
 let proxyAdminAddress;
@@ -21,7 +21,7 @@ contract("Proxy to upgradable token", async accounts => {
     PROJECT = await TestHelper({ from: proxyOwner });
 
     //creates a new proxy
-    PROXY = await PROJECT.createProxy(UpgradeableAssetToken, {
+    PROXY = await PROJECT.createProxy(AssetToken, {
       initMethod: "initialize",
       initArgs: ["CLR", "Asset Token", addrOwner]
     });
@@ -32,7 +32,7 @@ contract("Proxy to upgradable token", async accounts => {
     const symbol = await PROXY.methods.symbol().call();
     const decimal = await PROXY.methods.decimals().call();
     const value = web3.utils.toWei("1", "ether");
-    const logicAddress = PROJECT.implementations.UpgradeableAssetToken.address;
+    const logicAddress = PROJECT.implementations.AssetToken.address;
 
     let errMsg;
     try {

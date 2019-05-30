@@ -1,9 +1,9 @@
 {
   "zosversion": "2.2",
-  "name": "UpgradableAssetToken",
+  "name": "AssetToken",
   "version": "0.1.0",
   "contracts": {
-    "AssetToken": "UpgradeableAssetToken"
+    "AssetToken": "AssetToken"
   },
   "dependencies": {
     "openzeppelin-eth": "^2.1.3"

@@ -6,7 +6,7 @@ const NotAReceivingContract = artifacts.require(`./NotAReceivingContract.sol`);
 async function deploy(options, tokenOwner) {
   //Register Contract in the zos project
   add({
-    contractsData: [{ name: "UpgradeableAssetToken", alias: "AssetToken" }]
+    contractsData: [{ name: "AssetToken", alias: "AssetToken" }]
   });
 
   //push it to the network
@@ -29,7 +29,6 @@ module.exports = (deployer, networkName, accounts) => {
   deployer.then(async () => {
     deployer.deploy(MockReceivingContract);
     deployer.deploy(NotAReceivingContract);
-    //deployer.deploy(UpgradeableAssetToken, "CLR", "Asset Token", accounts[0]);
     const {
       network,
       txParams

@@ -6,7 +6,7 @@ const { Contracts, ZWeb3 } = require("zos-lib"); //to retrieve compiled contract
 
 ZWeb3.initialize(web3.currentProvider);
 
-const UpgradeableAssetToken = Contracts.getFromLocal("UpgradeableAssetToken");
+const AssetToken = Contracts.getFromLocal("AssetToken");
 const MockReceivingContract = artifacts.require(`MockReceivingContract`);
 const NotAReceivingContract = artifacts.require(`NotAReceivingContract`);
 
@@ -19,7 +19,7 @@ contract("AssetTokenTransfer", accounts => {
     PROJECT = await TestHelper({ from: proxyOwner });
 
     //contains logic contract
-    PROXY = await PROJECT.createProxy(UpgradeableAssetToken, {
+    PROXY = await PROJECT.createProxy(AssetToken, {
       initMethod: "initialize",
       initArgs: ["CLR", "Asset Token", addrOwner]
     });

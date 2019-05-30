@@ -4,13 +4,15 @@
 
 Designed to represent a fungible asset with offchain interaction as an [ERC223][1] token.
 
+Integrated with [ZeppelinOS][7] to make it upgradeable.
+
 ## Developing
 
 [Truffle][2] is used to develop and test the Asset Token Smart Contract. This has a dependency on [Node.js][3].
 
 Prerequisites:
 
-[yarn][4] (but [npm][5] should work just as well) and [solidity-coverage ][6] needs to be installed.
+[yarn][4] (but [npm][5] should work just as well)
 
     yarn install
 
@@ -23,13 +25,17 @@ Start `ganache` in a separate terminal tab or window.
     yarn ganache
 
     # in separate window or tab
+    npx zos session --network development --from <address>
+
+This will start a session to work with in the network. --from flag is optional
+
+    npx zos push --deploy-dependencies
+
+This will compile and deploy contracts from zos.json and dependencies to the local network. --deploy flag not needed if running in public testnets (Rinkeby, Kovan, Ropsten) or mainnet.
+
     yarn test
 
-This will compile the contract, deploy to the testrpc instance and run the tests.
-
-    yarn coverage
-
-this will produce a test coverage report
+This will run tests
 
 ## Deploy Asset Token (ready to use with wallet)
 
@@ -45,4 +51,4 @@ This will deploy Asset Token and fund accounts
 [3]: https://nodejs.org/
 [4]: https://yarnpkg.com/en/docs/install
 [5]: https://docs.npmjs.com/getting-started/installing-node
-[6]: https://www.npmjs.com/package/solidity-coverage
+[7]: https://zeppelinos.org/

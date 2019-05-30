@@ -10,7 +10,7 @@
 
 # Introduction
 
-This documentation aims at making life easier when dealing with upgradable smart Contracts, as we may need them for future implementations. I've collected materials and documentation from many different sources and here i try to condense them in a single one.
+This documentation aims at making life easier when dealing with upgradable smart Contracts, as we may need them for future implementations. I've collected materials and documentation from many different sources and here I try to condense them in a single one.
 
 This feature is part of the [ZeppelinOS](https://zeppelinos.org/) project, forked from the well-known openzeppelin. They provide a set of features that would improve the smart contract development experience, such as on-chain packages and libraries, state channels, trusted oracles, other than ZepKit - a toolkit that encapsulates Truffle, Infura, OpenZeppelin, and ZeppelinOS.
 So we rely on ZeppelinOS both for the documentation i provide here, and on the implementation.

@@ -12,7 +12,7 @@ const UpgradeableAssetToken = Contracts.getFromLocal("UpgradeableAssetToken"); /
 let PROXY, PROJECT;
 let proxyAdminAddress;
 
-contract("Proxy to upgradable token", accounts => {
+contract("Proxy to upgradable token", async accounts => {
   const addrOwner = accounts[0];
   const proxyOwner = accounts[1];
 
@@ -20,7 +20,7 @@ contract("Proxy to upgradable token", accounts => {
     //contains all zos structure - implementations, dependencies and proxyAdmin contracts
     PROJECT = await TestHelper({ from: proxyOwner });
 
-    //contains logic conconsole.log(PROJECT);tract
+    //creates a new proxy
     PROXY = await PROJECT.createProxy(UpgradeableAssetToken, {
       initMethod: "initialize",
       initArgs: ["CLR", "Asset Token", addrOwner]

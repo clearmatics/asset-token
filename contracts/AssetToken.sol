@@ -15,7 +15,7 @@ import "./ERC223Interface.sol";
 import "./ERC223ReceivingContract.sol";
 
 
-contract UpgradeableAssetToken is Initializable, ERC223Interface, IERC20 {
+contract AssetToken is Initializable, ERC223Interface, IERC20 {
     using SafeMath for uint256;
 
     string public _name;

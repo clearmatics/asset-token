@@ -1,6 +1,7 @@
 # Asset Token
 
 [![Build Status](https://travis-ci.org/clearmatics/asset-token.svg?branch=master)](https://travis-ci.org/clearmatics/asset-token)
+[![Coverage Status](https://coveralls.io/repos/github/clearmatics/asset-token/badge.svg?branch=master)](https://coveralls.io/github/clearmatics/asset-token?branch=master)
 
 Designed to represent a fungible asset with offchain interaction as an [ERC223][1] token.
 

@@ -6,6 +6,8 @@ matrix:
   include:
     - os: linux
       dist: trusty
+      install:
+        - npm install -g coveralls
       before_script:
         - yarn install
       script:
@@ -14,3 +16,4 @@ matrix:
         - npx zos session --network development
         - npx zos push --deploy-dependencies
         - yarn test
+        - npm run coverage && cat coverage/lcov.info | coveralls

@@ -39,7 +39,6 @@ contract AssetToken is Initializable, ERC223Interface, IERC20 {
     /**
         initialize function instead of constructor
         initializer from Initializable makes sure the function is called only once
-        for every new update - as a constructor
     */
 
     function initialize(string memory symbol, string memory name, address owner) public initializer {

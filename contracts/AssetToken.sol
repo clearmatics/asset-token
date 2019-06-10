@@ -72,7 +72,7 @@ contract AssetToken is Initializable, ERC223Interface, IERC20 {
     }
 
     modifier noOwnerAsCounterparty(address counterparty) {
-        if (counterparty == _owner || counterparty == _fundingDelegate) {
+        if (counterparty == _owner || counterparty == _fundingDelegate || counterparty == _emergencyDelegate) {
             revert("The contract owner can not perform this operation");
         }
         _;

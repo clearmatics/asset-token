@@ -58,7 +58,7 @@ contract AssetToken is Initializable, ERC223Interface, IERC20 {
 
     modifier onlyOwner() {
         if (msg.sender != _owner) {
-            revert("Only the contracttransfer owner can perform this operation");
+            revert("Only the contract owner can perform this operation");
         }
         _;
     }
@@ -72,7 +72,7 @@ contract AssetToken is Initializable, ERC223Interface, IERC20 {
     }
 
     modifier noOwnerAsCounterparty(address counterparty) {
-        if (counterparty == _owner) {
+        if (counterparty == _owner || counterparty == _fundingDelegate) {
             revert("The contract owner can not perform this operation");
         }
         _;

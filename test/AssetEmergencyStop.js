@@ -354,4 +354,20 @@ contract("AssetEmergencyStop", accounts => {
       "Error: Returned error: VM Exception while processing transaction: revert This account is not allowed to do this"
     );
   });
+
+  it("Emergency Stop Operation: Delegate is not able to make payments", async () => {
+    const delegate = accounts[2];
+    const recipient = accounts[3];
+    let error = null;
+    await CONTRACT.setEmergencyPermission(delegate).send({ from: addrOwner });
+    try {
+      await CONTRACT.transferNoData(recipient, 10).send({ from: delegate });
+    } catch (err) {
+      error = err;
+    }
+    assert.strictEqual(
+      error.toString(),
+      "Error: Returned error: VM Exception while processing transaction: revert The contract owner can not perform this operation"
+    );
+  });
 });

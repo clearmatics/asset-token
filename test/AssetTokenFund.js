@@ -126,6 +126,37 @@ contract("AssetTokenFund", accounts => {
     );
   });
 
+  it("fund: Attempt to Fund the delegate account", async () => {
+    const totalSupplyBefore = await CONTRACT.totalSupply().call();
+    const balanceRecipientBefore = await CONTRACT.balanceOf(addrOwner).call();
+    const delegate = accounts[2];
+
+    await CONTRACT.setFundingPermission(delegate).send({ from: addrOwner });
+
+    let actualError = null;
+    try {
+      const fundVal = 100;
+      const fundRes = await CONTRACT.fund(delegate, fundVal).send({
+        from: delegate
+      });
+    } catch (error) {
+      actualError = error;
+    }
+
+    const totalSupplyAfter = await CONTRACT.totalSupply().call();
+    const balanceRecipientAfter = await CONTRACT.balanceOf(addrOwner).call();
+
+    assert.strictEqual(parseInt(totalSupplyBefore), parseInt(totalSupplyAfter));
+    assert.strictEqual(
+      parseInt(balanceRecipientBefore),
+      parseInt(balanceRecipientAfter)
+    );
+    assert.strictEqual(
+      actualError.toString(),
+      "Error: Returned error: VM Exception while processing transaction: revert The contract owner can not perform this operation"
+    );
+  });
+
   it("Delegate fund operation: Delegated account is able to fund", async () => {
     const delegate = accounts[2];
     const addrRecipient = accounts[3];
@@ -205,6 +236,24 @@ contract("AssetTokenFund", accounts => {
     assert.strictEqual(
       error.toString(),
       "Error: Returned error: VM Exception while processing transaction: revert This account is not allowed to do this"
+    );
+  });
+
+  it("Delegate Fund Operation: Delegate is not able to make payments", async () => {
+    const delegate = accounts[2];
+    const recipient = accounts[3];
+    let error = null;
+    await CONTRACT.setFundingPermission(delegate).send({ from: addrOwner });
+    try {
+      const res = await CONTRACT.transferNoData(recipient, 10).send({
+        from: delegate
+      });
+    } catch (err) {
+      error = err;
+    }
+    assert.strictEqual(
+      error.toString(),
+      "Error: Returned error: VM Exception while processing transaction: revert The contract owner can not perform this operation"
     );
   });
 });

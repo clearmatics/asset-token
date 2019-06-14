@@ -2,9 +2,13 @@
 
 [![Build Status](https://travis-ci.org/clearmatics/asset-token.svg?branch=master)](https://travis-ci.org/clearmatics/asset-token)
 
-Designed to represent a fungible asset with offchain interaction as an [ERC223][1] token.
+Designed to represent a fungible asset with offchain interaction 
 
-Integrated with [ZeppelinOS][7] to make it upgradeable.
+## Features
+
+- Supports the [ERC223][1] token standard.
+- Upgradeable via integration with [ZeppelinOS][7].
+- Emergency stop to prevent transfers. 
 
 ## Developing
 

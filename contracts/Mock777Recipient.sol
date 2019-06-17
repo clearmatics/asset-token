@@ -8,7 +8,20 @@ import "openzeppelin-solidity/contracts/token/ERC777/IERC777Recipient.sol";
 */
 
 contract Mock777Recipient is IERC777Recipient {
-    event Received();
+  
+    event Created();
+    event Received(
+        address operator,
+        address from,
+        address to,
+        uint256 amount,
+        bytes userData,
+        bytes operatorData
+    );
+
+    constructor() public {
+        emit Created();
+    }
 
     /**
      * Called by the 777 contract whenever `to` is a registered account
@@ -27,6 +40,6 @@ contract Mock777Recipient is IERC777Recipient {
     )
     external
     {
-        emit Received();
+        emit Received(operator, from, to, amount, userData, operatorData);
     }
 }

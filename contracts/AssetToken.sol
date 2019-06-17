@@ -15,16 +15,49 @@ contract AssetToken is IERC777, Initializable {
     uint256 public _totalSupply;
     uint256 public _granularity;
 
-    //registry contract has the below address for every chain
-    IERC1820Registry private _erc1820 = IERC1820Registry(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24);
-
+    address private _owner;
+    address private _emergencyDelegate;
     mapping(address => uint256) private _balances;
 
-    function initialize(string memory name, string memory symbol) public initializer {
+    IERC1820Registry private _erc1820;
+
+    event Sent(
+        address indexed operator,
+        address indexed from,
+        address indexed to,
+        uint256 amount,
+        bytes data,
+        bytes operatorData
+    );
+    event Minted(
+        address indexed operator,
+        address indexed to,
+        uint256 amount,
+        bytes data,
+        bytes operatorData
+    );
+    event Burned(
+        address indexed operator,
+        address indexed from,
+        uint256 amount,
+        bytes data,
+        bytes operatorData
+    );
+    event AuthorizedOperator(
+        address indexed operator,
+        address indexed holder
+    );
+    event RevokedOperator(address indexed operator, address indexed holder);
+
+    function initialize(string memory symbol, string memory name, address owner) public initializer {
         _name = name;
         _symbol = symbol;
         _totalSupply = 0;
         _granularity = 1;
+        _owner = owner;
+        _emergencyDelegate = _owner;
+
+         _erc1820 = IERC1820Registry(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24);
 
         /**
          * @dev Sets the contract which implements a specific interface for an address.
@@ -35,6 +68,17 @@ contract AssetToken is IERC777, Initializable {
         */
         _erc1820.setInterfaceImplementer(address(this), keccak256("ERC777Token"), address(this));
         _erc1820.setInterfaceImplementer(address(this), keccak256("ERC20Token"), address(this));
+    }
+
+    function () external payable {
+        revert("This contract does not support ETH");
+    }
+
+    modifier onlyOwner() {
+        if (msg.sender != _owner) {
+            revert("Only the contract owner can perform this operation");
+        }
+        _;
     }
 
     function name() external view returns (string memory) {
@@ -60,4 +104,6 @@ contract AssetToken is IERC777, Initializable {
     function decimals() external pure returns (uint256) {
         return 18;
     }
+
+
 }

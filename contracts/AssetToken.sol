@@ -17,9 +17,19 @@ contract AssetToken is IERC777, Initializable {
 
     address private _owner;
     address private _emergencyDelegate;
+
     mapping(address => uint256) private _balances;
 
+    //must be immutable
+    address[] private _defaultOperatorsArray;
+    mapping(address => bool) private _defaultOperators;
+
+    // maps operators and revoked default ones to each account
+    mapping(address => mapping(address => bool)) private _operators;
+    mapping(address => mapping(address => bool)) private _revokedDefaultOperators;
+
     IERC1820Registry private _erc1820;
+
 
     event Sent(
         address indexed operator,
@@ -49,15 +59,27 @@ contract AssetToken is IERC777, Initializable {
     );
     event RevokedOperator(address indexed operator, address indexed holder);
 
-    function initialize(string memory symbol, string memory name, address owner) public initializer {
+    function initialize(
+        string memory symbol,
+        string memory name,
+        address owner,
+        address[] memory defaultOperators
+    )
+    public initializer
+    {
         _name = name;
         _symbol = symbol;
         _totalSupply = 0;
         _granularity = 1;
         _owner = owner;
         _emergencyDelegate = _owner;
+        _defaultOperatorsArray = defaultOperators;
 
-         _erc1820 = IERC1820Registry(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24);
+        for (uint256 i=0; i<defaultOperators.length; i++) {
+            _defaultOperators[defaultOperators[i]] = true;
+        }
+
+        _erc1820 = IERC1820Registry(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24);
 
         /**
          * @dev Sets the contract which implements a specific interface for an address.
@@ -101,9 +123,42 @@ contract AssetToken is IERC777, Initializable {
         return _balances[who];
     }
 
+    function defaultOperators() external view returns (address[] memory) {
+        return _defaultOperatorsArray;
+    }
+
+    function isOperatorFor(address operator, address holder) external view returns (bool) {
+        return holder == operator ||
+            (_defaultOperators[operator] && !_revokedDefaultOperators[operator][holder]) ||
+            _operators[operator][holder];
+    }
+
+    function authorizedOperator(address operator) external {
+        require(msg.sender != operator, "The sender is always authorized to be his own operator");
+
+        if(_defaultOperators[operator]) {
+            _revokedDefaultOperators[msg.sender][operator] = false;
+        } else {
+            _operators[msg.sender][operator] = true;
+        }
+
+        emit AuthorizedOperator(operator, msg.sender);
+    }
+
+    function revokeOperator(address operator) external {
+        require(msg.sender != operator, "You cannot revoke yourself your own rights");
+
+        if(_defaultOperators[operator]){
+            _revokedDefaultOperators[msg.sender][operator];
+        } else {
+            _operators[msg.sender][operator] = false;
+        }
+
+        emit RevokedOperator(operator, msg.sender);
+    }
+
     function decimals() external pure returns (uint256) {
         return 18;
     }
-
 
 }

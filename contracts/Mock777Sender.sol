@@ -8,7 +8,20 @@ import "openzeppelin-solidity/contracts/token/ERC777/IERC777Sender.sol";
 */
 
 contract Mock777Sender is IERC777Sender {
-    event Sent();
+
+    event Created();
+    event Sent(
+        address operator,
+        address from,
+        address to,
+        uint256 amount,
+        bytes userData,
+        bytes operatorData
+    );
+
+    constructor() public {
+        emit Created();
+    }
 
     /**
       * Called by the token whenever a registered holder's token `from` are about to be moved or destroyed
@@ -26,6 +39,6 @@ contract Mock777Sender is IERC777Sender {
     )
     external
     {
-        emit Sent();
+        emit Sent(operator, from, to, amount, userData, operatorData);
     }
 }

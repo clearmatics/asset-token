@@ -5,6 +5,8 @@
 const { TestHelper } = require("zos"); //function to retrieve zos project structure object
 const { Contracts, ZWeb3 } = require("zos-lib"); //to retrieve compiled contract artifacts
 
+const { singletons } = require("openzeppelin-test-helpers");
+
 ZWeb3.initialize(web3.currentProvider);
 
 const AssetToken = Contracts.getFromLocal("AssetToken");
@@ -15,12 +17,14 @@ contract("AssetTokenInit", accounts => {
   const addrOwner = accounts[0];
   const proxyOwner = accounts[1];
   beforeEach(async () => {
+    this.erc1820 = await singletons.ERC1820Registry(addrOwner);
+
     PROJECT = await TestHelper({ from: proxyOwner });
 
     //contains logic contract
     PROXY = await PROJECT.createProxy(AssetToken, {
       initMethod: "initialize",
-      initArgs: ["CLR", "Asset Token", addrOwner]
+      initArgs: ["CLR", "Asset Token", addrOwner, []]
     });
 
     CONTRACT = PROXY.methods;
@@ -42,7 +46,7 @@ contract("AssetTokenInit", accounts => {
 
   it("decimals: Check the number of decimal place in the tokens", async () => {
     const actualDecimals = await CONTRACT.decimals().call();
-    const expectedDecimals = 3;
+    const expectedDecimals = 18;
 
     assert.strictEqual(parseInt(actualDecimals), expectedDecimals);
   });

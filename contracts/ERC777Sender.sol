@@ -1,13 +1,11 @@
 pragma solidity ^0.5.0;
 
-import "openzeppelin-solidity/contracts/token/ERC777/IERC777Sender.sol";
-
 /**
   * Token holders can be notified of operations performed on their tokens by this contract
   * Needs to be registered to the global 1820 registry
 */
 
-contract ERC777Sender is IERC777Sender {
+contract ERC777TokensSender {
 
     event Created();
     event Sent(

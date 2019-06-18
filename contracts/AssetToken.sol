@@ -90,7 +90,7 @@ contract AssetToken is IERC777, Initializable {
         TOKEN_RECIPIENT_INTERFACE_HASH = keccak256("ERC777TokensSender");
 
         _erc1820.setInterfaceImplementer(address(this), keccak256("ERC777Token"), address(this));
-        //_erc1820.setInterfaceImplementer(address(this), keccak256("ERC20Token"), address(this));
+        _erc1820.setInterfaceImplementer(address(this), keccak256("ERC20Token"), address(this));
     }
 
     function () external payable {
@@ -139,7 +139,7 @@ contract AssetToken is IERC777, Initializable {
     }
 
     function authorizeOperator(address operator) external {
-        require(msg.sender != operator, "The sender must always be his own operator");
+        require(msg.sender != operator, "The sender is already his own operator");
 
         if(_defaultOperators[operator]) {
             _revokedDefaultOperators[msg.sender][operator] = false;
@@ -204,7 +204,7 @@ contract AssetToken is IERC777, Initializable {
     //always called in case of transfer
     /**
      * @param requireInterface if true, contract recipients are required to implement ERC777Recipient
-     * it's always true in case of ERC777 while false for ERC20 tokens
+     * it's always true in case of ERC777, needed only if we want ERC20 compatibility as well
      */
     function _send(
         address operator,
@@ -282,7 +282,7 @@ contract AssetToken is IERC777, Initializable {
 
         address implementer = _erc1820.getInterfaceImplementer(from, TOKEN_SENDER_INTERFACE_HASH);
         if(implementer != address(0)) {
-            ERC777Sender(implementer).tokensToSend(operator, from, to, amount, data, operatorData);
+            ERC777TokensSender(implementer).tokensToSend(operator, from, to, amount, data, operatorData);
         }
     }
 
@@ -300,7 +300,7 @@ contract AssetToken is IERC777, Initializable {
         //query the registry to retrieve recipient registered interface
         address implementer = _erc1820.getInterfaceImplementer(to, TOKEN_RECIPIENT_INTERFACE_HASH);
         if(implementer != address(0)) {
-            ERC777Recipient(implementer).tokensReceived(operator, from, to, amount, data, operatorData);
+            ERC777TokensRecipient(implementer).tokensReceived(operator, from, to, amount, data, operatorData);
         } else if (requireInterface) {
             require(!to.isContract(), "The recipient contract must implement the ERC777TokensRecipient interface");
         }

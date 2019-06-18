@@ -31,8 +31,10 @@ contract AssetToken is IERC777, Initializable {
     mapping(address => mapping(address => bool)) private _revokedDefaultOperators;
 
     IERC1820Registry private _erc1820;
-    bytes32 constant private TOKEN_SENDER_INTERFACE_HASH;
-    bytes32 constant private TOKEN_RECIPIENT_INTERFACE_HASH;
+
+    //these are supposed to be costant but for upgradeability must be initialized into the initializer
+    bytes32 private TOKEN_SENDER_INTERFACE_HASH;
+    bytes32 private TOKEN_RECIPIENT_INTERFACE_HASH;
 
 
     event Sent(
@@ -87,13 +89,6 @@ contract AssetToken is IERC777, Initializable {
         TOKEN_SENDER_INTERFACE_HASH = keccak256("ERC777TokensRecipient");
         TOKEN_RECIPIENT_INTERFACE_HASH = keccak256("ERC777TokensSender");
 
-        /**
-         * @dev Sets the contract which implements a specific interface for an address.
-         * function setInterfaceImplementer(address _addr, bytes32 _interfaceHash, address _implementer) external
-         * @param _addr: address for which to set the interface (msg.sender default)
-         * @param _interfaceHash: Keccak256 hash of the name of the interface
-         * @param _implementer: contract implementing _interfaceHash for _addr
-        */
         _erc1820.setInterfaceImplementer(address(this), keccak256("ERC777Token"), address(this));
         //_erc1820.setInterfaceImplementer(address(this), keccak256("ERC20Token"), address(this));
     }
@@ -143,7 +138,7 @@ contract AssetToken is IERC777, Initializable {
         return 18;
     }
 
-    function authorizedOperator(address operator) external {
+    function authorizeOperator(address operator) external {
         require(msg.sender != operator, "The sender must always be his own operator");
 
         if(_defaultOperators[operator]) {
@@ -167,6 +162,25 @@ contract AssetToken is IERC777, Initializable {
         emit RevokedOperator(operator, msg.sender);
     }
 
+    function burn(uint256 amount, bytes calldata data) external {
+        _burn(msg.sender, msg.sender, amount, data, "");
+    }
+
+    function operatorBurn(
+        address from,
+        uint256 amount,
+        bytes calldata data,
+        bytes calldata operatorData
+    )
+        external
+    {
+        //being isOperatorFor external the compiler doesn't sees it without `this`
+        require(this.isOperatorFor(msg.sender, from), "Caller is not an hoperator for the specified holder");
+
+        _burn(msg.sender, from, amount, data, operatorData);
+
+    }
+
     function send(address recipient, uint256 amount, bytes calldata data) external {
         _send(msg.sender, msg.sender, recipient, amount, data, "", true);
     }
@@ -181,7 +195,7 @@ contract AssetToken is IERC777, Initializable {
         external
     {
         //being isOperatorFor external the compiler doesn't sees it without `this`
-        require(this.isOperatorFor(msg.sender, from), "Caller is not operator for specified from account");
+        require(this.isOperatorFor(msg.sender, from), "Caller is not operator for specified holder");
 
         _send(msg.sender, from, to, amount, data, operatorData, true);
 
@@ -212,6 +226,26 @@ contract AssetToken is IERC777, Initializable {
         updateTokenState(operator, from, to, amount, data, operatorData);
 
         callTokensReceived(operator, from, to, amount, data, operatorData, requireInterface);
+    }
+
+    //always called in case of burn
+    function _burn(
+        address operator,
+        address from,
+        uint256 amount,
+        bytes memory data,
+        bytes memory operatorData
+    )
+        private
+    {
+        require(from != address(0), "You cannot burn tokens of address 0");
+
+        callTokensToSend(operator, from, address(0), amount, data, operatorData);
+
+        _totalSupply = _totalSupply.sub(amount);
+        _balances[from] = _balances[from].sub(amount);
+
+        emit Burned(operator, from, amount, data, operatorData);
     }
 
     function updateTokenState(

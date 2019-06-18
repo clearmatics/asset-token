@@ -5,6 +5,8 @@ import "openzeppelin-solidity/contracts/introspection/IERC1820Registry.sol";
 import "openzeppelin-solidity/contracts/token/ERC777/IERC777.sol";
 import "openzeppelin-eth/contracts/utils/Address.sol";
 import "zos-lib/contracts/Initializable.sol";
+import "./ERC777Recipient.sol";
+import "./ERC777Sender.sol";
 
 contract AssetToken is IERC777, Initializable {
     using SafeMath for uint256;
@@ -29,6 +31,8 @@ contract AssetToken is IERC777, Initializable {
     mapping(address => mapping(address => bool)) private _revokedDefaultOperators;
 
     IERC1820Registry private _erc1820;
+    bytes32 constant private TOKEN_SENDER_INTERFACE_HASH;
+    bytes32 constant private TOKEN_RECIPIENT_INTERFACE_HASH;
 
 
     event Sent(
@@ -80,6 +84,8 @@ contract AssetToken is IERC777, Initializable {
         }
 
         _erc1820 = IERC1820Registry(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24);
+        TOKEN_SENDER_INTERFACE_HASH = keccak256("ERC777TokensRecipient");
+        TOKEN_RECIPIENT_INTERFACE_HASH = keccak256("ERC777TokensSender");
 
         /**
          * @dev Sets the contract which implements a specific interface for an address.
@@ -89,7 +95,7 @@ contract AssetToken is IERC777, Initializable {
          * @param _implementer: contract implementing _interfaceHash for _addr
         */
         _erc1820.setInterfaceImplementer(address(this), keccak256("ERC777Token"), address(this));
-        _erc1820.setInterfaceImplementer(address(this), keccak256("ERC20Token"), address(this));
+        //_erc1820.setInterfaceImplementer(address(this), keccak256("ERC20Token"), address(this));
     }
 
     function () external payable {
@@ -133,8 +139,12 @@ contract AssetToken is IERC777, Initializable {
             _operators[operator][holder];
     }
 
+    function decimals() external pure returns (uint256) {
+        return 18;
+    }
+
     function authorizedOperator(address operator) external {
-        require(msg.sender != operator, "The sender is always authorized to be his own operator");
+        require(msg.sender != operator, "The sender must always be his own operator");
 
         if(_defaultOperators[operator]) {
             _revokedDefaultOperators[msg.sender][operator] = false;
@@ -157,8 +167,120 @@ contract AssetToken is IERC777, Initializable {
         emit RevokedOperator(operator, msg.sender);
     }
 
-    function decimals() external pure returns (uint256) {
-        return 18;
+    function send(address recipient, uint256 amount, bytes calldata data) external {
+        _send(msg.sender, msg.sender, recipient, amount, data, "", true);
+    }
+
+    function operatorSend(
+        address from,
+        address to,
+        uint256 amount,
+        bytes calldata data,
+        bytes calldata operatorData
+    )
+        external
+    {
+        //being isOperatorFor external the compiler doesn't sees it without `this`
+        require(this.isOperatorFor(msg.sender, from), "Caller is not operator for specified from account");
+
+        _send(msg.sender, from, to, amount, data, operatorData, true);
+
+    }
+
+    //always called in case of transfer
+    /**
+     * @param requireInterface if true, contract recipients are required to implement ERC777Recipient
+     * it's always true in case of ERC777 while false for ERC20 tokens
+     */
+    function _send(
+        address operator,
+        address from,
+        address to,
+        uint256 amount,
+        bytes memory data,
+        bytes memory operatorData,
+        bool requireInterface
+    )
+        private
+    {
+        require(from != address(0), "You cannot send from the zero address");
+        require(to != address(0), "You cannot send to the zero address");
+
+        //call ERC1820 registry hooks before and after the token state is updated
+        callTokensToSend(operator, from, to, amount, data, operatorData);
+
+        updateTokenState(operator, from, to, amount, data, operatorData);
+
+        callTokensReceived(operator, from, to, amount, data, operatorData, requireInterface);
+    }
+
+    function updateTokenState(
+        address operator,
+        address from,
+        address to,
+        uint256 amount,
+        bytes memory data,
+        bytes memory operatorData
+    )
+        private
+    {
+        _balances[from] = _balances[from].sub(amount);
+        _balances[to] = _balances[to].add(amount);
+
+        emit Sent(operator, from, to, amount, data, operatorData);
+    }
+
+    function callTokensToSend(
+        address operator,
+        address from,
+        address to,
+        uint256 amount,
+        bytes memory data,
+        bytes memory operatorData
+    )
+        private
+    {
+        /**
+          * if `from` has registered a ERC777Recipient to the registry
+          * the tokensToSend hook of that contract must be called before
+          * updating the state
+        */
+
+        address implementer = _erc1820.getInterfaceImplementer(from, TOKEN_SENDER_INTERFACE_HASH);
+        if(implementer != address(0)) {
+            ERC777Sender(implementer).tokensToSend(operator, from, to, amount, data, operatorData);
+        }
+    }
+
+    function callTokensReceived(
+        address operator,
+        address from,
+        address to,
+        uint256 amount,
+        bytes memory data,
+        bytes memory operatorData,
+        bool requireInterface
+    )
+        private
+    {
+        //query the registry to retrieve recipient registered interface
+        address implementer = _erc1820.getInterfaceImplementer(to, TOKEN_RECIPIENT_INTERFACE_HASH);
+        if(implementer != address(0)) {
+            ERC777Recipient(implementer).tokensReceived(operator, from, to, amount, data, operatorData);
+        } else if (requireInterface) {
+            require(!to.isContract(), "The recipient contract must implement the ERC777TokensRecipient interface");
+        }
+    }
+
+    function isContract(address addr) internal view returns (bool) {
+        uint256 length;
+
+        // solhint-disable-next-line no-inline-assembly
+        assembly {
+            //retrieve the size of the code on target address, this needs assembly
+            length := extcodesize(addr)
+        }
+        return (length > 0);
     }
 
 }

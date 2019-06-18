@@ -1,13 +1,11 @@
 pragma solidity ^0.5.0;
 
-import "openzeppelin-solidity/contracts/token/ERC777/IERC777Recipient.sol";
-
 /**
   * Implements hooks for token received
   * Must be registered to ERC1820Registry
 */
 
-contract ERC777Recipient is IERC777Recipient {
+contract ERC777TokensRecipient {
 
     event Created();
     event Received(

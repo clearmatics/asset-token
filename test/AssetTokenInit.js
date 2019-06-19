@@ -5,6 +5,7 @@
 const { TestHelper } = require("zos"); //function to retrieve zos project structure object
 const { Contracts, ZWeb3 } = require("zos-lib"); //to retrieve compiled contract artifacts
 
+require("openzeppelin-test-helpers/configure")({ web3 });
 const { singletons } = require("openzeppelin-test-helpers");
 
 ZWeb3.initialize(web3.currentProvider);

@@ -5,6 +5,9 @@
 const { TestHelper } = require("zos"); //function to retrieve zos project structure object
 const { Contracts, ZWeb3 } = require("zos-lib"); //to retrieve compiled contract artifacts
 
+require("openzeppelin-test-helpers/configure")({ web3 });
+const { singletons } = require("openzeppelin-test-helpers");
+
 ZWeb3.initialize(web3.currentProvider);
 
 const AssetToken = Contracts.getFromLocal("AssetToken"); //need to build first
@@ -17,14 +20,17 @@ contract("Proxy to upgradable token", async accounts => {
   const proxyOwner = accounts[1];
 
   beforeEach(async () => {
-    //contains all zos structure - implementations, dependencies and proxyAdmin contracts
+    this.erc1820 = await singletons.ERC1820Registry(addrOwner);
+
     PROJECT = await TestHelper({ from: proxyOwner });
 
-    //creates a new proxy
+    //contains logic contract
     PROXY = await PROJECT.createProxy(AssetToken, {
       initMethod: "initialize",
-      initArgs: ["CLR", "Asset Token", addrOwner]
+      initArgs: ["CLR", "Asset Token", addrOwner, []]
     });
+
+    CONTRACT = PROXY.methods;
   });
 
   it("Proxies to implementation contract", async () => {
@@ -50,7 +56,7 @@ contract("Proxy to upgradable token", async accounts => {
     );
 
     assert.equal(name, "Asset Token");
-    assert.equal(decimal, 3);
+    assert.equal(decimal, 18);
     assert.equal(symbol, "CLR");
     assert.notEqual(PROXY.address, logicAddress);
   });

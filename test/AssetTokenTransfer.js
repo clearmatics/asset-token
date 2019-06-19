@@ -4,6 +4,9 @@
 const { TestHelper } = require("zos"); //function to retrieve zos project structure object
 const { Contracts, ZWeb3 } = require("zos-lib"); //to retrieve compiled contract artifacts
 
+require("openzeppelin-test-helpers/configure")({ web3 });
+const { singletons } = require("openzeppelin-test-helpers");
+
 ZWeb3.initialize(web3.currentProvider);
 
 const AssetToken = Contracts.getFromLocal("AssetToken");
@@ -15,13 +18,16 @@ let CONTRACT;
 contract("AssetTokenTransfer", accounts => {
   const addrOwner = accounts[0];
   const proxyOwner = accounts[1];
+  const data = web3.utils.randomHex(0);
   beforeEach(async () => {
+    this.erc1820 = await singletons.ERC1820Registry(addrOwner);
+
     PROJECT = await TestHelper({ from: proxyOwner });
 
     //contains logic contract
     PROXY = await PROJECT.createProxy(AssetToken, {
       initMethod: "initialize",
-      initArgs: ["CLR", "Asset Token", addrOwner]
+      initArgs: ["CLR", "Asset Token", addrOwner, []]
     });
 
     CONTRACT = PROXY.methods;
@@ -40,10 +46,13 @@ contract("AssetTokenTransfer", accounts => {
     let actualError = null;
     try {
       const transferVal = 50;
-      const transferRes = await CONTRACT.transferNoData(
+      const transferRes = await CONTRACT.send(
         addrRecipient,
-        transferVal
-      ).send({ from: addrSender });
+        transferVal,
+        data
+      ).send({
+        from: addrSender
+      });
     } catch (error) {
       actualError = error;
     }

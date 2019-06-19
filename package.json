@@ -21,5 +21,8 @@
     "coverage": "solidity-coverage",
     "ganache": "ganache-cli --port 7545 --gasLimit 0xFFFFFFFF",
     "lint": "solhint contracts/**/*.sol"
+  },
+  "devDependencies": {
+    "openzeppelin-test-helpers": "^0.4.0"
   }
 }

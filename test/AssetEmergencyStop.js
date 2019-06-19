@@ -4,6 +4,9 @@
 const { TestHelper } = require("zos"); //function to retrieve zos project structure object
 const { Contracts, ZWeb3 } = require("zos-lib"); //to retrieve compiled contract artifacts
 
+require("openzeppelin-test-helpers/configure")({ web3 });
+const { singletons } = require("openzeppelin-test-helpers");
+
 ZWeb3.initialize(web3.currentProvider);
 
 const AssetToken = Contracts.getFromLocal("AssetToken");
@@ -13,13 +16,16 @@ let CONTRACT;
 contract("AssetEmergencyStop", accounts => {
   const addrOwner = accounts[0];
   const proxyOwner = accounts[1];
+  const data = web3.utils.randomHex(0);
   beforeEach(async () => {
+    this.erc1820 = await singletons.ERC1820Registry(addrOwner);
+
     PROJECT = await TestHelper({ from: proxyOwner });
 
     //contains logic contract
     PROXY = await PROJECT.createProxy(AssetToken, {
       initMethod: "initialize",
-      initArgs: ["CLR", "Asset Token", addrOwner]
+      initArgs: ["CLR", "Asset Token", addrOwner, []]
     });
 
     CONTRACT = PROXY.methods;
@@ -69,9 +75,10 @@ contract("AssetEmergencyStop", accounts => {
     assert.equal(status.events.Switch.returnValues[0], false);
 
     let actualError = null;
+    let data = web3.utils.randomHex(0);
     try {
       const defundVal = 50;
-      const defundRes = await CONTRACT.defund(defundVal).send({
+      const defundRes = await CONTRACT.burn(defundVal, data).send({
         from: addrOwner
       });
     } catch (error) {
@@ -115,10 +122,13 @@ contract("AssetEmergencyStop", accounts => {
     let actualError = null;
     try {
       const transferVal = 50;
-      const transferRes = await CONTRACT.transferNoData(
+      const transferRes = await CONTRACT.send(
         addrRecipient,
-        transferVal
-      ).send({ from: addrSender });
+        transferVal,
+        data
+      ).send({
+        from: addrSender
+      });
     } catch (error) {
       actualError = error;
     }
@@ -191,9 +201,10 @@ contract("AssetEmergencyStop", accounts => {
 
     let actualError = null;
     try {
-      const transferRes = await CONTRACT.transferNoData(
+      const transferRes = await CONTRACT.send(
         addrRecipient,
-        transferVal
+        transferVal,
+        data
       ).send({ from: addrSender });
     } catch (error) {
       actualError = error;
@@ -251,6 +262,7 @@ contract("AssetEmergencyStop", accounts => {
     ).call();
 
     const fundValAfter = 100;
+
     const fundResAfter = await CONTRACT.fund(addrSender, fundVal).send({
       from: addrOwner
     });
@@ -263,10 +275,13 @@ contract("AssetEmergencyStop", accounts => {
 
     actualError = null;
     try {
-      const transferRes = await CONTRACT.transferNoData(
+      const transferRes = await CONTRACT.send(
         addrRecipient,
-        transferVal
-      ).send({ from: addrSender });
+        transferVal,
+        data
+      ).send({
+        from: addrSender
+      });
     } catch (error) {
       actualError = error;
     }
@@ -359,9 +374,10 @@ contract("AssetEmergencyStop", accounts => {
     const delegate = accounts[2];
     const recipient = accounts[3];
     let error = null;
+    let data = web3.utils.randomHex(0);
     await CONTRACT.setEmergencyPermission(delegate).send({ from: addrOwner });
     try {
-      await CONTRACT.transferNoData(recipient, 10).send({ from: delegate });
+      await CONTRACT.send(recipient, 10, data).send({ from: delegate });
     } catch (err) {
       error = err;
     }

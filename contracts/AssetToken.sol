@@ -19,6 +19,8 @@ contract AssetToken is IERC777, Initializable {
 
     address private _owner;
     address private _emergencyDelegate;
+    address private _fundingDelegate;
+    bool private _isActive;
 
     mapping(address => uint256) private _balances;
 
@@ -64,6 +66,9 @@ contract AssetToken is IERC777, Initializable {
         address indexed holder
     );
     event RevokedOperator(address indexed operator, address indexed holder);
+    event EmergencyDelegation(address indexed member);
+    event FundingDelegation(address indexed member);
+    event Switch(bool balance);
 
     function initialize(
         string memory symbol,
@@ -79,18 +84,21 @@ contract AssetToken is IERC777, Initializable {
         _granularity = 1;
         _owner = owner;
         _emergencyDelegate = _owner;
+        _fundingDelegate = _owner;
+        _isActive = true;
         _defaultOperatorsArray = defaultOperators;
 
         for (uint256 i=0; i<defaultOperators.length; i++) {
             _defaultOperators[defaultOperators[i]] = true;
         }
 
+        //the address of the registry is universally costant
         _erc1820 = IERC1820Registry(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24);
         TOKEN_SENDER_INTERFACE_HASH = keccak256("ERC777TokensRecipient");
         TOKEN_RECIPIENT_INTERFACE_HASH = keccak256("ERC777TokensSender");
 
         _erc1820.setInterfaceImplementer(address(this), keccak256("ERC777Token"), address(this));
-        _erc1820.setInterfaceImplementer(address(this), keccak256("ERC20Token"), address(this));
+        //_erc1820.setInterfaceImplementer(address(this), keccak256("ERC20Token"), address(this));
     }
 
     function () external payable {
@@ -100,6 +108,34 @@ contract AssetToken is IERC777, Initializable {
     modifier onlyOwner() {
         if (msg.sender != _owner) {
             revert("Only the contract owner can perform this operation");
+        }
+        _;
+    }
+
+    modifier onlyEmergencyAccount() {
+        if (msg.sender != _emergencyDelegate){
+            revert("This account is not allowed to do this");
+        }
+        _;
+    }
+
+    modifier onlyFundingAccount() {
+        if(msg.sender != _fundingDelegate) {
+            revert("This account is not allowed to do this");
+        }
+        _;
+    }
+
+    modifier checkActive() {
+        if(_isActive != true) {
+            revert("Contract emergency stop is activated");
+        }
+        _;
+    }
+
+    modifier noOwnerAsCounterparty(address counterparty) {
+        if (counterparty == _owner || counterparty == _fundingDelegate || counterparty == _emergencyDelegate) {
+            revert("The contract owner can not perform this operation");
         }
         _;
     }
@@ -161,6 +197,48 @@ contract AssetToken is IERC777, Initializable {
 
         emit RevokedOperator(operator, msg.sender);
     }
+
+    function setEmergencyPermission(address who) external onlyOwner {
+        _emergencyDelegate = who;
+        emit EmergencyDelegation(_emergencyDelegate);
+    }
+
+    function revokeEmergencyPermission() external onlyOwner {
+        _emergencyDelegate = _owner;
+        emit EmergencyDelegation(_emergencyDelegate);
+    }
+
+    function setFundingPermission(address who) external onlyOwner {
+        _fundingDelegate = who;
+        emit FundingDelegation(_fundingDelegate);
+    }
+
+    function revokeFundingPermission() external onlyOwner{
+        _fundingDelegate = _owner;
+        emit FundingDelegation(_fundingDelegate);
+    }
+
+    // @dev starts trading by switching _isActive to true
+    function emergencyStart() public onlyOwner {
+        if (_isActive == false) {
+            _isActive = true;
+        }
+        emit Switch(true);
+    }
+
+    // @dev stops trading by switching _isActive to false
+    function emergencyStop() public onlyEmergencyAccount {
+        if (_isActive == true) {
+            _isActive = false;
+        }
+        emit Switch(false);
+    }
+
+    function getTradingStatus() public returns (bool) {
+        emit Switch(_isActive);
+        return _isActive;
+    }
+
 
     function burn(uint256 amount, bytes calldata data) external {
         _burn(msg.sender, msg.sender, amount, data, "");

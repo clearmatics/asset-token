@@ -25,7 +25,7 @@ contract("AssetTokenInit", accounts => {
     //contains logic contract
     PROXY = await PROJECT.createProxy(AssetToken, {
       initMethod: "initialize",
-      initArgs: ["CLR", "Asset Token", addrOwner, []]
+      initArgs: ["CLR", "Asset Token", addrOwner, [accounts[2]]]
     });
 
     CONTRACT = PROXY.methods;
@@ -50,6 +50,11 @@ contract("AssetTokenInit", accounts => {
     const expectedDecimals = 18;
 
     assert.strictEqual(parseInt(actualDecimals), expectedDecimals);
+  });
+
+  it("default operators: Set default operator", async () => {
+    const defOperator = await CONTRACT.defaultOperators().call();
+    assert.equal(defOperator, accounts[2]);
   });
 
   it("default: Attempt to send Eth to the contract", async () => {

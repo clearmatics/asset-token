@@ -40,8 +40,8 @@ contract("AssetEmergencyStop", accounts => {
     ).call();
 
     await CONTRACT.emergencyStop().send({ from: addrOwner });
-    const status = await CONTRACT.getTradingStatus().send({ from: addrOwner });
-    assert.equal(status.events.Switch.returnValues[0], false);
+    const status = await CONTRACT.getTradingStatus().call();
+    assert.equal(status, false);
 
     let actualError = null;
     try {
@@ -71,8 +71,8 @@ contract("AssetEmergencyStop", accounts => {
     const balanceRecipientBefore = await CONTRACT.balanceOf(addrOwner).call();
 
     await CONTRACT.emergencyStop().send({ from: addrOwner });
-    const status = await CONTRACT.getTradingStatus().send({ from: addrOwner });
-    assert.equal(status.events.Switch.returnValues[0], false);
+    const status = await CONTRACT.getTradingStatus().call();
+    assert.equal(status, false);
 
     let actualError = null;
     let data = web3.utils.randomHex(0);
@@ -116,8 +116,8 @@ contract("AssetEmergencyStop", accounts => {
     const balanceRecipientFund = await CONTRACT.balanceOf(addrRecipient).call();
 
     await CONTRACT.emergencyStop().send({ from: addrOwner });
-    const status = await CONTRACT.getTradingStatus().send({ from: addrOwner });
-    assert.equal(status.events.Switch.returnValues[0], false);
+    const status = await CONTRACT.getTradingStatus().call();
+    assert.equal(status, false);
 
     let actualError = null;
     try {
@@ -194,10 +194,8 @@ contract("AssetEmergencyStop", accounts => {
     const balanceRecipientFund = await CONTRACT.balanceOf(addrRecipient).call();
 
     await CONTRACT.emergencyStop().send({ from: addrOwner });
-    const switchStatusbefore = await CONTRACT.getTradingStatus().send({
-      from: addrOwner
-    });
-    assert.equal(switchStatusbefore.events.Switch.returnValues[0], false);
+    const switchStatusbefore = await CONTRACT.getTradingStatus().call();
+    assert.equal(switchStatusbefore, false);
 
     let actualError = null;
     try {
@@ -250,10 +248,8 @@ contract("AssetEmergencyStop", accounts => {
     );
 
     await CONTRACT.emergencyStart().send({ from: addrOwner });
-    const switchStatusAfter = await CONTRACT.getTradingStatus().send({
-      from: addrOwner
-    });
-    assert.equal(switchStatusAfter.events.Switch.returnValues[0], true);
+    const switchStatusAfter = await CONTRACT.getTradingStatus().call();
+    assert.equal(switchStatusAfter, true);
 
     const totalSupplyAfter = await CONTRACT.totalSupply().call();
     const balanceSenderAfter = await CONTRACT.balanceOf(addrSender).call();
@@ -329,10 +325,8 @@ contract("AssetEmergencyStop", accounts => {
     await CONTRACT.setEmergencyPermission(delegate).send({ from: addrOwner });
 
     await CONTRACT.emergencyStop().send({ from: delegate });
-    const status = await CONTRACT.getTradingStatus().send({
-      from: addrOwner
-    });
-    assert.equal(status.events.Switch.returnValues[0], false);
+    const status = await CONTRACT.getTradingStatus().call();
+    assert.equal(status, false);
   });
 
   it("Emergency Stop Delegation: Permission is correctly revoked", async () => {

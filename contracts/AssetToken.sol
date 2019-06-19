@@ -8,6 +8,11 @@ import "zos-lib/contracts/Initializable.sol";
 import "./ERC777Recipient.sol";
 import "./ERC777Sender.sol";
 
+/**
+* TODO discuss roles of operator and funding account that may overlap
+*/
+
+
 contract AssetToken is IERC777, Initializable {
     using SafeMath for uint256;
     using Address for address;
@@ -69,6 +74,7 @@ contract AssetToken is IERC777, Initializable {
     event EmergencyDelegation(address indexed member);
     event FundingDelegation(address indexed member);
     event Switch(bool balance);
+    event Fund(address indexed member, uint256 value, uint256 balance);
 
     function initialize(
         string memory symbol,
@@ -164,6 +170,10 @@ contract AssetToken is IERC777, Initializable {
         return _defaultOperatorsArray;
     }
 
+    function getTradingStatus() external view returns (bool) {
+        return _isActive;
+    }
+
     function isOperatorFor(address operator, address holder) external view returns (bool) {
         return holder == operator ||
             (_defaultOperators[operator] && !_revokedDefaultOperators[operator][holder]) ||
@@ -234,13 +244,30 @@ contract AssetToken is IERC777, Initializable {
         emit Switch(false);
     }
 
-    function getTradingStatus() public returns (bool) {
-        emit Switch(_isActive);
-        return _isActive;
+    // solhint-disable-next-line no-simple-event-func-name
+    function fund(address member, uint256 value)
+        public
+        onlyFundingAccount
+        checkActive
+        noOwnerAsCounterparty(member)
+    {
+
+        require(member != address(0), "You cannot mint tokens to address 0");
+
+        _balances[member] = _balances[member].add(value);
+        _totalSupply = _totalSupply.add(value);
+
+        callTokensReceived(msg.sender, address(0), member, value, "", "", true);
+
+        emit Minted(msg.sender, member, value, "", "");
+        emit Fund(member, value, _balances[member]);
     }
 
-
-    function burn(uint256 amount, bytes calldata data) external {
+    function burn(uint256 amount, bytes calldata data)
+        checkActive
+        noOwnerAsCounterparty(msg.sender)
+        external
+    {
         _burn(msg.sender, msg.sender, amount, data, "");
     }
 
@@ -253,13 +280,18 @@ contract AssetToken is IERC777, Initializable {
         external
     {
         //being isOperatorFor external the compiler doesn't sees it without `this`
-        require(this.isOperatorFor(msg.sender, from), "Caller is not an hoperator for the specified holder");
+        require(this.isOperatorFor(msg.sender, from), "Caller is operator for the specified holder");
 
         _burn(msg.sender, from, amount, data, operatorData);
 
     }
 
-    function send(address recipient, uint256 amount, bytes calldata data) external {
+    function send(address recipient, uint256 amount, bytes calldata data)
+        external
+        checkActive
+        noOwnerAsCounterparty(recipient)
+        noOwnerAsCounterparty(msg.sender)
+    {
         _send(msg.sender, msg.sender, recipient, amount, data, "", true);
     }
 
@@ -279,10 +311,10 @@ contract AssetToken is IERC777, Initializable {
 
     }
 
-    //always called in case of transfer
     /**
      * @param requireInterface if true, contract recipients are required to implement ERC777Recipient
      * it's always true in case of ERC777, needed only if we want ERC20 compatibility as well
+     * always called for transfer
      */
     function _send(
         address operator,
@@ -301,7 +333,7 @@ contract AssetToken is IERC777, Initializable {
         //call ERC1820 registry hooks before and after the token state is updated
         callTokensToSend(operator, from, to, amount, data, operatorData);
 
-        updateTokenState(operator, from, to, amount, data, operatorData);
+        updateTokenBalances(operator, from, to, amount, data, operatorData);
 
         callTokensReceived(operator, from, to, amount, data, operatorData, requireInterface);
     }
@@ -326,7 +358,7 @@ contract AssetToken is IERC777, Initializable {
         emit Burned(operator, from, amount, data, operatorData);
     }
 
-    function updateTokenState(
+    function updateTokenBalances(
         address operator,
         address from,
         address to,

@@ -5,13 +5,8 @@ import "openzeppelin-solidity/contracts/introspection/IERC1820Registry.sol";
 import "openzeppelin-solidity/contracts/token/ERC777/IERC777.sol";
 import "openzeppelin-eth/contracts/utils/Address.sol";
 import "zos-lib/contracts/Initializable.sol";
-import "./ERC777Recipient.sol";
-import "./ERC777Sender.sol";
-
-/**
-* TODO discuss roles of operator and funding account that may overlap
-*/
-
+import "./IERC777Recipient.sol";
+import "./IERC777Sender.sol";
 
 contract AssetToken is IERC777, Initializable {
     using SafeMath for uint256;
@@ -40,8 +35,8 @@ contract AssetToken is IERC777, Initializable {
     IERC1820Registry private _erc1820;
 
     //these are supposed to be costant but for upgradeability must be initialized into the initializer
-    bytes32 private TOKEN_SENDER_INTERFACE_HASH;
-    bytes32 private TOKEN_RECIPIENT_INTERFACE_HASH;
+    bytes32 private TOKENS_SENDER_INTERFACE_HASH;
+    bytes32 private TOKENS_RECIPIENT_INTERFACE_HASH;
 
 
     event Sent(
@@ -75,6 +70,7 @@ contract AssetToken is IERC777, Initializable {
     event FundingDelegation(address indexed member);
     event Switch(bool balance);
     event Fund(address indexed member, uint256 value, uint256 balance);
+    event Implementer(address indexed implementer);
 
     function initialize(
         string memory symbol,
@@ -100,8 +96,10 @@ contract AssetToken is IERC777, Initializable {
 
         //the address of the registry is universally costant
         _erc1820 = IERC1820Registry(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24);
-        TOKEN_SENDER_INTERFACE_HASH = keccak256("ERC777TokensRecipient");
-        TOKEN_RECIPIENT_INTERFACE_HASH = keccak256("ERC777TokensSender");
+        TOKENS_SENDER_INTERFACE_HASH =
+            0x29ddb589b1fb5fc7cf394961c1adf5f8c6454761adf795e67fe149f658abe895;
+        TOKENS_RECIPIENT_INTERFACE_HASH =
+            0xb281fc8c12954d22544db45de3159a39272895b169a852b314f9cc762e44c53b;
 
         _erc1820.setInterfaceImplementer(address(this), keccak256("ERC777Token"), address(this));
         //_erc1820.setInterfaceImplementer(address(this), keccak256("ERC20Token"), address(this));
@@ -280,7 +278,7 @@ contract AssetToken is IERC777, Initializable {
         external
     {
         //being isOperatorFor external the compiler doesn't sees it without `this`
-        require(this.isOperatorFor(msg.sender, from), "Caller is operator for the specified holder");
+        require(this.isOperatorFor(msg.sender, from), "Caller is not operator for the specified holder");
 
         _burn(msg.sender, from, amount, data, operatorData);
 
@@ -389,10 +387,9 @@ contract AssetToken is IERC777, Initializable {
           * the tokensToSend hook of that contract must be called before
           * updating the state
         */
-
-        address implementer = _erc1820.getInterfaceImplementer(from, TOKEN_SENDER_INTERFACE_HASH);
+        address implementer = _erc1820.getInterfaceImplementer(from, TOKENS_SENDER_INTERFACE_HASH);
         if(implementer != address(0)) {
-            ERC777TokensSender(implementer).tokensToSend(operator, from, to, amount, data, operatorData);
+            IERC777Sender(implementer).tokensToSend(operator, from, to, amount, data, operatorData);
         }
     }
 
@@ -408,9 +405,10 @@ contract AssetToken is IERC777, Initializable {
         private
     {
         //query the registry to retrieve recipient registered interface
-        address implementer = _erc1820.getInterfaceImplementer(to, TOKEN_RECIPIENT_INTERFACE_HASH);
+        address implementer = _erc1820.getInterfaceImplementer(to, TOKENS_RECIPIENT_INTERFACE_HASH);
+        emit Implementer(implementer);
         if(implementer != address(0)) {
-            ERC777TokensRecipient(implementer).tokensReceived(operator, from, to, amount, data, operatorData);
+            IERC777Recipient(implementer).tokensReceived(operator, from, to, amount, data, operatorData);
         } else if (requireInterface) {
             require(!to.isContract(), "The recipient contract must implement the ERC777TokensRecipient interface");
         }

@@ -1,9 +1,11 @@
 const { scripts, ConfigVariablesInitializer } = require("zos");
 const { add, push, create } = scripts;
+
 require("openzeppelin-test-helpers/configure")({ web3 });
-const { singletons } = require("openzeppelin-test-helpers");
-const ERC777Sender = artifacts.require(`./ERC777Sender.sol`);
-const ERC777Recipient = artifacts.require(`./ERC777Recipient.sol`);
+
+//const ERC777Sender = artifacts.require(`./ERC777TokensSender.sol`);
+const MockRecipientContract = artifacts.require(`./MockRecipientContract.sol`);
+const MockSenderContract = artifacts.require(`./MockSenderContract.sol`);
 
 async function deploy(options, tokenOwner) {
   //Register Contract in the zos project
@@ -29,9 +31,8 @@ async function deploy(options, tokenOwner) {
 
 module.exports = (deployer, networkName, accounts) => {
   deployer.then(async () => {
-    const erc1820 = await singletons.ERC1820Registry(accounts[0]);
-    deployer.deploy(ERC777Sender);
-    deployer.deploy(ERC777Recipient);
+    deployer.deploy(MockRecipientContract);
+    deployer.deploy(MockSenderContract);
     const {
       network,
       txParams

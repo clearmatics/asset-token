@@ -235,7 +235,7 @@ contract("AssetTokenTransfer", accounts => {
   describe("send and receive tokens hooks", () => {
     let addrRecipient,
       addrSender,
-      tokenRecipientImplemter,
+      tokenRecipientImplementer,
       transferVal,
       fundVal,
       actualError;
@@ -245,10 +245,10 @@ contract("AssetTokenTransfer", accounts => {
         beforeEach(async () => {
           addrSender = accounts[3];
 
-          tokenRecipientImplemter = await MockImplementerContract.new({
+          tokenRecipientImplementer = await MockImplementerContract.new({
             from: addrOwner
           });
-          addrRecipient = await tokenRecipientImplemter.address;
+          addrRecipient = await tokenRecipientImplementer.address;
           //not registering the interface to the 1820
 
           transferVal = 50;
@@ -338,19 +338,19 @@ contract("AssetTokenTransfer", accounts => {
           addrRecipient = accounts[2];
           addrSender = accounts[3];
 
-          tokenRecipientImplemter = await MockImplementerContract.new({
+          tokenRecipientImplementer = await MockImplementerContract.new({
             from: addrOwner
           });
         });
 
         context("with a contract implementer for a EOA", () => {
           it("transfer tokens", async () => {
-            await tokenRecipientImplemter.recipientFor(addrRecipient);
+            await tokenRecipientImplementer.recipientFor(addrRecipient);
 
             await this.erc1820.setInterfaceImplementer(
               addrRecipient,
               TOKENS_RECIPIENT_INTERFACE_HASH,
-              tokenRecipientImplemter.address,
+              tokenRecipientImplementer.address,
               { from: addrRecipient }
             );
 
@@ -430,7 +430,7 @@ contract("AssetTokenTransfer", accounts => {
               parseInt(balanceRecipientAfterTransfer)
             );
 
-            const logs = await tokenRecipientImplemter.getPastEvents(
+            const logs = await tokenRecipientImplementer.getPastEvents(
               "TokensReceivedCalled",
               {
                 fromBlock: 0,
@@ -459,10 +459,10 @@ contract("AssetTokenTransfer", accounts => {
 
             addrRecipient = recipientContract.address;
 
-            await tokenRecipientImplemter.recipientFor(addrRecipient);
+            await tokenRecipientImplementer.recipientFor(addrRecipient);
 
             await recipientContract.registerRecipient(
-              tokenRecipientImplemter.address
+              tokenRecipientImplementer.address
             );
           });
 
@@ -543,7 +543,7 @@ contract("AssetTokenTransfer", accounts => {
               parseInt(balanceRecipientAfterTransfer)
             );
 
-            const logs = await tokenRecipientImplemter.getPastEvents(
+            const logs = await tokenRecipientImplementer.getPastEvents(
               "TokensReceivedCalled",
               {
                 fromBlock: 0,
@@ -565,9 +565,9 @@ contract("AssetTokenTransfer", accounts => {
 
         context("with a contract implementer for itself", () => {
           beforeEach(async () => {
-            addrRecipient = tokenRecipientImplemter.address;
+            addrRecipient = tokenRecipientImplementer.address;
 
-            await tokenRecipientImplemter.recipientFor(addrRecipient);
+            await tokenRecipientImplementer.recipientFor(addrRecipient);
           });
 
           it("transfer tokens", async () => {
@@ -647,7 +647,7 @@ contract("AssetTokenTransfer", accounts => {
               parseInt(balanceRecipientAfterTransfer)
             );
 
-            const logs = await tokenRecipientImplemter.getPastEvents(
+            const logs = await tokenRecipientImplementer.getPastEvents(
               "TokensReceivedCalled",
               {
                 fromBlock: 0,

@@ -173,8 +173,8 @@ contract AssetToken is IERC777, Initializable {
 
     function isOperatorFor(address operator, address holder) external view returns (bool) {
         return holder == operator ||
-            (_defaultOperators[operator] && !_revokedDefaultOperators[operator][holder]) ||
-            _operators[operator][holder];
+            (_defaultOperators[operator] && !_revokedDefaultOperators[holder][operator]) ||
+            _operators[holder][operator];
     }
 
     function decimals() external pure returns (uint256) {
@@ -197,7 +197,7 @@ contract AssetToken is IERC777, Initializable {
         require(msg.sender != operator, "You cannot revoke yourself your own rights");
 
         if(_defaultOperators[operator]){
-            _revokedDefaultOperators[msg.sender][operator];
+            _revokedDefaultOperators[msg.sender][operator] = true;
         } else {
             _operators[msg.sender][operator] = false;
         }

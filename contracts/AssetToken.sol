@@ -70,7 +70,6 @@ contract AssetToken is IERC777, Initializable {
     event FundingDelegation(address indexed member);
     event Switch(bool balance);
     event Fund(address indexed member, uint256 value, uint256 balance);
-    event Implementer(address indexed implementer);
 
     function initialize(
         string memory symbol,
@@ -406,7 +405,6 @@ contract AssetToken is IERC777, Initializable {
     {
         //query the registry to retrieve recipient registered interface
         address implementer = _erc1820.getInterfaceImplementer(to, TOKENS_RECIPIENT_INTERFACE_HASH);
-        emit Implementer(implementer);
         if(implementer != address(0)) {
             IERC777Recipient(implementer).tokensReceived(operator, from, to, amount, data, operatorData);
         } else if (requireInterface) {

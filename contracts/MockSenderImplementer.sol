@@ -16,40 +16,40 @@ contract MockSenderContract is IERC777Recipient, ERC1820Implementer {
 
     event Created();
     event TokensToSendCalled(
-          address operator,
-          address from,
-          address to,
-          uint256 amount,
-          bytes data,
-          bytes operatorData,
-          address token,
-          uint256 fromBalance,
-          uint256 toBalance
-  );
-  event Registered(address who, address implementer);
+        address operator,
+        address from,
+        address to,
+        uint256 amount,
+        bytes data,
+        bytes operatorData,
+        address token,
+        uint256 fromBalance,
+        uint256 toBalance
+    );
+    event Registered(address who, address implementer);
 
-  constructor() public {
-      emit Created();
-  }
+    constructor() public {
+        emit Created();
+    }
 
-  function senderFor(address account) public {
-      _registerInterfaceForAddress(TOKENS_SENDER_INTERFACE_HASH, account);
+    function senderFor(address account) public {
+        _registerInterfaceForAddress(TOKENS_SENDER_INTERFACE_HASH, account);
 
-      emit Registered(account, address(this));
+        emit Registered(account, address(this));
 
-      address self = address(this);
-      if (account == self) {
-          registerSender(self);
-      }
-  }
+        address self = address(this);
+        if (account == self) {
+            registerSender(self);
+        }
+    }
 
-  //register association into the universal registry
-  function registerSender(address recipient) public {
-      _erc1820.setInterfaceImplementer(address(this), TOKENS_SENDER_INTERFACE_HASH, recipient);
-  }
+    //register association into the universal registry
+    function registerSender(address recipient) public {
+        _erc1820.setInterfaceImplementer(address(this), TOKENS_SENDER_INTERFACE_HASH, recipient);
+    }
 
-  function setShouldRevert(bool shouldRevert) public {
-    _shouldRevert = shouldRevert;
-  }
+    function setShouldRevert(bool shouldRevert) public {
+        _shouldRevert = shouldRevert;
+    }
 
 }

@@ -53,7 +53,7 @@ contract MockRecipientContract is IERC777Recipient, ERC1820Implementer {
     }
 
     function setShouldRevert(bool shouldRevert) public {
-      _shouldRevert = shouldRevert;
+        _shouldRevert = shouldRevert;
     }
 
     function tokensReceived(
@@ -67,7 +67,7 @@ contract MockRecipientContract is IERC777Recipient, ERC1820Implementer {
         external
     {
         if(_shouldRevert) {
-          revert();
+            revert();
         }
 
         emit TokensReceivedCalled(operator, from, to, amount, userData, operatorData);

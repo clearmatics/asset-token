@@ -4,8 +4,7 @@ const { add, push, create } = scripts;
 require("openzeppelin-test-helpers/configure")({ web3 });
 
 //const ERC777Sender = artifacts.require(`./ERC777TokensSender.sol`);
-const MockRecipientContract = artifacts.require(`./MockRecipientContract.sol`);
-const MockSenderContract = artifacts.require(`./MockSenderContract.sol`);
+const IERC777Compatible = artifacts.require("./IERC777Compatible");
 
 async function deploy(options, tokenOwner) {
   //Register Contract in the zos project
@@ -31,8 +30,7 @@ async function deploy(options, tokenOwner) {
 
 module.exports = (deployer, networkName, accounts) => {
   deployer.then(async () => {
-    deployer.deploy(MockRecipientContract);
-    deployer.deploy(MockSenderContract);
+    deployer.deploy(IERC777Compatible);
     const {
       network,
       txParams

@@ -382,9 +382,9 @@ contract AssetToken is IERC777, Initializable {
         private
     {
         /**
-          * if `from` has registered a ERC777Recipient to the registry
-          * the tokensToSend hook of that contract must be called before
-          * updating the state
+          * if `from` has registered a ERC777Sender interface to the registry
+          * the tokensToSend hook of that contract is called -
+          * it's then optional for an account to implement it
         */
         address implementer = _erc1820.getInterfaceImplementer(from, TOKENS_SENDER_INTERFACE_HASH);
         if(implementer != address(0)) {
@@ -403,12 +403,16 @@ contract AssetToken is IERC777, Initializable {
     )
         private
     {
-        //query the registry to retrieve recipient registered interface
+        /**
+          * if `to` has registered a ERC777Recipient to the registry
+          * the tokensReceived hook of that contract is called -
+          * optional for EOA mandatory for contracts
+        */
         address implementer = _erc1820.getInterfaceImplementer(to, TOKENS_RECIPIENT_INTERFACE_HASH);
         if(implementer != address(0)) {
             IERC777Recipient(implementer).tokensReceived(operator, from, to, amount, data, operatorData);
         } else if (requireInterface) {
-            require(!to.isContract(), "The recipient contract must implement the ERC777TokensRecipient interface");
+            require(!isContract(to), "The recipient contract must implement the ERC777TokensRecipient interface");
         }
     }
 

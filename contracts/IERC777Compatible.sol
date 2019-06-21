@@ -5,18 +5,32 @@
 pragma solidity ^0.5.0;
 
 import "./IERC777Recipient.sol";
+import "./IERC777Sender.sol";
 import "openzeppelin-solidity/contracts/introspection/IERC1820Registry.sol";
 import "openzeppelin-solidity/contracts/introspection/ERC1820Implementer.sol";
 
-contract MockRecipientContract is IERC777Recipient, ERC1820Implementer {
+/**
+ * Implements both Recipient and Sender implementer interfaces to be used in tests
+*/
+contract IERC777Compatible is IERC777Recipient, IERC777Sender, ERC1820Implementer {
 
     bytes32 constant private TOKENS_RECIPIENT_INTERFACE_HASH = keccak256("ERC777TokensRecipient");
+    bytes32 constant private TOKENS_SENDER_INTERFACE_HASH = keccak256("ERC777TokensSender");
     IERC1820Registry private _erc1820 = IERC1820Registry(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24);
 
-    bool private _shouldRevert;
+    bool private _shouldRevertReceive;
+    bool private _shouldRevertSend;
 
     event Created();
     event TokensReceivedCalled(
+        address operator,
+        address from,
+        address to,
+        uint256 amount,
+        bytes data,
+        bytes operatorData
+    );
+    event TokensToSendCalled(
         address operator,
         address from,
         address to,
@@ -52,8 +66,8 @@ contract MockRecipientContract is IERC777Recipient, ERC1820Implementer {
         _erc1820.setInterfaceImplementer(address(this), TOKENS_RECIPIENT_INTERFACE_HASH, recipient);
     }
 
-    function setShouldRevert(bool shouldRevert) public {
-        _shouldRevert = shouldRevert;
+    function setShouldRevertReceive(bool shouldRevert) public {
+        _shouldRevertReceive = shouldRevert;
     }
 
     function tokensReceived(
@@ -66,11 +80,58 @@ contract MockRecipientContract is IERC777Recipient, ERC1820Implementer {
     )
         external
     {
-        if(_shouldRevert) {
+        if(_shouldRevertReceive) {
             revert();
         }
 
         emit TokensReceivedCalled(operator, from, to, amount, userData, operatorData);
+    }
+
+    /**
+     * SENDER IMPLEMENTER
+    */
+    function senderFor(address account) public {
+        _registerInterfaceForAddress(TOKENS_SENDER_INTERFACE_HASH, account);
+
+        emit Registered(account, address(this));
+
+        address self = address(this);
+        if (account == self) {
+            registerSender(self);
+        }
+    }
+
+    //register association into the universal registry
+    function registerSender(address recipient) public {
+        _erc1820.setInterfaceImplementer(address(this), TOKENS_SENDER_INTERFACE_HASH, recipient);
+    }
+
+    function setShouldRevertSend(bool shouldRevert) public {
+        _shouldRevertSend = shouldRevert;
+    }
+
+    function tokensToSend(
+        address operator,
+        address from,
+        address to,
+        uint256 amount,
+        bytes calldata userData,
+        bytes calldata operatorData
+    )
+        external
+    {
+        if(_shouldRevertSend) {
+            revert();
+        }
+
+        emit TokensToSendCalled(
+            operator,
+            from,
+            to,
+            amount,
+            userData,
+            operatorData
+        );
     }
 
 }

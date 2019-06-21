@@ -10,7 +10,7 @@ const { singletons } = require("openzeppelin-test-helpers");
 ZWeb3.initialize(web3.currentProvider);
 
 const AssetToken = Contracts.getFromLocal("AssetToken");
-const MockImplementerContract = artifacts.require("MockRecipientContract");
+const IERC777Compatible = artifacts.require("IERC777Compatible");
 
 let CONTRACT;
 let TOKENS_RECIPIENT_INTERFACE_HASH = web3.utils.keccak256(
@@ -94,7 +94,7 @@ contract("Asset Token", accounts => {
         authorizedEvent = res.events.AuthorizedOperator;
       });
 
-      it("auth event is thrown correctly", async () => {
+      it("AuthorizedOperator event is emitted correctly", async () => {
         assert.notEqual(authorizedEvent, null);
         assert.equal(authorizedEvent.returnValues.operator, newOperator);
         assert.equal(authorizedEvent.returnValues.holder, tokenHolder);
@@ -119,6 +119,17 @@ contract("Asset Token", accounts => {
           await CONTRACT.isOperatorFor(newOperator, tokenHolder).call(),
           false
         );
+      });
+
+      it("RevokedOperator event is emitted correctly", async () => {
+        const res = await CONTRACT.revokeOperator(newOperator).send({
+          from: tokenHolder
+        });
+        const revokeEvent = res.events.RevokedOperator;
+
+        assert.notEqual(revokeEvent, null);
+        assert.equal(revokeEvent.returnValues.operator, newOperator);
+        assert.equal(revokeEvent.returnValues.holder, tokenHolder);
       });
     });
 
@@ -169,7 +180,7 @@ contract("Asset Token", accounts => {
           from: addrSender
         });
 
-        tokenRecipientImplementer = await MockImplementerContract.new({
+        tokenRecipientImplementer = await IERC777Compatible.new({
           from: addrOwner
         });
       });

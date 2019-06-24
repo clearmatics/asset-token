@@ -36,7 +36,7 @@ contract("Asset TokenTransfer", accounts => {
     CONTRACT = PROXY.methods;
   });
 
-  describe("Unallowed transfers", () => {
+  describe("Transfer modifiers check", () => {
     it("Cannot transfer more tokens than in the account", async () => {
       const addrSender = accounts[2];
       const addrRecipient = accounts[3];
@@ -233,7 +233,7 @@ contract("Asset TokenTransfer", accounts => {
     });
   });
 
-  describe("Allowed transfers with hooks", () => {
+  describe("Transfer with hooks", () => {
     let addrRecipient,
       addrSender,
       tokenRecipientImplementer,
@@ -241,6 +241,10 @@ contract("Asset TokenTransfer", accounts => {
       fundVal,
       actualError,
       tokenSenderImplementer,
+      balanceSenderStart,
+      balanceRecipientStart,
+      balanceSenderFund,
+      balanceRecipientFund,
       balanceSenderAfterTransfer,
       balanceRecipientAfterTransfer;
 
@@ -249,12 +253,6 @@ contract("Asset TokenTransfer", accounts => {
         beforeEach(async () => {
           addrSender = accounts[3];
 
-          tokenRecipientImplementer = await IERC777Compatible.new({
-            from: addrOwner
-          });
-          addrRecipient = await tokenRecipientImplementer.address;
-          //not registering the interface to the 1820
-
           transferVal = 50;
           fundVal = 100;
           actualError = null;
@@ -262,8 +260,17 @@ contract("Asset TokenTransfer", accounts => {
           await CONTRACT.fund(addrSender, fundVal).send({
             from: addrOwner
           });
+
+          balanceSenderFund = await CONTRACT.balanceOf(addrSender).call();
         });
         context("with contract recipient", () => {
+          beforeEach(async () => {
+            tokenRecipientImplementer = await IERC777Compatible.new({
+              from: addrOwner
+            });
+            addrRecipient = await tokenRecipientImplementer.address;
+            //not registering the interface to the 1820
+          });
           it("send function reverts", async () => {
             try {
               await CONTRACT.send(addrRecipient, transferVal, data).send({
@@ -300,39 +307,65 @@ contract("Asset TokenTransfer", accounts => {
         });
 
         context("with EOA recipient", () => {
-          addrRecipient = accounts[2];
-          it("send function reverts", async () => {
-            try {
-              await CONTRACT.send(addrRecipient, transferVal, data).send({
-                from: addrSender
-              });
-            } catch (error) {
-              actualError = error;
-            }
+          beforeEach(async () => {
+            addrRecipient = accounts[5];
+            actualError = null;
 
-            assert.strictEqual(
-              actualError.toString(),
-              "Error: Returned error: VM Exception while processing transaction: revert The recipient contract must implement the ERC777TokensRecipient interface"
-            );
+            balanceRecipientStart = await CONTRACT.balanceOf(
+              addrRecipient
+            ).call();
           });
 
-          it("operatorSend reverts", async () => {
-            try {
-              await CONTRACT.operatorSend(
-                addrSender,
-                addrRecipient,
-                transferVal,
-                data,
-                data
-              ).send({ from: defaultOperator });
-            } catch (error) {
-              actualError = error;
-            }
+          it("send function completes - balances updated", async () => {
+            await CONTRACT.send(addrRecipient, transferVal, data).send({
+              from: addrSender
+            });
 
-            assert.strictEqual(
-              actualError.toString(),
-              "Error: Returned error: VM Exception while processing transaction: revert The recipient contract must implement the ERC777TokensRecipient interface"
+            balanceSenderAfterTransfer = await CONTRACT.balanceOf(
+              addrSender
+            ).call();
+
+            balanceRecipientAfterTransfer = await CONTRACT.balanceOf(
+              addrRecipient
+            ).call();
+
+            assert.equal(
+              parseInt(balanceSenderAfterTransfer),
+              parseInt(balanceSenderFund) - parseInt(transferVal)
             );
+            assert.equal(
+              parseInt(balanceRecipientAfterTransfer),
+              parseInt(balanceRecipientStart) + parseInt(transferVal)
+            );
+            assert.equal(actualError, null);
+          });
+
+          it("operatorSend completes - balances updated", async () => {
+            await CONTRACT.operatorSend(
+              addrSender,
+              addrRecipient,
+              transferVal,
+              data,
+              data
+            ).send({ from: defaultOperator });
+
+            balanceSenderAfterTransfer = await CONTRACT.balanceOf(
+              addrSender
+            ).call();
+
+            balanceRecipientAfterTransfer = await CONTRACT.balanceOf(
+              addrRecipient
+            ).call();
+
+            assert.equal(
+              parseInt(balanceSenderAfterTransfer),
+              parseInt(balanceSenderFund) - parseInt(transferVal)
+            );
+            assert.equal(
+              parseInt(balanceRecipientAfterTransfer),
+              parseInt(balanceRecipientStart) + parseInt(transferVal)
+            );
+            assert.equal(actualError, null);
           });
         });
       });

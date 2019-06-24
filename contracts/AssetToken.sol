@@ -254,7 +254,7 @@ contract AssetToken is IERC777, Initializable {
         _balances[member] = _balances[member].add(value);
         _totalSupply = _totalSupply.add(value);
 
-        callTokensReceived(msg.sender, address(0), member, value, "", "", true);
+        callTokensReceived(msg.sender, address(0), member, value, "", "");
 
         emit Minted(msg.sender, member, value, "", "");
         emit Fund(member, value, _balances[member]);
@@ -289,7 +289,7 @@ contract AssetToken is IERC777, Initializable {
         noOwnerAsCounterparty(recipient)
         noOwnerAsCounterparty(msg.sender)
     {
-        _send(msg.sender, msg.sender, recipient, amount, data, "", true);
+        _send(msg.sender, msg.sender, recipient, amount, data, "");
     }
 
     function operatorSend(
@@ -304,23 +304,19 @@ contract AssetToken is IERC777, Initializable {
         //being isOperatorFor external the compiler doesn't sees it without `this`
         require(this.isOperatorFor(msg.sender, from), "Caller is not operator for specified holder");
 
-        _send(msg.sender, from, to, amount, data, operatorData, true);
+        _send(msg.sender, from, to, amount, data, operatorData);
 
     }
 
-    /**
-     * @param requireInterface if true, contract recipients are required to implement ERC777Recipient
-     * it's always true in case of ERC777, needed only if we want ERC20 compatibility as well
-     * always called for transfer
-     */
+
+    //always called for transfer
     function _send(
         address operator,
         address from,
         address to,
         uint256 amount,
         bytes memory data,
-        bytes memory operatorData,
-        bool requireInterface
+        bytes memory operatorData
     )
         private
     {
@@ -332,7 +328,7 @@ contract AssetToken is IERC777, Initializable {
 
         updateTokenBalances(operator, from, to, amount, data, operatorData);
 
-        callTokensReceived(operator, from, to, amount, data, operatorData, requireInterface);
+        callTokensReceived(operator, from, to, amount, data, operatorData);
     }
 
     //always called in case of burn
@@ -398,8 +394,7 @@ contract AssetToken is IERC777, Initializable {
         address to,
         uint256 amount,
         bytes memory data,
-        bytes memory operatorData,
-        bool requireInterface
+        bytes memory operatorData
     )
         private
     {
@@ -411,7 +406,7 @@ contract AssetToken is IERC777, Initializable {
         address implementer = _erc1820.getInterfaceImplementer(to, TOKENS_RECIPIENT_INTERFACE_HASH);
         if(implementer != address(0)) {
             IERC777Recipient(implementer).tokensReceived(operator, from, to, amount, data, operatorData);
-        } else if (requireInterface) {
+        } else {
             require(!isContract(to), "The recipient contract must implement the ERC777TokensRecipient interface");
         }
     }

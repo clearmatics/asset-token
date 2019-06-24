@@ -233,14 +233,16 @@ contract("Asset TokenTransfer", accounts => {
     });
   });
 
-  describe("send and receive tokens hooks", () => {
+  describe("Allowed transfers with hooks", () => {
     let addrRecipient,
       addrSender,
       tokenRecipientImplementer,
       transferVal,
       fundVal,
       actualError,
-      tokenSenderImplementer;
+      tokenSenderImplementer,
+      balanceSenderAfterTransfer,
+      balanceRecipientAfterTransfer;
 
     context("Receive hooks", () => {
       context("without ERC777TokensRecipient implementer", () => {
@@ -336,17 +338,30 @@ contract("Asset TokenTransfer", accounts => {
       });
 
       context("with ERC777TokensRecipient implementer", () => {
-        beforeEach(async () => {
-          addrRecipient = accounts[2];
-          addrSender = accounts[3];
+        let totalSupplyStart,
+          balanceSenderStart,
+          balanceRecipientStart,
+          fundVal,
+          fundRes,
+          totalSupplyFund,
+          balanceSenderFund,
+          transferVal,
+          sendRes;
+        context("when the implementer reverts", () => {
+          beforeEach(async () => {
+            addrRecipient = accounts[2];
+            addrSender = accounts[3];
 
-          tokenRecipientImplementer = await IERC777Compatible.new({
-            from: addrOwner
+            tokenRecipientImplementer = await IERC777Compatible.new({
+              from: addrOwner
+            });
+
+            tokenRecipientImplementer.setShouldRevertReceive(true, {
+              from: addrRecipient
+            });
           });
-        });
 
-        context("with a contract implementer for a EOA", () => {
-          it("transfer tokens", async () => {
+          it("reverts the transfer and the state", async () => {
             await tokenRecipientImplementer.recipientFor(addrRecipient);
 
             await this.erc1820.setInterfaceImplementer(
@@ -378,13 +393,18 @@ contract("Asset TokenTransfer", accounts => {
             ).call();
 
             const transferVal = 50;
-            const transferRes = await CONTRACT.send(
-              addrRecipient,
-              transferVal,
-              data
-            ).send({
-              from: addrSender
-            });
+
+            try {
+              const transferRes = await CONTRACT.send(
+                addrRecipient,
+                transferVal,
+                data
+              ).send({
+                from: addrSender
+              });
+            } catch (err) {
+              actualError = err;
+            }
 
             const totalSupplyAfterTransfer = await CONTRACT.totalSupply().call();
             const balanceSenderAfterTransfer = await CONTRACT.balanceOf(
@@ -394,278 +414,348 @@ contract("Asset TokenTransfer", accounts => {
               addrRecipient
             ).call();
 
-            const transferEvent = transferRes.events.Sent;
-            const transferEventFrom = transferEvent.returnValues.from;
-            const transferEventTo = transferEvent.returnValues.to;
-            const transferEventValue = parseInt(
-              transferEvent.returnValues.amount
+            assert.equal(
+              actualError.toString(),
+              "Error: Returned error: VM Exception while processing transaction: revert Tokens to receive revert"
             );
-
-            assert(transferEvent != null);
-            assert.strictEqual(transferEventFrom, addrSender);
-            assert.strictEqual(transferEventTo, addrRecipient);
-            assert.strictEqual(transferEventValue, transferVal);
-
-            assert.strictEqual(
-              parseInt(totalSupplyStart) + fundVal,
-              parseInt(totalSupplyFund)
-            );
-            assert.strictEqual(
-              parseInt(balanceSenderStart) + fundVal,
-              parseInt(balanceSenderFund)
-            );
-            assert.strictEqual(
-              parseInt(balanceRecipientStart),
-              parseInt(balanceRecipientFund)
-            );
-
-            assert.strictEqual(
-              parseInt(totalSupplyFund),
-              parseInt(totalSupplyAfterTransfer)
-            );
-            assert.strictEqual(
-              parseInt(balanceSenderFund) - transferVal,
-              parseInt(balanceSenderAfterTransfer)
-            );
-            assert.strictEqual(
-              parseInt(balanceRecipientFund) + transferVal,
-              parseInt(balanceRecipientAfterTransfer)
-            );
-
-            const logs = await tokenRecipientImplementer.getPastEvents(
-              "TokensReceivedCalled",
-              {
-                fromBlock: 0,
-                toBlock: "latest"
-              }
-            );
-
-            assert.strictEqual(logs[0].event, "TokensReceivedCalled");
-            assert.strictEqual(logs[0].returnValues.from, addrSender);
-            assert.strictEqual(logs[0].returnValues.operator, addrSender);
-            assert.strictEqual(logs[0].returnValues.to, addrRecipient);
-            assert.strictEqual(logs[0].returnValues.data, null);
-            assert.strictEqual(
-              logs[0].returnValues.amount,
-              transferVal.toString()
-            );
+            assert.equal(balanceSenderAfterTransfer, balanceSenderFund);
+            assert.equal(balanceRecipientAfterTransfer, 0);
           });
         });
-
-        context("with a contract implementer for another contract", () => {
-          let recipientContract;
+        context("when the implementer doesn't revert", () => {
           beforeEach(async () => {
-            recipientContract = await IERC777Compatible.new({
+            addrRecipient = accounts[2];
+            addrSender = accounts[3];
+
+            tokenRecipientImplementer = await IERC777Compatible.new({
               from: addrOwner
             });
-
-            addrRecipient = recipientContract.address;
-
-            await tokenRecipientImplementer.recipientFor(addrRecipient);
-
-            await recipientContract.registerRecipient(
-              tokenRecipientImplementer.address
-            );
           });
 
-          it("transfer tokens", async () => {
-            const totalSupplyStart = await CONTRACT.totalSupply().call();
-            const balanceSenderStart = await CONTRACT.balanceOf(
-              addrSender
-            ).call();
-            const balanceRecipientStart = await CONTRACT.balanceOf(
-              addrRecipient
-            ).call();
+          context("with a contract implementer for a EOA", () => {
+            beforeEach(async () => {
+              await tokenRecipientImplementer.recipientFor(addrRecipient);
 
-            const fundVal = 100;
-            const fundRes = await CONTRACT.fund(addrSender, fundVal).send({
-              from: addrOwner
+              await this.erc1820.setInterfaceImplementer(
+                addrRecipient,
+                TOKENS_RECIPIENT_INTERFACE_HASH,
+                tokenRecipientImplementer.address,
+                { from: addrRecipient }
+              );
+
+              totalSupplyStart = await CONTRACT.totalSupply().call();
+              balanceSenderStart = await CONTRACT.balanceOf(addrSender).call();
+              balanceRecipientStart = await CONTRACT.balanceOf(
+                addrRecipient
+              ).call();
+
+              fundVal = 100;
+              fundRes = await CONTRACT.fund(addrSender, fundVal).send({
+                from: addrOwner
+              });
+
+              totalSupplyFund = await CONTRACT.totalSupply().call();
+              balanceSenderFund = await CONTRACT.balanceOf(addrSender).call();
+              balanceRecipientFund = await CONTRACT.balanceOf(
+                addrRecipient
+              ).call();
+
+              transferVal = 50;
+              transferRes = await CONTRACT.send(
+                addrRecipient,
+                transferVal,
+                data
+              ).send({
+                from: addrSender
+              });
+
+              totalSupplyAfterTransfer = await CONTRACT.totalSupply().call();
+              balanceSenderAfterTransfer = await CONTRACT.balanceOf(
+                addrSender
+              ).call();
+              balanceRecipientAfterTransfer = await CONTRACT.balanceOf(
+                addrRecipient
+              ).call();
             });
 
-            const totalSupplyFund = await CONTRACT.totalSupply().call();
-            const balanceSenderFund = await CONTRACT.balanceOf(
-              addrSender
-            ).call();
-            const balanceRecipientFund = await CONTRACT.balanceOf(
-              addrRecipient
-            ).call();
+            it("updates token balance state", async () => {
+              assert.strictEqual(
+                parseInt(totalSupplyStart) + fundVal,
+                parseInt(totalSupplyFund)
+              );
+              assert.strictEqual(
+                parseInt(balanceSenderStart) + fundVal,
+                parseInt(balanceSenderFund)
+              );
+              assert.strictEqual(
+                parseInt(balanceRecipientStart),
+                parseInt(balanceRecipientFund)
+              );
 
-            const transferVal = 50;
-            const transferRes = await CONTRACT.send(
-              addrRecipient,
-              transferVal,
-              data
-            ).send({
-              from: addrSender
+              assert.strictEqual(
+                parseInt(totalSupplyFund),
+                parseInt(totalSupplyAfterTransfer)
+              );
+              assert.strictEqual(
+                parseInt(balanceSenderFund) - transferVal,
+                parseInt(balanceSenderAfterTransfer)
+              );
+              assert.strictEqual(
+                parseInt(balanceRecipientFund) + transferVal,
+                parseInt(balanceRecipientAfterTransfer)
+              );
             });
 
-            const totalSupplyAfterTransfer = await CONTRACT.totalSupply().call();
-            const balanceSenderAfterTransfer = await CONTRACT.balanceOf(
-              addrSender
-            ).call();
-            const balanceRecipientAfterTransfer = await CONTRACT.balanceOf(
-              addrRecipient
-            ).call();
+            it("emits contract Sent event", () => {
+              const transferEvent = transferRes.events.Sent;
+              const transferEventFrom = transferEvent.returnValues.from;
+              const transferEventTo = transferEvent.returnValues.to;
+              const transferEventValue = parseInt(
+                transferEvent.returnValues.amount
+              );
 
-            const transferEvent = transferRes.events.Sent;
-            const transferEventFrom = transferEvent.returnValues.from;
-            const transferEventTo = transferEvent.returnValues.to;
-            const transferEventValue = parseInt(
-              transferEvent.returnValues.amount
-            );
+              assert(transferEvent != null);
+              assert.strictEqual(transferEventFrom, addrSender);
+              assert.strictEqual(transferEventTo, addrRecipient);
+              assert.strictEqual(transferEventValue, transferVal);
+            });
 
-            assert(transferEvent != null);
-            assert.strictEqual(transferEventFrom, addrSender);
-            assert.strictEqual(transferEventTo, addrRecipient);
-            assert.strictEqual(transferEventValue, transferVal);
+            it("triggers tokensReceived hook", async () => {
+              const logs = await tokenRecipientImplementer.getPastEvents(
+                "TokensReceivedCalled",
+                {
+                  fromBlock: 0,
+                  toBlock: "latest"
+                }
+              );
 
-            assert.strictEqual(
-              parseInt(totalSupplyStart) + fundVal,
-              parseInt(totalSupplyFund)
-            );
-            assert.strictEqual(
-              parseInt(balanceSenderStart) + fundVal,
-              parseInt(balanceSenderFund)
-            );
-            assert.strictEqual(
-              parseInt(balanceRecipientStart),
-              parseInt(balanceRecipientFund)
-            );
-
-            assert.strictEqual(
-              parseInt(totalSupplyFund),
-              parseInt(totalSupplyAfterTransfer)
-            );
-            assert.strictEqual(
-              parseInt(balanceSenderFund) - transferVal,
-              parseInt(balanceSenderAfterTransfer)
-            );
-            assert.strictEqual(
-              parseInt(balanceRecipientFund) + transferVal,
-              parseInt(balanceRecipientAfterTransfer)
-            );
-
-            const logs = await tokenRecipientImplementer.getPastEvents(
-              "TokensReceivedCalled",
-              {
-                fromBlock: 0,
-                toBlock: "latest"
-              }
-            );
-
-            assert.strictEqual(logs[0].event, "TokensReceivedCalled");
-            assert.strictEqual(logs[0].returnValues.from, addrSender);
-            assert.strictEqual(logs[0].returnValues.operator, addrSender);
-            assert.strictEqual(logs[0].returnValues.to, addrRecipient);
-            assert.strictEqual(logs[0].returnValues.data, null);
-            assert.strictEqual(
-              logs[0].returnValues.amount,
-              transferVal.toString()
-            );
+              assert.strictEqual(logs[0].event, "TokensReceivedCalled");
+              assert.strictEqual(logs[0].returnValues.from, addrSender);
+              assert.strictEqual(logs[0].returnValues.operator, addrSender);
+              assert.strictEqual(logs[0].returnValues.to, addrRecipient);
+              assert.strictEqual(logs[0].returnValues.data, null);
+              assert.strictEqual(
+                logs[0].returnValues.amount,
+                transferVal.toString()
+              );
+            });
           });
-        });
 
-        context("with a contract implementer for itself", () => {
-          beforeEach(async () => {
-            addrRecipient = tokenRecipientImplementer.address;
+          context("with a contract implementer for another contract", () => {
+            let recipientContract;
+            beforeEach(async () => {
+              recipientContract = await IERC777Compatible.new({
+                from: addrOwner
+              });
 
-            await tokenRecipientImplementer.recipientFor(addrRecipient);
+              addrRecipient = recipientContract.address;
+
+              await tokenRecipientImplementer.recipientFor(addrRecipient);
+
+              await recipientContract.registerRecipient(
+                tokenRecipientImplementer.address
+              );
+
+              totalSupplyStart = await CONTRACT.totalSupply().call();
+              balanceSenderStart = await CONTRACT.balanceOf(addrSender).call();
+              balanceRecipientStart = await CONTRACT.balanceOf(
+                addrRecipient
+              ).call();
+
+              fundVal = 100;
+              fundRes = await CONTRACT.fund(addrSender, fundVal).send({
+                from: addrOwner
+              });
+
+              totalSupplyFund = await CONTRACT.totalSupply().call();
+              balanceSenderFund = await CONTRACT.balanceOf(addrSender).call();
+              balanceRecipientFund = await CONTRACT.balanceOf(
+                addrRecipient
+              ).call();
+
+              transferVal = 50;
+              transferRes = await CONTRACT.send(
+                addrRecipient,
+                transferVal,
+                data
+              ).send({
+                from: addrSender
+              });
+
+              totalSupplyAfterTransfer = await CONTRACT.totalSupply().call();
+              balanceSenderAfterTransfer = await CONTRACT.balanceOf(
+                addrSender
+              ).call();
+              balanceRecipientAfterTransfer = await CONTRACT.balanceOf(
+                addrRecipient
+              ).call();
+            });
+
+            it("updates token balance state", async () => {
+              assert.strictEqual(
+                parseInt(totalSupplyStart) + fundVal,
+                parseInt(totalSupplyFund)
+              );
+              assert.strictEqual(
+                parseInt(balanceSenderStart) + fundVal,
+                parseInt(balanceSenderFund)
+              );
+              assert.strictEqual(
+                parseInt(balanceRecipientStart),
+                parseInt(balanceRecipientFund)
+              );
+
+              assert.strictEqual(
+                parseInt(totalSupplyFund),
+                parseInt(totalSupplyAfterTransfer)
+              );
+              assert.strictEqual(
+                parseInt(balanceSenderFund) - transferVal,
+                parseInt(balanceSenderAfterTransfer)
+              );
+              assert.strictEqual(
+                parseInt(balanceRecipientFund) + transferVal,
+                parseInt(balanceRecipientAfterTransfer)
+              );
+            });
+
+            it("emits contract Sent event", () => {
+              const transferEvent = transferRes.events.Sent;
+              const transferEventFrom = transferEvent.returnValues.from;
+              const transferEventTo = transferEvent.returnValues.to;
+              const transferEventValue = parseInt(
+                transferEvent.returnValues.amount
+              );
+
+              assert(transferEvent != null);
+              assert.strictEqual(transferEventFrom, addrSender);
+              assert.strictEqual(transferEventTo, addrRecipient);
+              assert.strictEqual(transferEventValue, transferVal);
+            });
+
+            it("triggers tokensReceived hook", async () => {
+              const logs = await tokenRecipientImplementer.getPastEvents(
+                "TokensReceivedCalled",
+                {
+                  fromBlock: 0,
+                  toBlock: "latest"
+                }
+              );
+
+              assert.strictEqual(logs[0].event, "TokensReceivedCalled");
+              assert.strictEqual(logs[0].returnValues.from, addrSender);
+              assert.strictEqual(logs[0].returnValues.operator, addrSender);
+              assert.strictEqual(logs[0].returnValues.to, addrRecipient);
+              assert.strictEqual(logs[0].returnValues.data, null);
+              assert.strictEqual(
+                logs[0].returnValues.amount,
+                transferVal.toString()
+              );
+            });
           });
 
-          it("transfer tokens", async () => {
-            const totalSupplyStart = await CONTRACT.totalSupply().call();
-            const balanceSenderStart = await CONTRACT.balanceOf(
-              addrSender
-            ).call();
-            const balanceRecipientStart = await CONTRACT.balanceOf(
-              addrRecipient
-            ).call();
+          context("with a contract implementer for itself", () => {
+            beforeEach(async () => {
+              addrRecipient = tokenRecipientImplementer.address;
 
-            const fundVal = 100;
-            const fundRes = await CONTRACT.fund(addrSender, fundVal).send({
-              from: addrOwner
+              await tokenRecipientImplementer.recipientFor(addrRecipient);
+
+              totalSupplyStart = await CONTRACT.totalSupply().call();
+              balanceSenderStart = await CONTRACT.balanceOf(addrSender).call();
+              balanceRecipientStart = await CONTRACT.balanceOf(
+                addrRecipient
+              ).call();
+
+              fundVal = 100;
+              fundRes = await CONTRACT.fund(addrSender, fundVal).send({
+                from: addrOwner
+              });
+
+              totalSupplyFund = await CONTRACT.totalSupply().call();
+              balanceSenderFund = await CONTRACT.balanceOf(addrSender).call();
+              balanceRecipientFund = await CONTRACT.balanceOf(
+                addrRecipient
+              ).call();
+
+              transferVal = 50;
+              transferRes = await CONTRACT.send(
+                addrRecipient,
+                transferVal,
+                data
+              ).send({
+                from: addrSender
+              });
+
+              totalSupplyAfterTransfer = await CONTRACT.totalSupply().call();
+              balanceSenderAfterTransfer = await CONTRACT.balanceOf(
+                addrSender
+              ).call();
+              balanceRecipientAfterTransfer = await CONTRACT.balanceOf(
+                addrRecipient
+              ).call();
             });
 
-            const totalSupplyFund = await CONTRACT.totalSupply().call();
-            const balanceSenderFund = await CONTRACT.balanceOf(
-              addrSender
-            ).call();
-            const balanceRecipientFund = await CONTRACT.balanceOf(
-              addrRecipient
-            ).call();
+            it("updates token balance state", async () => {
+              assert.strictEqual(
+                parseInt(totalSupplyStart) + fundVal,
+                parseInt(totalSupplyFund)
+              );
+              assert.strictEqual(
+                parseInt(balanceSenderStart) + fundVal,
+                parseInt(balanceSenderFund)
+              );
+              assert.strictEqual(
+                parseInt(balanceRecipientStart),
+                parseInt(balanceRecipientFund)
+              );
 
-            const transferVal = 50;
-            const transferRes = await CONTRACT.send(
-              addrRecipient,
-              transferVal,
-              data
-            ).send({
-              from: addrSender
+              assert.strictEqual(
+                parseInt(totalSupplyFund),
+                parseInt(totalSupplyAfterTransfer)
+              );
+              assert.strictEqual(
+                parseInt(balanceSenderFund) - transferVal,
+                parseInt(balanceSenderAfterTransfer)
+              );
+              assert.strictEqual(
+                parseInt(balanceRecipientFund) + transferVal,
+                parseInt(balanceRecipientAfterTransfer)
+              );
             });
 
-            const totalSupplyAfterTransfer = await CONTRACT.totalSupply().call();
-            const balanceSenderAfterTransfer = await CONTRACT.balanceOf(
-              addrSender
-            ).call();
-            const balanceRecipientAfterTransfer = await CONTRACT.balanceOf(
-              addrRecipient
-            ).call();
+            it("emits contract Sent event", () => {
+              const transferEvent = transferRes.events.Sent;
+              const transferEventFrom = transferEvent.returnValues.from;
+              const transferEventTo = transferEvent.returnValues.to;
+              const transferEventValue = parseInt(
+                transferEvent.returnValues.amount
+              );
 
-            const transferEvent = transferRes.events.Sent;
-            const transferEventFrom = transferEvent.returnValues.from;
-            const transferEventTo = transferEvent.returnValues.to;
-            const transferEventValue = parseInt(
-              transferEvent.returnValues.amount
-            );
+              assert(transferEvent != null);
+              assert.strictEqual(transferEventFrom, addrSender);
+              assert.strictEqual(transferEventTo, addrRecipient);
+              assert.strictEqual(transferEventValue, transferVal);
+            });
 
-            assert(transferEvent != null);
-            assert.strictEqual(transferEventFrom, addrSender);
-            assert.strictEqual(transferEventTo, addrRecipient);
-            assert.strictEqual(transferEventValue, transferVal);
+            it("triggers tokensReceived hook", async () => {
+              const logs = await tokenRecipientImplementer.getPastEvents(
+                "TokensReceivedCalled",
+                {
+                  fromBlock: 0,
+                  toBlock: "latest"
+                }
+              );
 
-            assert.strictEqual(
-              parseInt(totalSupplyStart) + fundVal,
-              parseInt(totalSupplyFund)
-            );
-            assert.strictEqual(
-              parseInt(balanceSenderStart) + fundVal,
-              parseInt(balanceSenderFund)
-            );
-            assert.strictEqual(
-              parseInt(balanceRecipientStart),
-              parseInt(balanceRecipientFund)
-            );
-
-            assert.strictEqual(
-              parseInt(totalSupplyFund),
-              parseInt(totalSupplyAfterTransfer)
-            );
-            assert.strictEqual(
-              parseInt(balanceSenderFund) - transferVal,
-              parseInt(balanceSenderAfterTransfer)
-            );
-            assert.strictEqual(
-              parseInt(balanceRecipientFund) + transferVal,
-              parseInt(balanceRecipientAfterTransfer)
-            );
-
-            const logs = await tokenRecipientImplementer.getPastEvents(
-              "TokensReceivedCalled",
-              {
-                fromBlock: 0,
-                toBlock: "latest"
-              }
-            );
-
-            assert.strictEqual(logs[0].event, "TokensReceivedCalled");
-            assert.strictEqual(logs[0].returnValues.from, addrSender);
-            assert.strictEqual(logs[0].returnValues.operator, addrSender);
-            assert.strictEqual(logs[0].returnValues.to, addrRecipient);
-            assert.strictEqual(logs[0].returnValues.data, null);
-            assert.strictEqual(
-              logs[0].returnValues.amount,
-              transferVal.toString()
-            );
+              assert.strictEqual(logs[0].event, "TokensReceivedCalled");
+              assert.strictEqual(logs[0].returnValues.from, addrSender);
+              assert.strictEqual(logs[0].returnValues.operator, addrSender);
+              assert.strictEqual(logs[0].returnValues.to, addrRecipient);
+              assert.strictEqual(logs[0].returnValues.data, null);
+              assert.strictEqual(
+                logs[0].returnValues.amount,
+                transferVal.toString()
+              );
+            });
           });
         });
       });
@@ -682,15 +772,17 @@ contract("Asset TokenTransfer", accounts => {
         transferVal,
         sendRes;
       beforeEach(async () => {
-        //register recipient implementer as contract himself
-        //internally makes the registry call as well
-        addrRecipient = accounts[2];
+        addrRecipient = accounts[3];
       });
-      context("with a contract implementer for EOA", () => {
+
+      context("when the implementer reverts", () => {
         beforeEach(async () => {
           tokenSenderImplementer = await IERC777Compatible.new();
 
-          addrSender = accounts[3];
+          addrSender = accounts[4];
+          tokenSenderImplementer.setShouldRevertSend(true, {
+            from: addrSender
+          });
 
           //register sender implementer for EOA
           await tokenSenderImplementer.senderFor(addrSender);
@@ -701,7 +793,6 @@ contract("Asset TokenTransfer", accounts => {
             { from: addrSender }
           );
 
-          totalSupplyStart = await CONTRACT.totalSupply().call();
           balanceSenderStart = await CONTRACT.balanceOf(addrSender).call();
           balanceRecipientStart = await CONTRACT.balanceOf(
             addrRecipient
@@ -712,67 +803,132 @@ contract("Asset TokenTransfer", accounts => {
             from: addrOwner
           });
 
-          totalSupplyFund = await CONTRACT.totalSupply().call();
           balanceSenderFund = await CONTRACT.balanceOf(addrSender).call();
 
           transferVal = 100;
-
-          sendRes = await CONTRACT.send(addrRecipient, transferVal, data).send({
-            from: addrSender
-          });
         });
 
-        it("updates token balance state", async () => {
-          const balanceRecipientAfter = await CONTRACT.balanceOf(
-            addrRecipient
-          ).call();
-          const balanceSenderAfter = await CONTRACT.balanceOf(
+        it("reverts the transaction and the state", async () => {
+          try {
+            sendRes = await CONTRACT.send(
+              addrRecipient,
+              transferVal,
+              data
+            ).send({
+              from: addrSender
+            });
+          } catch (err) {
+            actualError = err;
+          }
+
+          balanceSenderAfterTransfer = await CONTRACT.balanceOf(
             addrSender
           ).call();
+          balanceRecipientAfterTransfer = await CONTRACT.balanceOf(
+            addrRecipient
+          ).call();
 
           assert.equal(
-            parseInt(balanceRecipientAfter),
-            parseInt(balanceRecipientStart) + parseInt(transferVal)
+            actualError.toString(),
+            "Error: Returned error: VM Exception while processing transaction: revert Tokens to send revert"
           );
-
-          assert.equal(
-            parseInt(balanceSenderAfter),
-            parseInt(balanceSenderFund) - transferVal
-          );
+          assert.equal(balanceSenderAfterTransfer, balanceSenderFund);
+          assert.equal(balanceRecipientAfterTransfer, 0);
         });
+      });
 
-        it("triggers tokensToSend hook function", async () => {
-          const logs = await tokenSenderImplementer.getPastEvents(
-            "TokensToSendCalled",
-            {
-              fromBlock: 0,
-              toBlock: "latest"
-            }
-          );
+      context("when the implementer doesn't revert", () => {
+        context("with a contract implementer for EOA", () => {
+          beforeEach(async () => {
+            tokenSenderImplementer = await IERC777Compatible.new();
 
-          assert.equal(logs[0].event, "TokensToSendCalled");
-          assert.equal(logs[0].returnValues.operator, addrSender);
-          assert.equal(logs[0].returnValues.from, addrSender);
-          assert.equal(logs[0].returnValues.to, addrRecipient);
-          assert.equal(logs[0].returnValues.amount, transferVal);
-        });
+            addrSender = accounts[4];
 
-        it("token contract emits Sent event", async () => {
-          const transferEvent = sendRes.events.Sent;
-          assert.notEqual(transferEvent, null);
-          assert.equal(transferEvent.returnValues.operator, addrSender);
-          assert.equal(transferEvent.returnValues.from, addrSender);
-          assert.equal(transferEvent.returnValues.to, addrRecipient);
-          assert.equal(transferEvent.returnValues.amount, transferVal);
+            //register sender implementer for EOA
+            await tokenSenderImplementer.senderFor(addrSender);
+            await this.erc1820.setInterfaceImplementer(
+              addrSender,
+              TOKENS_SENDER_INTERFACE_HASH,
+              tokenSenderImplementer.address,
+              { from: addrSender }
+            );
+
+            totalSupplyStart = await CONTRACT.totalSupply().call();
+            balanceSenderStart = await CONTRACT.balanceOf(addrSender).call();
+            balanceRecipientStart = await CONTRACT.balanceOf(
+              addrRecipient
+            ).call();
+
+            fundVal = 100;
+            fundRes = await CONTRACT.fund(addrSender, fundVal).send({
+              from: addrOwner
+            });
+
+            totalSupplyFund = await CONTRACT.totalSupply().call();
+            balanceSenderFund = await CONTRACT.balanceOf(addrSender).call();
+
+            transferVal = 100;
+
+            sendRes = await CONTRACT.send(
+              addrRecipient,
+              transferVal,
+              data
+            ).send({
+              from: addrSender
+            });
+          });
+
+          it("updates token balance state", async () => {
+            const balanceRecipientAfter = await CONTRACT.balanceOf(
+              addrRecipient
+            ).call();
+            const balanceSenderAfter = await CONTRACT.balanceOf(
+              addrSender
+            ).call();
+
+            assert.equal(
+              parseInt(balanceRecipientAfter),
+              parseInt(balanceRecipientStart) + parseInt(transferVal)
+            );
+
+            assert.equal(
+              parseInt(balanceSenderAfter),
+              parseInt(balanceSenderFund) - transferVal
+            );
+          });
+
+          it("triggers tokensToSend hook function", async () => {
+            const logs = await tokenSenderImplementer.getPastEvents(
+              "TokensToSendCalled",
+              {
+                fromBlock: 0,
+                toBlock: "latest"
+              }
+            );
+
+            assert.equal(logs[0].event, "TokensToSendCalled");
+            assert.equal(logs[0].returnValues.operator, addrSender);
+            assert.equal(logs[0].returnValues.from, addrSender);
+            assert.equal(logs[0].returnValues.to, addrRecipient);
+            assert.equal(logs[0].returnValues.amount, transferVal);
+          });
+
+          it("token contract emits Sent event", async () => {
+            const transferEvent = sendRes.events.Sent;
+            assert.notEqual(transferEvent, null);
+            assert.equal(transferEvent.returnValues.operator, addrSender);
+            assert.equal(transferEvent.returnValues.from, addrSender);
+            assert.equal(transferEvent.returnValues.to, addrRecipient);
+            assert.equal(transferEvent.returnValues.amount, transferVal);
+          });
         });
       });
 
       /*
       context("with a contract implementer for another contract", () => {
         beforeEach(async () => {
-          tokenSenderImplementer = await MockRecipientContract.new();
-          const contractSender = await MockRecipientContract.new();
-          const tokenRecipientImplementer = await MockRecipientContract.new();
+          tokenSenderImplementer = await IERC777Compatible.new();
+          const contractSender = await IERC777Compatible.new();
 
           addrSender = contractSender.address;
 
@@ -780,8 +936,7 @@ contract("Asset TokenTransfer", accounts => {
           await tokenSenderImplementer.senderFor(addrSender);
           await contractSender.registerSender(tokenSenderImplementer.address);
 
-          //sender contract must be also receiver implementer for fund operations
-          await tokenRecipientImplementer.recipientFor(addrSender);
+          //sender contract must be also receiver implementer for fund operations - itself
           await contractSender.registerRecipient(addrSender);
 
           totalSupplyStart = await CONTRACT.totalSupply().call();
@@ -800,9 +955,13 @@ contract("Asset TokenTransfer", accounts => {
 
           transferVal = 100;
 
-          sendRes = await CONTRACT.send(addrRecipient, transferVal, data).send({
-            from: addrSender
-          });
+          sendRes = await tokenSenderImplementer.send(
+            PROJECT.implementations.AssetToken.address,
+            addrRecipient,
+            transferVal,
+            data,
+            { from: accounts[5] }
+          );
         });
 
         it("updates token balance state", async () => {
@@ -848,8 +1007,17 @@ contract("Asset TokenTransfer", accounts => {
           assert.equal(transferEvent.returnValues.to, addrRecipient);
           assert.equal(transferEvent.returnValues.amount, transferVal);
         });
+      });
+      context("with a contract implementer for itself", () => {
+        beforeEach(async () => {
+          tokenSenderImplementer = await IERC777Compatible.new();
+
+          addrSender = accounts[3];
+
+          //register sender implementer for EOA
+          await tokenSenderImplementer.senderFor(addrSender);
+        });
       }); */
-      context("with a contract implementer for itself", () => {});
     });
   });
 });

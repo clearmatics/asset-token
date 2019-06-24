@@ -2,13 +2,17 @@
 
 [![Build Status](https://travis-ci.org/clearmatics/asset-token.svg?branch=master)](https://travis-ci.org/clearmatics/asset-token)
 
-Designed to represent a fungible asset with offchain interaction 
+Designed to represent a fungible asset with offchain interaction
 
 ## Features
 
-- Supports the [ERC223][1] token standard.
+- Supports the [ERC777][1] token standard.
+  - Operators (default/elected, contracts/EOA) to move tokens on behalf of holder
+  - tokensReceived hook function to manage incoming tokens
+  - tokensToSend hook function to manage outcoming tokens
 - Upgradeable via integration with [ZeppelinOS][7].
-- Emergency stop to prevent transfers. 
+- Emergency stop to prevent transfers.
+- Non compatible with ERC-20 standard
 
 ## Developing
 
@@ -50,7 +54,7 @@ npm install
 
 This will deploy Asset Token and fund accounts
 
-[1]: https://github.com/ethereum/EIPs/issues/223
+[1]: https://eips.ethereum.org/EIPS/eip-777
 [2]: http://truffleframework.com/
 [3]: https://nodejs.org/
 [4]: https://yarnpkg.com/en/docs/install

@@ -6,6 +6,7 @@ pragma solidity ^0.5.0;
 
 import "./IERC777Recipient.sol";
 import "./IERC777Sender.sol";
+import "openzeppelin-solidity/contracts/token/ERC777/IERC777.sol";
 import "openzeppelin-solidity/contracts/introspection/IERC1820Registry.sol";
 import "openzeppelin-solidity/contracts/introspection/ERC1820Implementer.sol";
 
@@ -81,7 +82,7 @@ contract IERC777Compatible is IERC777Recipient, IERC777Sender, ERC1820Implemente
         external
     {
         if(_shouldRevertReceive) {
-            revert();
+            revert("Tokens to receive revert");
         }
 
         emit TokensReceivedCalled(operator, from, to, amount, userData, operatorData);
@@ -121,7 +122,7 @@ contract IERC777Compatible is IERC777Recipient, IERC777Sender, ERC1820Implemente
         external
     {
         if(_shouldRevertSend) {
-            revert();
+            revert("Tokens to send revert");
         }
 
         emit TokensToSendCalled(
@@ -132,6 +133,10 @@ contract IERC777Compatible is IERC777Recipient, IERC777Sender, ERC1820Implemente
             userData,
             operatorData
         );
+    }
+
+    function send(IERC777 token, address to, uint256 amount, bytes memory data) public {
+        token.send(to, amount, data);
     }
 
 }

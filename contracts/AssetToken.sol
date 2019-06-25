@@ -1,3 +1,7 @@
+//Copyright (c) 2019 Clearmatics Technologies Ltd
+
+// SPDX-License-Identifier: LGPL-3.0+
+
 pragma solidity ^0.5.0;
 
 import "openzeppelin-eth/contracts/math/SafeMath.sol";

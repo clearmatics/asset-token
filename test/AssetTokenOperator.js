@@ -4,6 +4,7 @@
 
 const { TestHelper } = require("zos"); //function to retrieve zos project structure object
 const { Contracts, ZWeb3 } = require("zos-lib"); //to retrieve compiled contract artifacts
+const sha3 = require("js-sha3").keccak_256;
 
 const { singletons } = require("openzeppelin-test-helpers");
 
@@ -86,18 +87,24 @@ contract("Asset Token", accounts => {
 
     context("New operators", () => {
       let authorizedEvent = null;
+      let authorizedOperatorSignature =
+        "0x" + sha3("AuthorizedOperator(address,address)");
+      let revokedOperatorSignature =
+        "0x" + sha3("RevokedOperator(address,address)");
+
       beforeEach(async () => {
         const res = await CONTRACT.authorizeOperator(newOperator).send({
           from: tokenHolder
         });
 
-        authorizedEvent = res.events.AuthorizedOperator;
+        const rec = await web3.eth.getTransactionReceipt(res.transactionHash);
+
+        authorizedEvent = rec.logs[0].topics;
       });
 
       it("AuthorizedOperator event is emitted correctly", async () => {
         assert.notEqual(authorizedEvent, null);
-        assert.equal(authorizedEvent.returnValues.operator, newOperator);
-        assert.equal(authorizedEvent.returnValues.holder, tokenHolder);
+        assert.equal(authorizedEvent[0], authorizedOperatorSignature);
       });
 
       it("added to operators list", async () => {
@@ -125,11 +132,12 @@ contract("Asset Token", accounts => {
         const res = await CONTRACT.revokeOperator(newOperator).send({
           from: tokenHolder
         });
-        const revokeEvent = res.events.RevokedOperator;
+        const rec = await web3.eth.getTransactionReceipt(res.transactionHash);
+
+        revokeEvent = rec.logs[0].topics;
 
         assert.notEqual(revokeEvent, null);
-        assert.equal(revokeEvent.returnValues.operator, newOperator);
-        assert.equal(revokeEvent.returnValues.holder, tokenHolder);
+        assert.equal(revokeEvent[0], revokedOperatorSignature);
       });
     });
 

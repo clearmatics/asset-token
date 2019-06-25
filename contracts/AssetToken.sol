@@ -38,34 +38,6 @@ contract AssetToken is IERC777, Initializable {
     bytes32 private TOKENS_SENDER_INTERFACE_HASH;
     bytes32 private TOKENS_RECIPIENT_INTERFACE_HASH;
 
-
-    event Sent(
-        address indexed operator,
-        address indexed from,
-        address indexed to,
-        uint256 amount,
-        bytes data,
-        bytes operatorData
-    );
-    event Minted(
-        address indexed operator,
-        address indexed to,
-        uint256 amount,
-        bytes data,
-        bytes operatorData
-    );
-    event Burned(
-        address indexed operator,
-        address indexed from,
-        uint256 amount,
-        bytes data,
-        bytes operatorData
-    );
-    event AuthorizedOperator(
-        address indexed operator,
-        address indexed holder
-    );
-    event RevokedOperator(address indexed operator, address indexed holder);
     event EmergencyDelegation(address indexed member);
     event FundingDelegation(address indexed member);
     event Switch(bool balance);
@@ -101,7 +73,6 @@ contract AssetToken is IERC777, Initializable {
             0xb281fc8c12954d22544db45de3159a39272895b169a852b314f9cc762e44c53b;
 
         _erc1820.setInterfaceImplementer(address(this), keccak256("ERC777Token"), address(this));
-        //_erc1820.setInterfaceImplementer(address(this), keccak256("ERC20Token"), address(this));
     }
 
     function () external payable {

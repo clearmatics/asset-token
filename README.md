@@ -7,9 +7,10 @@ Designed to represent a fungible asset with offchain interaction
 ## Features
 
 - Supports the [ERC777][1] token standard.
-  - Operators (default/elected, contracts/EOA) to move tokens on behalf of holder
+  - Operators (default/elected, contracts/EOA) to transfer and burn tokens on behalf of holder
   - tokensReceived hook function to manage incoming tokens
   - tokensToSend hook function to manage outcoming tokens
+- Makes use of the [ERC1820][8] Pseudo-introspection Registry Contract to avoid token loss
 - Upgradeable via integration with [ZeppelinOS][7].
 - Emergency stop to prevent transfers.
 - Non compatible with ERC-20 standard
@@ -60,3 +61,4 @@ This will deploy Asset Token and fund accounts
 [4]: https://yarnpkg.com/en/docs/install
 [5]: https://docs.npmjs.com/getting-started/installing-node
 [7]: https://zeppelinos.org/
+[8]: http://eips.ethereum.org/EIPS/eip-1820

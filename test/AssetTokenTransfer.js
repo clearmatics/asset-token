@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2018 Clearmatics Technologies Ltd
+// Copyright (c) 2017 Clearmatics Technologies Ltd
 
 // SPDX-License-Identifier: LGPL-3.0+
 const { TestHelper } = require("zos"); //function to retrieve zos project structure object
@@ -10,6 +10,7 @@ ZWeb3.initialize(web3.currentProvider);
 
 const AssetToken = Contracts.getFromLocal("AssetToken");
 const IERC777Compatible = artifacts.require("IERC777Compatible");
+const MockAssetToken = artifacts.require("AssetToken");
 
 let CONTRACT;
 let TOKENS_RECIPIENT_INTERFACE_HASH = web3.utils.keccak256(
@@ -17,11 +18,12 @@ let TOKENS_RECIPIENT_INTERFACE_HASH = web3.utils.keccak256(
 );
 let TOKENS_SENDER_INTERFACE_HASH = web3.utils.keccak256("ERC777TokensSender");
 
-contract("Asset TokenTransfer", accounts => {
+contract("Asset Token", accounts => {
   const addrOwner = accounts[0];
   const proxyOwner = accounts[1];
   const data = web3.utils.randomHex(0);
   const defaultOperator = accounts[9];
+
   beforeEach(async () => {
     this.erc1820 = await singletons.ERC1820Registry(addrOwner);
 
@@ -957,7 +959,9 @@ contract("Asset TokenTransfer", accounts => {
         });
       });
 
-      /*
+      /**
+       * i would need to pass to token interface to the IERC777 compatible send that would in turn call tokenSend
+       * but in the proxy model his state is empty and so the transaction would revert because isActive is still false
       context("with a contract implementer for another contract", () => {
         beforeEach(async () => {
           tokenSenderImplementer = await IERC777Compatible.new();
@@ -989,7 +993,7 @@ contract("Asset TokenTransfer", accounts => {
           transferVal = 100;
 
           sendRes = await tokenSenderImplementer.send(
-            PROJECT.implementations.AssetToken.address,
+            PROXY._address,
             addrRecipient,
             transferVal,
             data,
@@ -1050,7 +1054,8 @@ contract("Asset TokenTransfer", accounts => {
           //register sender implementer for EOA
           await tokenSenderImplementer.senderFor(addrSender);
         });
-      }); */
+      });
+      */
     });
   });
 });

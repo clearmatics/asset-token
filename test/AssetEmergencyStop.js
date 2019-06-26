@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2018 Clearmatics Technologies Ltd
+// Copyright (c) 2017 Clearmatics Technologies Ltd
 
 // SPDX-License-Identifier: LGPL-3.0+
 const { TestHelper } = require("zos"); //function to retrieve zos project structure object

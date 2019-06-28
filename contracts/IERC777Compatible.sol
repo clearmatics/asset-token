@@ -6,6 +6,7 @@ pragma solidity ^0.5.0;
 
 import "./IERC777Recipient.sol";
 import "./IERC777Sender.sol";
+import "./AssetToken.sol";
 import "openzeppelin-solidity/contracts/token/ERC777/IERC777.sol";
 import "openzeppelin-solidity/contracts/introspection/IERC1820Registry.sol";
 import "openzeppelin-solidity/contracts/introspection/ERC1820Implementer.sol";
@@ -135,7 +136,8 @@ contract IERC777Compatible is IERC777Recipient, IERC777Sender, ERC1820Implemente
         );
     }
 
-    function send(IERC777 token, address to, uint256 amount, bytes memory data) public {
+    function send(address payable tokenAddr, address to, uint256 amount, bytes memory data) public {
+        AssetToken token = AssetToken(tokenAddr);
         token.send(to, amount, data);
     }
 

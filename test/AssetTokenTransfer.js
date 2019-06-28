@@ -873,6 +873,9 @@ contract("Asset Token", accounts => {
       });
 
       context("when the implementer doesn't revert", () => {
+        let sentSignature = web3.utils.keccak256(
+          "Sent(address,address,address,uint256,bytes,bytes)"
+        );
         context("with a contract implementer for EOA", () => {
           beforeEach(async () => {
             tokenSenderImplementer = await IERC777Compatible.new();
@@ -957,105 +960,169 @@ contract("Asset Token", accounts => {
             assert.equal(transferEvent.returnValues.amount, transferVal);
           });
         });
-      });
+        context("with a contract implementer for another contract", () => {
+          beforeEach(async () => {
+            tokenSenderImplementer = await IERC777Compatible.new();
+            const contractSender = await IERC777Compatible.new();
 
-      /**
-       * i would need to pass to token interface to the IERC777 compatible send that would in turn call tokenSend
-       * but in the proxy model his state is empty and so the transaction would revert because isActive is still false
-      context("with a contract implementer for another contract", () => {
-        beforeEach(async () => {
-          tokenSenderImplementer = await IERC777Compatible.new();
-          const contractSender = await IERC777Compatible.new();
+            addrSender = contractSender.address;
 
-          addrSender = contractSender.address;
+            //register sender implementer for contracts
+            await tokenSenderImplementer.senderFor(addrSender);
+            await contractSender.registerSender(tokenSenderImplementer.address);
 
-          //register sender implementer for contracts
-          await tokenSenderImplementer.senderFor(addrSender);
-          await contractSender.registerSender(tokenSenderImplementer.address);
+            //sender contract must be also receiver implementer for fund operations - itself
+            await contractSender.registerRecipient(addrSender);
 
-          //sender contract must be also receiver implementer for fund operations - itself
-          await contractSender.registerRecipient(addrSender);
+            totalSupplyStart = await CONTRACT.totalSupply().call();
+            balanceSenderStart = await CONTRACT.balanceOf(addrSender).call();
+            balanceRecipientStart = await CONTRACT.balanceOf(
+              addrRecipient
+            ).call();
 
-          totalSupplyStart = await CONTRACT.totalSupply().call();
-          balanceSenderStart = await CONTRACT.balanceOf(addrSender).call();
-          balanceRecipientStart = await CONTRACT.balanceOf(
-            addrRecipient
-          ).call();
+            fundVal = 100;
+            fundRes = await CONTRACT.fund(addrSender, fundVal).send({
+              from: addrOwner
+            });
 
-          fundVal = 100;
-          fundRes = await CONTRACT.fund(addrSender, fundVal).send({
-            from: addrOwner
+            totalSupplyFund = await CONTRACT.totalSupply().call();
+            balanceSenderFund = await CONTRACT.balanceOf(addrSender).call();
+
+            transferVal = 100;
+
+            sendRes = await contractSender.send(
+              PROXY._address,
+              addrRecipient,
+              transferVal,
+              data,
+              { from: accounts[5] }
+            );
           });
 
-          totalSupplyFund = await CONTRACT.totalSupply().call();
-          balanceSenderFund = await CONTRACT.balanceOf(addrSender).call();
+          it("updates token balance state", async () => {
+            const balanceRecipientAfter = await CONTRACT.balanceOf(
+              addrRecipient
+            ).call();
+            const balanceSenderAfter = await CONTRACT.balanceOf(
+              addrSender
+            ).call();
 
-          transferVal = 100;
+            assert.equal(
+              parseInt(balanceRecipientAfter),
+              parseInt(balanceRecipientStart) + parseInt(transferVal)
+            );
 
-          sendRes = await tokenSenderImplementer.send(
-            PROXY._address,
-            addrRecipient,
-            transferVal,
-            data,
-            { from: accounts[5] }
-          );
+            assert.equal(
+              parseInt(balanceSenderAfter),
+              parseInt(balanceSenderFund) - transferVal
+            );
+          });
+
+          it("triggers tokensToSend hook function", async () => {
+            const logs = await tokenSenderImplementer.getPastEvents(
+              "TokensToSendCalled",
+              {
+                fromBlock: 0,
+                toBlock: "latest"
+              }
+            );
+
+            assert.equal(logs[0].event, "TokensToSendCalled");
+            assert.equal(logs[0].returnValues.operator, addrSender);
+            assert.equal(logs[0].returnValues.from, addrSender);
+            assert.equal(logs[0].returnValues.to, addrRecipient);
+            assert.equal(logs[0].returnValues.amount, transferVal);
+          });
+
+          it("token contract emits Sent event", async () => {
+            const rec = await web3.eth.getTransactionReceipt(
+              sendRes.receipt.transactionHash
+            );
+            const transferEvent = rec.logs[1].topics;
+            assert.equal(transferEvent[0], sentSignature);
+          });
         });
+        context("with a contract implementer for itself", () => {
+          beforeEach(async () => {
+            tokenSenderImplementer = await IERC777Compatible.new();
 
-        it("updates token balance state", async () => {
-          const balanceRecipientAfter = await CONTRACT.balanceOf(
-            addrRecipient
-          ).call();
-          const balanceSenderAfter = await CONTRACT.balanceOf(
-            addrSender
-          ).call();
+            addrSender = tokenSenderImplementer.address;
 
-          assert.equal(
-            parseInt(balanceRecipientAfter),
-            parseInt(balanceRecipientStart) + parseInt(transferVal)
-          );
+            //register sender implementer for EOA
+            await tokenSenderImplementer.senderFor(addrSender);
 
-          assert.equal(
-            parseInt(balanceSenderAfter),
-            parseInt(balanceSenderFund) - transferVal
-          );
-        });
+            //register recipient to get funds
+            await tokenSenderImplementer.recipientFor(addrSender);
 
-        it("triggers tokensToSend hook function", async () => {
-          const logs = await tokenSenderImplementer.getPastEvents(
-            "TokensToSendCalled",
-            {
-              fromBlock: 0,
-              toBlock: "latest"
-            }
-          );
+            totalSupplyStart = await CONTRACT.totalSupply().call();
+            balanceSenderStart = await CONTRACT.balanceOf(addrSender).call();
+            balanceRecipientStart = await CONTRACT.balanceOf(
+              addrRecipient
+            ).call();
 
-          assert.equal(logs[0].event, "TokensToSendCalled");
-          assert.equal(logs[0].returnValues.operator, addrSender);
-          assert.equal(logs[0].returnValues.from, addrSender);
-          assert.equal(logs[0].returnValues.to, addrRecipient);
-          assert.equal(logs[0].returnValues.amount, transferVal);
-        });
+            fundVal = 100;
+            fundRes = await CONTRACT.fund(addrSender, fundVal).send({
+              from: addrOwner
+            });
 
-        it("token contract emits Sent event", async () => {
-          const transferEvent = sendRes.events.Sent;
-          assert.notEqual(transferEvent, null);
-          assert.equal(transferEvent.returnValues.operator, addrSender);
-          assert.equal(transferEvent.returnValues.from, addrSender);
-          assert.equal(transferEvent.returnValues.to, addrRecipient);
-          assert.equal(transferEvent.returnValues.amount, transferVal);
+            totalSupplyFund = await CONTRACT.totalSupply().call();
+            balanceSenderFund = await CONTRACT.balanceOf(addrSender).call();
+
+            transferVal = 100;
+
+            sendRes = await tokenSenderImplementer.send(
+              PROXY._address,
+              addrRecipient,
+              transferVal,
+              data,
+              { from: accounts[5] }
+            );
+          });
+
+          it("updates token balance state", async () => {
+            const balanceRecipientAfter = await CONTRACT.balanceOf(
+              addrRecipient
+            ).call();
+            const balanceSenderAfter = await CONTRACT.balanceOf(
+              addrSender
+            ).call();
+
+            assert.equal(
+              parseInt(balanceRecipientAfter),
+              parseInt(balanceRecipientStart) + parseInt(transferVal)
+            );
+
+            assert.equal(
+              parseInt(balanceSenderAfter),
+              parseInt(balanceSenderFund) - transferVal
+            );
+          });
+
+          it("triggers tokensToSend hook function", async () => {
+            const logs = await tokenSenderImplementer.getPastEvents(
+              "TokensToSendCalled",
+              {
+                fromBlock: 0,
+                toBlock: "latest"
+              }
+            );
+
+            assert.equal(logs[0].event, "TokensToSendCalled");
+            assert.equal(logs[0].returnValues.operator, addrSender);
+            assert.equal(logs[0].returnValues.from, addrSender);
+            assert.equal(logs[0].returnValues.to, addrRecipient);
+            assert.equal(logs[0].returnValues.amount, transferVal);
+          });
+
+          it("token contract emits Sent event", async () => {
+            const rec = await web3.eth.getTransactionReceipt(
+              sendRes.receipt.transactionHash
+            );
+            const transferEvent = rec.logs[1].topics;
+            assert.equal(transferEvent[0], sentSignature);
+          });
         });
       });
-      context("with a contract implementer for itself", () => {
-        beforeEach(async () => {
-          tokenSenderImplementer = await IERC777Compatible.new();
-
-          addrSender = accounts[3];
-
-          //register sender implementer for EOA
-          await tokenSenderImplementer.senderFor(addrSender);
-        });
-      });
-      */
     });
   });
 });

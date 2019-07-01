@@ -122,7 +122,11 @@ contract AssetToken is IERC777, Initializable {
     }
 
     modifier noOwnerAsCounterparty(address counterparty) {
-        if (counterparty == _owner || counterparty == _fundingDelegate || counterparty == _emergencyDelegate || counterparty == _blacklistDelegate) {
+        if (counterparty == _owner ||
+            counterparty == _fundingDelegate ||
+            counterparty == _emergencyDelegate ||
+            counterparty == _blacklistDelegate)
+        {
             revert("The contract owner can not perform this operation");
         }
         _;

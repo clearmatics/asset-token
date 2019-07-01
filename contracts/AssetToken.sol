@@ -29,6 +29,10 @@ contract AssetToken is IERC777, Initializable {
 
     mapping(address => uint256) private _balances;
 
+    //all addresses whitelisted by default
+    bool private _blacklistAll;
+    mapping(address => bool) private _isBlacklisted;
+
     //must be immutable
     address[] private _defaultOperatorsArray;
     mapping(address => bool) private _defaultOperators;
@@ -53,7 +57,8 @@ contract AssetToken is IERC777, Initializable {
         string memory symbol,
         string memory name,
         address owner,
-        address[] memory defaultOperators
+        address[] memory defaultOperators,
+        bool blacklistAll
     )
     public initializer
     {
@@ -66,6 +71,7 @@ contract AssetToken is IERC777, Initializable {
         _fundingDelegate = _owner;
         _blacklistDelegate = _owner;
         _isActive = true;
+        _blacklistAll = blacklistAll;
         _defaultOperatorsArray = defaultOperators;
 
         for (uint256 i=0; i<defaultOperators.length; i++) {
@@ -111,6 +117,11 @@ contract AssetToken is IERC777, Initializable {
         if (msg.sender != _blacklistDelegate) {
             revert("This account is not allowed to do this");
         }
+        _;
+    }
+
+    modifier onlyWhitelistedAddress(address who) {
+        require(!_isBlacklisted[who], "This address is blacklisted");
         _;
     }
 
@@ -166,8 +177,27 @@ contract AssetToken is IERC777, Initializable {
             _operators[holder][operator];
     }
 
+    function isBlacklisted(address who) external view returns (bool) {
+        //if client
+        return _isBlacklisted[who] || _blacklistAll;
+    }
+
     function decimals() external pure returns (uint256) {
         return 18;
+    }
+
+    function blacklistAddress(address who) external onlyBlacklistAccount {
+        _isBlacklisted[who] = true;
+    }
+
+    function whitelistAddress(address who) external onlyBlacklistAccount {
+        /**
+         * from the moment i whitelist someone, isBlacklisted for that address should return false (so whitelisted)
+         * thus _blacklistAll has to be turned off
+         * this allows to switch
+         */
+        _isBlacklisted[who] = false;
+        _blacklistAll = false;
     }
 
     function authorizeOperator(address operator) external {

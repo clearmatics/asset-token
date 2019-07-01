@@ -222,7 +222,9 @@ contract("AssetToken", accounts => {
         let error = null;
 
         await CONTRACT.setFundingPermission(delegate).send({ from: addrOwner });
-        await CONTRACT.revokeFundingPermission().send({ from: addrOwner });
+        await CONTRACT.setFundingPermission(addrOwner).send({
+          from: addrOwner
+        });
 
         try {
           await CONTRACT.fund(addrRecipient, fundVal).send({ from: delegate });

@@ -185,18 +185,8 @@ contract AssetToken is IERC777, Initializable {
         emit EmergencyDelegation(_emergencyDelegate);
     }
 
-    function revokeEmergencyPermission() external onlyOwner {
-        _emergencyDelegate = _owner;
-        emit EmergencyDelegation(_emergencyDelegate);
-    }
-
     function setFundingPermission(address who) external onlyOwner {
         _fundingDelegate = who;
-        emit FundingDelegation(_fundingDelegate);
-    }
-
-    function revokeFundingPermission() external onlyOwner{
-        _fundingDelegate = _owner;
         emit FundingDelegation(_fundingDelegate);
     }
 

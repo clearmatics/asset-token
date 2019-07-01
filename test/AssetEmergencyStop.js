@@ -350,7 +350,9 @@ contract("Asset Token", accounts => {
         await CONTRACT.setEmergencyPermission(delegate).send({
           from: addrOwner
         });
-        await CONTRACT.revokeEmergencyPermission().send({ from: addrOwner });
+        await CONTRACT.setEmergencyPermission(addrOwner).send({
+          from: addrOwner
+        });
 
         try {
           await CONTRACT.emergencyStop().send({ from: delegate });

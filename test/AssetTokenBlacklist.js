@@ -49,7 +49,7 @@ contract("Asset Token", accounts => {
       });
 
       it("Delegate account can't delegate", async () => {
-        const thirdParty = accounts[4];
+        const thirdParty = accounts[3];
         try {
           await CONTRACT.setBlacklistPermission(thirdParty).send({
             from: delegate
@@ -61,6 +61,20 @@ contract("Asset Token", accounts => {
         assert.strictEqual(
           error.toString(),
           "Error: Returned error: VM Exception while processing transaction: revert Only the contract owner can perform this operation"
+        );
+      });
+
+      it("Delegate can't take part of a payment", async () => {
+        const recipient = accounts[3];
+        try {
+          await CONTRACT.send(recipient, 10, data).send({ from: delegate });
+        } catch (err) {
+          error = err;
+        }
+
+        assert.strictEqual(
+          error.toString(),
+          "Error: Returned error: VM Exception while processing transaction: revert The contract owner can not perform this operation"
         );
       });
 

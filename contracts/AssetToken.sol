@@ -24,6 +24,7 @@ contract AssetToken is IERC777, Initializable {
     address private _owner;
     address private _emergencyDelegate;
     address private _fundingDelegate;
+    address private _blacklistDelegate;
     bool private _isActive;
 
     mapping(address => uint256) private _balances;
@@ -44,6 +45,7 @@ contract AssetToken is IERC777, Initializable {
 
     event EmergencyDelegation(address indexed member);
     event FundingDelegation(address indexed member);
+    event BlacklistDelegation(address indexed member);
     event Switch(bool balance);
     event Fund(address indexed member, uint256 value, uint256 balance);
 
@@ -62,6 +64,7 @@ contract AssetToken is IERC777, Initializable {
         _owner = owner;
         _emergencyDelegate = _owner;
         _fundingDelegate = _owner;
+        _blacklistDelegate = _owner;
         _isActive = true;
         _defaultOperatorsArray = defaultOperators;
 
@@ -98,21 +101,28 @@ contract AssetToken is IERC777, Initializable {
     }
 
     modifier onlyFundingAccount() {
-        if(msg.sender != _fundingDelegate) {
+        if (msg.sender != _fundingDelegate) {
+            revert("This account is not allowed to do this");
+        }
+        _;
+    }
+
+    modifier onlyBlacklistAccount() {
+        if (msg.sender != _blacklistDelegate) {
             revert("This account is not allowed to do this");
         }
         _;
     }
 
     modifier checkActive() {
-        if(_isActive != true) {
+        if (_isActive != true) {
             revert("Contract emergency stop is activated");
         }
         _;
     }
 
     modifier noOwnerAsCounterparty(address counterparty) {
-        if (counterparty == _owner || counterparty == _fundingDelegate || counterparty == _emergencyDelegate) {
+        if (counterparty == _owner || counterparty == _fundingDelegate || counterparty == _emergencyDelegate || counterparty == _blacklistDelegate) {
             revert("The contract owner can not perform this operation");
         }
         _;
@@ -188,6 +198,11 @@ contract AssetToken is IERC777, Initializable {
     function setFundingPermission(address who) external onlyOwner {
         _fundingDelegate = who;
         emit FundingDelegation(_fundingDelegate);
+    }
+
+    function setBlacklistPermission(address who) external onlyOwner {
+        _blacklistDelegate = who;
+        emit BlacklistDelegation(_blacklistDelegate);
     }
 
     // @dev starts trading by switching _isActive to true

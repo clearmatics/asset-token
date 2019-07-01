@@ -1,7 +1,27 @@
 {
-  "name": "test_smart_contract",
+  "name": "asset-token",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "ERC777 token standard, designed to represent a fungible asset with offchain interaction",
+  "keywords": [
+    "ethereum",
+    "erc777",
+    "solidity",
+    "smart",
+    "contract",
+    "fungible",
+    "currency",
+    "blockchain"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/clearmatics/asset-token.git"
+  },
+  "files": [
+    "build",
+    "contracts"
+  ],
+  "homepage": "https://github.com/clearmatics/asset-token",
+  "author": "Clearmatics <opensource@clearmatics.com>",
   "license": "MIT",
   "dependencies": {
     "ganache-cli": "6.2.5",
@@ -23,7 +43,7 @@
     "lint": "solhint contracts/**/*.sol"
   },
   "devDependencies": {
-    "openzeppelin-test-helpers": "^0.4.0",
-    "chai": "^4.2.0"
+    "chai": "^4.2.0",
+    "openzeppelin-test-helpers": "^0.4.0"
   }
 }

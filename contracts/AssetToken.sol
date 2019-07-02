@@ -289,8 +289,6 @@ contract AssetToken is IERC777, Initializable {
     }
 
     function burn(uint256 amount, bytes calldata data)
-        checkActive
-        noOwnerAsCounterparty(msg.sender)
         external
     {
         _burn(msg.sender, msg.sender, amount, data, "");
@@ -313,9 +311,6 @@ contract AssetToken is IERC777, Initializable {
 
     function send(address recipient, uint256 amount, bytes calldata data)
         external
-        checkActive
-        noOwnerAsCounterparty(recipient)
-        noOwnerAsCounterparty(msg.sender)
     {
         _send(msg.sender, msg.sender, recipient, amount, data, "");
     }
@@ -347,6 +342,10 @@ contract AssetToken is IERC777, Initializable {
         bytes memory operatorData
     )
         private
+        checkActive
+        noOwnerAsCounterparty(from)
+        noOwnerAsCounterparty(to)
+        noOwnerAsCounterparty(operator)
         onlyAllowedAddress(from)
         onlyAllowedAddress(operator)
     {
@@ -370,6 +369,9 @@ contract AssetToken is IERC777, Initializable {
         bytes memory operatorData
     )
         private
+        checkActive
+        noOwnerAsCounterparty(operator)
+        noOwnerAsCounterparty(from)
     {
         require(from != address(0), "You cannot burn tokens of address 0");
 

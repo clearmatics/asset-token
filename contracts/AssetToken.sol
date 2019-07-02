@@ -55,6 +55,7 @@ contract AssetToken is IERC777, Initializable {
     event Fund(address indexed member, uint256 value, uint256 balance);
     event ListDelegation(address indexed member);
     event Denied(address indexed who, bool isBlacklist);
+    event Allowed(address indexed who, bool isBlacklist);
     event SwtichList(bool isBlacklist);
 
     function initialize(
@@ -196,6 +197,16 @@ contract AssetToken is IERC777, Initializable {
         }
 
         emit Denied(who, _isUsingBlacklist);
+    }
+
+    function allowAddress(address who) external onlyListsController {
+        if (_isUsingBlacklist) {
+            _isBlacklisted[who] = false;
+        } else {
+            _isWhiteListed[who] = true;
+        }
+
+        emit Allowed(who, _isUsingBlacklist);
     }
 
     function authorizeOperator(address operator) external {

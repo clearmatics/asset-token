@@ -56,7 +56,7 @@ contract AssetToken is IERC777, Initializable {
     event ListDelegation(address indexed member);
     event Denied(address indexed who, bool isBlacklist);
     event Allowed(address indexed who, bool isBlacklist);
-    event SwtichList(bool isBlacklist);
+    event SwitchList(bool isBlacklist);
 
     function initialize(
         string memory symbol,
@@ -125,6 +125,11 @@ contract AssetToken is IERC777, Initializable {
         _;
     }
 
+    modifier onlyAllowedAddress(address who){
+      require(isAllowedToSend(who), "This account is not allowed to send money");
+      _;
+    }
+
     modifier checkActive() {
         if (_isActive != true) {
             revert("Contract emergency stop is activated");
@@ -177,7 +182,7 @@ contract AssetToken is IERC777, Initializable {
             _operators[holder][operator];
     }
 
-    function isAllowedToSend(address who) external view returns (bool) {
+    function isAllowedToSend(address who) public view returns (bool) {
         if (_isUsingBlacklist) {
             return !_isBlacklisted[who];
         } else {
@@ -342,6 +347,7 @@ contract AssetToken is IERC777, Initializable {
         bytes memory operatorData
     )
         private
+        onlyAllowedAddress(from)
     {
         require(from != address(0), "You cannot send from the zero address");
         require(to != address(0), "You cannot send to the zero address");

@@ -348,6 +348,7 @@ contract AssetToken is IERC777, Initializable {
     )
         private
         onlyAllowedAddress(from)
+        onlyAllowedAddress(operator)
     {
         require(from != address(0), "You cannot send from the zero address");
         require(to != address(0), "You cannot send to the zero address");

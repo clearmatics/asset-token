@@ -16,6 +16,9 @@ contract AssetToken is IERC777, Initializable {
     using SafeMath for uint256;
     using Address for address;
 
+    //if negative a whitelist is assumed
+    bool private _isUsingBlacklist;
+
     string public _name;
     string public _symbol;
     uint256 public _totalSupply;
@@ -24,14 +27,13 @@ contract AssetToken is IERC777, Initializable {
     address private _owner;
     address private _emergencyDelegate;
     address private _fundingDelegate;
-    address private _blacklistDelegate;
+    address private _listsController;
     bool private _isActive;
 
     mapping(address => uint256) private _balances;
 
-    //all addresses whitelisted by default
-    bool private _blacklistAll;
     mapping(address => bool) private _isBlacklisted;
+    mapping(address => bool) private _isWhiteListed;
 
     //must be immutable
     address[] private _defaultOperatorsArray;
@@ -49,16 +51,18 @@ contract AssetToken is IERC777, Initializable {
 
     event EmergencyDelegation(address indexed member);
     event FundingDelegation(address indexed member);
-    event BlacklistDelegation(address indexed member);
     event Switch(bool balance);
     event Fund(address indexed member, uint256 value, uint256 balance);
+    event ListDelegation(address indexed member);
+    event Denied(address indexed who, bool isBlacklist);
+    event SwtichList(bool isBlacklist);
 
     function initialize(
         string memory symbol,
         string memory name,
         address owner,
         address[] memory defaultOperators,
-        bool blacklistAll
+        bool useBlacklist
     )
     public initializer
     {
@@ -69,9 +73,9 @@ contract AssetToken is IERC777, Initializable {
         _owner = owner;
         _emergencyDelegate = _owner;
         _fundingDelegate = _owner;
-        _blacklistDelegate = _owner;
+        _listsController = _owner;
         _isActive = true;
-        _blacklistAll = blacklistAll;
+        _isUsingBlacklist = useBlacklist;
         _defaultOperatorsArray = defaultOperators;
 
         for (uint256 i=0; i<defaultOperators.length; i++) {
@@ -113,15 +117,10 @@ contract AssetToken is IERC777, Initializable {
         _;
     }
 
-    modifier onlyBlacklistAccount() {
-        if (msg.sender != _blacklistDelegate) {
+    modifier onlyListsController() {
+        if (msg.sender != _listsController) {
             revert("This account is not allowed to do this");
         }
-        _;
-    }
-
-    modifier onlyWhitelistedAddress(address who) {
-        require(!_isBlacklisted[who], "This address is blacklisted");
         _;
     }
 
@@ -136,7 +135,7 @@ contract AssetToken is IERC777, Initializable {
         if (counterparty == _owner ||
             counterparty == _fundingDelegate ||
             counterparty == _emergencyDelegate ||
-            counterparty == _blacklistDelegate)
+            counterparty == _listsController)
         {
             revert("The contract owner can not perform this operation");
         }
@@ -177,27 +176,26 @@ contract AssetToken is IERC777, Initializable {
             _operators[holder][operator];
     }
 
-    function isBlacklisted(address who) external view returns (bool) {
-        //if client
-        return _isBlacklisted[who] || _blacklistAll;
+    function isAllowedToSend(address who) external view returns (bool) {
+        if (_isUsingBlacklist) {
+            return !_isBlacklisted[who];
+        } else {
+            return _isWhiteListed[who];
+        }
     }
 
     function decimals() external pure returns (uint256) {
         return 18;
     }
 
-    function blacklistAddress(address who) external onlyBlacklistAccount {
-        _isBlacklisted[who] = true;
-    }
+    function denyAddress(address who) external onlyListsController {
+        if (_isUsingBlacklist) {
+            _isBlacklisted[who] = true;
+        } else {
+            _isWhiteListed[who] = false;
+        }
 
-    function whitelistAddress(address who) external onlyBlacklistAccount {
-        /**
-         * from the moment i whitelist someone, isBlacklisted for that address should return false (so whitelisted)
-         * thus _blacklistAll has to be turned off
-         * this allows to switch
-         */
-        _isBlacklisted[who] = false;
-        _blacklistAll = false;
+        emit Denied(who, _isUsingBlacklist);
     }
 
     function authorizeOperator(address operator) external {
@@ -234,9 +232,9 @@ contract AssetToken is IERC777, Initializable {
         emit FundingDelegation(_fundingDelegate);
     }
 
-    function setBlacklistPermission(address who) external onlyOwner {
-        _blacklistDelegate = who;
-        emit BlacklistDelegation(_blacklistDelegate);
+    function setListsController(address who) external onlyOwner {
+        _listsController = who;
+        emit ListDelegation(_listsController);
     }
 
     // @dev starts trading by switching _isActive to true

@@ -188,6 +188,31 @@ contract("Asset Token", accounts => {
             "Error: Returned error: VM Exception while processing transaction: revert This account is not allowed to send money"
           );
         });
+
+        it("OperatorSend by a blacklisted operator is reverted", async () => {
+          await CONTRACT.denyAddress(defaultOperator).send({
+            from: addrOwner
+          });
+
+          try {
+            await CONTRACT.operatorSend(
+              accounts[5],
+              addrRecipient,
+              fundVal,
+              data,
+              data
+            ).send({
+              from: defaultOperator
+            });
+          } catch (err) {
+            actualError = err;
+          }
+
+          assert.equal(
+            actualError.toString(),
+            "Error: Returned error: VM Exception while processing transaction: revert This account is not allowed to send money"
+          );
+        });
       });
 
       context("Allow that account again", async () => {
@@ -262,10 +287,35 @@ contract("Asset Token", accounts => {
         );
       });
 
-      it("OperatorSend on behalf of blacklisted account is reverted", async () => {
+      it("OperatorSend on behalf of unallowed account is reverted", async () => {
         try {
           await CONTRACT.operatorSend(
             addrSender,
+            addrRecipient,
+            fundVal,
+            data,
+            data
+          ).send({
+            from: defaultOperator
+          });
+        } catch (err) {
+          actualError = err;
+        }
+
+        assert.equal(
+          actualError.toString(),
+          "Error: Returned error: VM Exception while processing transaction: revert This account is not allowed to send money"
+        );
+      });
+
+      it("OperatorSend by an unallowed operator is reverted", async () => {
+        await CONTRACT.denyAddress(defaultOperator).send({
+          from: addrOwner
+        });
+
+        try {
+          await CONTRACT.operatorSend(
+            accounts[5],
             addrRecipient,
             fundVal,
             data,

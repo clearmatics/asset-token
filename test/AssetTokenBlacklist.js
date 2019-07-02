@@ -16,6 +16,7 @@ let CONTRACT;
 contract("Asset Token", accounts => {
   const addrOwner = accounts[0];
   const proxyOwner = accounts[1];
+  const defaultOperator = accounts[9];
   const data = web3.utils.randomHex(0);
 
   describe("Controller delegation", () => {
@@ -102,7 +103,7 @@ contract("Asset Token", accounts => {
       //contains logic contract
       PROXY = await PROJECT.createProxy(AssetToken, {
         initMethod: "initialize",
-        initArgs: ["CLR", "Asset Token", addrOwner, [], true]
+        initArgs: ["CLR", "Asset Token", addrOwner, [defaultOperator], true]
       });
 
       CONTRACT = PROXY.methods;
@@ -140,6 +141,55 @@ contract("Asset Token", accounts => {
         assert.equal(denyEvent.returnValues.isBlacklist, true);
       });
 
+      context("Payment operations", () => {
+        let addrRecipient, fundVal, actualError;
+        beforeEach(async () => {
+          addrRecipient = accounts[4];
+          fundVal = 100;
+          actualError = null;
+
+          await CONTRACT.fund(victim, fundVal).send({
+            from: addrOwner
+          });
+        });
+
+        it("Send operation is reverted", async () => {
+          try {
+            await CONTRACT.send(addrRecipient, fundVal, data).send({
+              from: victim
+            });
+          } catch (err) {
+            actualError = err;
+          }
+
+          assert.equal(
+            actualError.toString(),
+            "Error: Returned error: VM Exception while processing transaction: revert This account is not allowed to send money"
+          );
+        });
+
+        it("OperatorSend on behalf of blacklisted account is reverted", async () => {
+          try {
+            await CONTRACT.operatorSend(
+              victim,
+              addrRecipient,
+              fundVal,
+              data,
+              data
+            ).send({
+              from: defaultOperator
+            });
+          } catch (err) {
+            actualError = err;
+          }
+
+          assert.equal(
+            actualError.toString(),
+            "Error: Returned error: VM Exception while processing transaction: revert This account is not allowed to send money"
+          );
+        });
+      });
+
       context("Allow that account again", async () => {
         beforeEach(async () => {
           const res = await CONTRACT.allowAddress(victim).send({
@@ -169,7 +219,7 @@ contract("Asset Token", accounts => {
       //contains logic contract
       PROXY = await PROJECT.createProxy(AssetToken, {
         initMethod: "initialize",
-        initArgs: ["CLR", "Asset Token", addrOwner, [], false]
+        initArgs: ["CLR", "Asset Token", addrOwner, [defaultOperator], false]
       });
 
       CONTRACT = PROXY.methods;
@@ -182,6 +232,56 @@ contract("Asset Token", accounts => {
         ).call();
         assert.equal(isAllowedToSend, false);
       }
+    });
+
+    context("Payment operations", () => {
+      let addrRecipient, fundVal, actualError, addrSender;
+      beforeEach(async () => {
+        addrRecipient = accounts[4];
+        addrSender = accounts[3];
+        fundVal = 100;
+        actualError = null;
+
+        await CONTRACT.fund(addrSender, fundVal).send({
+          from: addrOwner
+        });
+      });
+
+      it("Send operation is reverted", async () => {
+        try {
+          await CONTRACT.send(addrRecipient, fundVal, data).send({
+            from: addrSender
+          });
+        } catch (err) {
+          actualError = err;
+        }
+
+        assert.equal(
+          actualError.toString(),
+          "Error: Returned error: VM Exception while processing transaction: revert This account is not allowed to send money"
+        );
+      });
+
+      it("OperatorSend on behalf of blacklisted account is reverted", async () => {
+        try {
+          await CONTRACT.operatorSend(
+            addrSender,
+            addrRecipient,
+            fundVal,
+            data,
+            data
+          ).send({
+            from: defaultOperator
+          });
+        } catch (err) {
+          actualError = err;
+        }
+
+        assert.equal(
+          actualError.toString(),
+          "Error: Returned error: VM Exception while processing transaction: revert This account is not allowed to send money"
+        );
+      });
     });
 
     context("Whitelisting an account", () => {

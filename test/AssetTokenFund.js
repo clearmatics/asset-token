@@ -25,7 +25,7 @@ contract("AssetToken", accounts => {
     //contains logic contract
     PROXY = await PROJECT.createProxy(AssetToken, {
       initMethod: "initialize",
-      initArgs: ["CLR", "Asset Token", addrOwner, [accounts[2]]]
+      initArgs: ["CLR", "Asset Token", addrOwner, [accounts[2]], true]
     });
 
     CONTRACT = PROXY.methods;

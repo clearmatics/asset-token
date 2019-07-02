@@ -26,7 +26,7 @@ contract("Proxy to upgradable token", async accounts => {
     //contains logic contract
     PROXY = await PROJECT.createProxy(AssetToken, {
       initMethod: "initialize",
-      initArgs: ["CLR", "Asset Token", addrOwner, []]
+      initArgs: ["CLR", "Asset Token", addrOwner, [], true]
     });
 
     CONTRACT = PROXY.methods;

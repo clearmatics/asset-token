@@ -21,7 +21,7 @@ async function deploy(options, tokenOwner) {
       {
         contractAlias: "AssetToken",
         methodName: "initialize",
-        methodArgs: ["CLR", "Asset Token", tokenOwner, []]
+        methodArgs: ["CLR", "Asset Token", tokenOwner, [], true]
       },
       options
     )

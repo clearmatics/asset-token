@@ -118,7 +118,8 @@ contract("Asset Token", accounts => {
     });
 
     context("Blacklisting an account", async () => {
-      let denyEvent = null,
+      let denyEvent,
+        allowedEvent = null,
         victim;
       beforeEach(async () => {
         victim = accounts[3];
@@ -137,6 +138,26 @@ contract("Asset Token", accounts => {
         assert.notEqual(denyEvent, null);
         assert.equal(denyEvent.returnValues.who, victim);
         assert.equal(denyEvent.returnValues.isBlacklist, true);
+      });
+
+      context("Allow that account again", async () => {
+        beforeEach(async () => {
+          const res = await CONTRACT.allowAddress(victim).send({
+            from: addrOwner
+          });
+
+          allowedEvent = res.events.Allowed;
+        });
+
+        it("Allowed to send again", async () => {
+          const isAllowedToSend = await CONTRACT.isAllowedToSend(victim).call();
+          assert.equal(isAllowedToSend, true);
+        });
+
+        it("Emits Allowed event", () => {
+          assert.equal(allowedEvent.returnValues.who, victim);
+          assert.equal(allowedEvent.returnValues.isBlacklist, true);
+        });
       });
     });
   });
@@ -163,28 +184,47 @@ contract("Asset Token", accounts => {
       }
     });
 
-    /*
-    context("Whitelist an account", () => {
+    context("Whitelisting an account", () => {
       const victim = accounts[8];
+      let allowedEvent,
+        denyEvent = null;
       beforeEach(async () => {
-        const res = await CONTRACT.blacklistAddress(victim).send({
+        const res = await CONTRACT.allowAddress(victim).send({
           from: addrOwner
         });
-      });
-      it("Only that account is blacklisted", async () => {
-        const blacklisted = await CONTRACT.isBlacklisted(victim).call();
-        const notBlacklisted = await CONTRACT.isBlacklisted(accounts[7]).call();
 
-        assert.equal(blacklisted, true);
-        assert.equal(notBlacklisted, false);
+        allowedEvent = res.events.Allowed;
       });
 
-      it("Whitelist that account again", async () => {
-        await CONTRACT.whitelistAddress(victim).send({ from: addrOwner });
-        const notBlacklisted = await CONTRACT.isBlacklisted(victim).call();
-
-        assert.equal(notBlacklisted, false);
+      it("He is now allowed to send", async () => {
+        const isAllowedToSend = await CONTRACT.isAllowedToSend(victim).call();
+        assert.equal(isAllowedToSend, true);
       });
-    }); */
+
+      it("Emits Allowed event", async () => {
+        assert.equal(allowedEvent.returnValues.who, victim);
+        assert.equal(allowedEvent.returnValues.isBlacklist, false);
+      });
+
+      context("Deny that account again", async () => {
+        beforeEach(async () => {
+          const res = await CONTRACT.denyAddress(victim).send({
+            from: addrOwner
+          });
+
+          denyEvent = res.events.Denied;
+        });
+
+        it("Not allowed to send anymore", async () => {
+          const isAllowedToSend = await CONTRACT.isAllowedToSend(victim).call();
+          assert.equal(isAllowedToSend, false);
+        });
+
+        it("Emits Denied event", () => {
+          assert.equal(denyEvent.returnValues.who, victim);
+          assert.equal(denyEvent.returnValues.isBlacklist, false);
+        });
+      });
+    });
   });
 });

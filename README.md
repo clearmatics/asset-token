@@ -10,10 +10,36 @@ Designed to represent a fungible asset with offchain interaction
   - Operators (default/elected, contracts/EOA) to transfer and burn tokens on behalf of holder
   - tokensReceived hook function to manage incoming tokens
   - tokensToSend hook function to manage outcoming tokens
-- Makes use of the [ERC1820][8] Pseudo-introspection Registry Contract to avoid token loss
+  - Makes use of the [ERC1820][8] Pseudo-introspection Registry Contract to avoid token loss
 - Upgradeable via integration with [ZeppelinOS][7].
 - Emergency stop to prevent transfers.
+- Support for whitelisting and blacklisting with dynamic switching
 - Non compatible with ERC-20 standard
+
+## Install
+
+`npm install asset-token`
+
+## Usage
+
+Import it and extend it through inherithance. Remember to call parent's _initialize_ function in your _initializer_ one
+For example:
+
+```
+pragma solidity ^0.5.0;
+
+import "asset-token/contracts/AssetToken.sol";
+import "zos-lib/contracts/Initializable.sol";
+
+contract myToken is AssetToken {
+
+  function myInitialize() public initializer {
+      AssetToken.initialize(<symbol>, <name>, <owner>, <[defaultOperators]>, <hasBlacklistPattern>);
+      //your constructor code
+  }
+
+}
+```
 
 ## Developing
 

@@ -16,8 +16,8 @@ contract AssetToken is IERC777, Initializable {
     using SafeMath for uint256;
     using Address for address;
 
-    //if negative a whitelist is assumed
-    bool private _isUsingBlacklist;
+    enum ListStatus {NoFilter, Blacklist, Whitelist}
+    ListStatus private _listStatus;
 
     string public _name;
     string public _symbol;
@@ -54,16 +54,16 @@ contract AssetToken is IERC777, Initializable {
     event Switch(bool balance);
     event Fund(address indexed member, uint256 value, uint256 balance);
     event ListDelegation(address indexed member);
-    event Denied(address indexed who, bool isBlacklist);
-    event Allowed(address indexed who, bool isBlacklist);
-    event SwitchList(bool isBlacklist);
+    event Denied(address indexed who, ListStatus status);
+    event Allowed(address indexed who, ListStatus status);
+    event SwitchListStatus(ListStatus status);
 
     function initialize(
         string memory symbol,
         string memory name,
         address owner,
         address[] memory defaultOperators,
-        bool useBlacklist
+        uint8 status
     )
     public initializer
     {
@@ -76,7 +76,7 @@ contract AssetToken is IERC777, Initializable {
         _fundingDelegate = _owner;
         _listsController = _owner;
         _isActive = true;
-        _isUsingBlacklist = useBlacklist;
+        _listStatus = ListStatus(status);
         _defaultOperatorsArray = defaultOperators;
 
         for (uint256 i=0; i<defaultOperators.length; i++) {
@@ -125,9 +125,20 @@ contract AssetToken is IERC777, Initializable {
         _;
     }
 
-    modifier onlyAllowedAddress(address who){
-        require(isAllowedToSend(who), "This account is not allowed to send money");
-        _;
+    modifier onlyAllowedAddress(address who) {
+        //the check only if either white or blacklisting
+        if (_listStatus != ListStatus.NoFilter) {
+            require(isAllowedToSend(who), "This account is not allowed to send money");
+            _;
+        } else {
+            _;
+        }
+
+    }
+
+    modifier onlyWithListFilter() {
+       require(_listStatus != ListStatus.NoFilter, "You must do either in white or black listing status");
+       _;
     }
 
     modifier checkActive() {
@@ -176,6 +187,10 @@ contract AssetToken is IERC777, Initializable {
         return _isActive;
     }
 
+    function getListStatus() external view returns (ListStatus) {
+        return _listStatus;
+    }
+
     function isOperatorFor(address operator, address holder) external view returns (bool) {
         return holder == operator ||
             (_defaultOperators[operator] && !_revokedDefaultOperators[holder][operator]) ||
@@ -186,29 +201,29 @@ contract AssetToken is IERC777, Initializable {
         return 18;
     }
 
-    function denyAddress(address who) external onlyListsController {
-        if (_isUsingBlacklist) {
+    function denyAddress(address who) external onlyListsController onlyWithListFilter {
+        if (_listStatus == ListStatus.Blacklist) {
             _isBlacklisted[who] = true;
         } else {
             _isWhiteListed[who] = false;
         }
 
-        emit Denied(who, _isUsingBlacklist);
+        emit Denied(who, _listStatus);
     }
 
-    function allowAddress(address who) external onlyListsController {
-        if (_isUsingBlacklist) {
+    function allowAddress(address who) external onlyListsController onlyWithListFilter {
+        if (_listStatus == ListStatus.Blacklist) {
             _isBlacklisted[who] = false;
         } else {
             _isWhiteListed[who] = true;
         }
 
-        emit Allowed(who, _isUsingBlacklist);
+        emit Allowed(who, _listStatus);
     }
 
-    function switchList() external onlyListsController {
-        _isUsingBlacklist = !_isUsingBlacklist;
-        emit SwitchList(_isUsingBlacklist);
+    function switchListStatus(uint8 status) external onlyListsController {
+        _listStatus = ListStatus(status);
+        emit SwitchListStatus(_listStatus);
     }
 
     function authorizeOperator(address operator) external {
@@ -251,11 +266,13 @@ contract AssetToken is IERC777, Initializable {
     }
 
     function isAllowedToSend(address who) public view returns (bool) {
-        if (_isUsingBlacklist) {
+        if (_listStatus == ListStatus.Blacklist) {
             return !_isBlacklisted[who];
-        } else {
+        } else if (_listStatus == ListStatus.Whitelist) {
             return _isWhiteListed[who];
         }
+
+        return true;
     }
 
     // @dev starts trading by switching _isActive to true

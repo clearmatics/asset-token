@@ -126,8 +126,8 @@ contract AssetToken is IERC777, Initializable {
     }
 
     modifier onlyAllowedAddress(address who){
-      require(isAllowedToSend(who), "This account is not allowed to send money");
-      _;
+        require(isAllowedToSend(who), "This account is not allowed to send money");
+        _;
     }
 
     modifier checkActive() {

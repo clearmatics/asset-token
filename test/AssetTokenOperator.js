@@ -324,6 +324,49 @@ contract("Asset Token", accounts => {
         assert.equal(resEvent.returnValues.data, userData);
         assert.equal(resEvent.returnValues.operatorData, operatorData);
       });
+
+      context("if owner becomes operator", () => {
+        let actualError = null;
+        beforeEach(async () => {
+          await CONTRACT.authorizeOperator(addrOwner).send({
+            from: addrSender
+          });
+        });
+        it("operatorSend reverts", async () => {
+          try {
+            await CONTRACT.operatorSend(
+              addrSender,
+              addrRecipient,
+              10,
+              userData,
+              userData
+            ).send({ from: addrOwner });
+          } catch (err) {
+            actualError = err;
+          }
+          assert.equal(
+            actualError.toString(),
+            "Error: Returned error: VM Exception while processing transaction: revert The contract owner can not perform this operation"
+          );
+        });
+
+        it("operatorBurn reverts", async () => {
+          try {
+            await CONTRACT.operatorBurn(
+              addrSender,
+              10,
+              userData,
+              userData
+            ).send({ from: addrOwner });
+          } catch (err) {
+            actualError = err;
+          }
+          assert.equal(
+            actualError.toString(),
+            "Error: Returned error: VM Exception while processing transaction: revert The contract owner can not perform this operation"
+          );
+        });
+      });
     });
   });
 });

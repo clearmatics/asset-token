@@ -22,7 +22,7 @@
   ],
   "homepage": "https://github.com/clearmatics/asset-token",
   "author": "Clearmatics <opensource@clearmatics.com>",
-  "license": "MIT",
+  "license": "LGPL-3.0",
   "dependencies": {
     "ganache-cli": "6.2.5",
     "openzeppelin-eth": "^2.1.3",

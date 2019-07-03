@@ -28,7 +28,7 @@ contract("Asset Token", accounts => {
       //contains logic contract
       PROXY = await PROJECT.createProxy(AssetToken, {
         initMethod: "initialize",
-        initArgs: ["CLR", "Asset Token", addrOwner, [defaultOperator], true]
+        initArgs: ["CLR", "Asset Token", addrOwner, [defaultOperator], 1]
       });
 
       CONTRACT = PROXY.methods;
@@ -119,7 +119,7 @@ contract("Asset Token", accounts => {
       //contains logic contract
       PROXY = await PROJECT.createProxy(AssetToken, {
         initMethod: "initialize",
-        initArgs: ["CLR", "Asset Token", addrOwner, [defaultOperator], true]
+        initArgs: ["CLR", "Asset Token", addrOwner, [defaultOperator], 1]
       });
 
       CONTRACT = PROXY.methods;
@@ -154,7 +154,7 @@ contract("Asset Token", accounts => {
       it("Emits Denied event", () => {
         assert.notEqual(denyEvent, null);
         assert.equal(denyEvent.returnValues.who, victim);
-        assert.equal(denyEvent.returnValues.isBlacklist, true);
+        assert.equal(denyEvent.returnValues.status, 1);
       });
 
       context("Payment operations", () => {
@@ -247,7 +247,7 @@ contract("Asset Token", accounts => {
 
         it("Emits Allowed event", () => {
           assert.equal(allowedEvent.returnValues.who, victim);
-          assert.equal(allowedEvent.returnValues.isBlacklist, true);
+          assert.equal(allowedEvent.returnValues.status, 1);
         });
       });
     });
@@ -255,12 +255,14 @@ contract("Asset Token", accounts => {
     context("Switching to whitelist", () => {
       let switchEvent = null;
       beforeEach(async () => {
-        const res = await CONTRACT.switchList().send({ from: addrOwner });
-        switchEvent = res.events.SwitchList;
+        const res = await CONTRACT.switchListStatus(2).send({
+          from: addrOwner
+        });
+        switchEvent = res.events.SwitchListStatus;
       });
       it("Emits switch event correctly", () => {
         assert.notEqual(switchEvent, undefined || null);
-        assert.equal(switchEvent.returnValues.isBlacklist, false);
+        assert.equal(switchEvent.returnValues.status, 2);
       });
       it("Accounts are not allowed anymore", async () => {
         for (let i = 0; i < accounts.length; i++) {
@@ -280,7 +282,7 @@ contract("Asset Token", accounts => {
       //contains logic contract
       PROXY = await PROJECT.createProxy(AssetToken, {
         initMethod: "initialize",
-        initArgs: ["CLR", "Asset Token", addrOwner, [defaultOperator], false]
+        initArgs: ["CLR", "Asset Token", addrOwner, [defaultOperator], 2]
       });
 
       CONTRACT = PROXY.methods;
@@ -389,7 +391,7 @@ contract("Asset Token", accounts => {
 
       it("Emits Allowed event", async () => {
         assert.equal(allowedEvent.returnValues.who, victim);
-        assert.equal(allowedEvent.returnValues.isBlacklist, false);
+        assert.equal(allowedEvent.returnValues.status, 2);
       });
 
       context("Deny that account again", async () => {
@@ -408,7 +410,7 @@ contract("Asset Token", accounts => {
 
         it("Emits Denied event", () => {
           assert.equal(denyEvent.returnValues.who, victim);
-          assert.equal(denyEvent.returnValues.isBlacklist, false);
+          assert.equal(denyEvent.returnValues.status, 2);
         });
       });
     });
@@ -416,12 +418,14 @@ contract("Asset Token", accounts => {
     context("Switching to blacklist", () => {
       let switchEvent = null;
       beforeEach(async () => {
-        const res = await CONTRACT.switchList().send({ from: addrOwner });
-        switchEvent = res.events.SwitchList;
+        const res = await CONTRACT.switchListStatus(1).send({
+          from: addrOwner
+        });
+        switchEvent = res.events.SwitchListStatus;
       });
       it("Emits switch event correctly", () => {
         assert.notEqual(switchEvent, undefined || null);
-        assert.equal(switchEvent.returnValues.isBlacklist, true);
+        assert.equal(switchEvent.returnValues.status, 1);
       });
       it("Accounts are now all allowed", async () => {
         for (let i = 0; i < accounts.length; i++) {
@@ -431,6 +435,65 @@ contract("Asset Token", accounts => {
           assert.equal(isAllowedToSend, true);
         }
       });
+    });
+  });
+
+  describe("No filter mode", () => {
+    let actualError;
+    beforeEach(async () => {
+      this.erc1820 = await singletons.ERC1820Registry(addrOwner);
+      PROJECT = await TestHelper({ from: proxyOwner });
+
+      //contains logic contract
+      PROXY = await PROJECT.createProxy(AssetToken, {
+        initMethod: "initialize",
+        initArgs: ["CLR", "Asset Token", addrOwner, [defaultOperator], 0]
+      });
+
+      CONTRACT = PROXY.methods;
+
+      actualError = null;
+    });
+
+    it("Accounts are allowed by default", async () => {
+      for (let i = 0; i < accounts.length; i++) {
+        const isAllowedToSend = await CONTRACT.isAllowedToSend(
+          accounts[i]
+        ).call();
+        assert.equal(isAllowedToSend, true);
+      }
+    });
+
+    it("Not possible to deny an account", async () => {
+      try {
+        let victim = accounts[3];
+        const res = await CONTRACT.denyAddress(victim).send({
+          from: addrOwner
+        });
+      } catch (err) {
+        actualError = err;
+      }
+
+      assert.equal(
+        actualError.toString(),
+        "Error: Returned error: VM Exception while processing transaction: revert You must do either in white or black listing status"
+      );
+    });
+
+    it("Nor to allow an account", async () => {
+      try {
+        let victim = accounts[3];
+        const res = await CONTRACT.allowAddress(victim).send({
+          from: addrOwner
+        });
+      } catch (err) {
+        actualError = err;
+      }
+
+      assert.equal(
+        actualError.toString(),
+        "Error: Returned error: VM Exception while processing transaction: revert You must do either in white or black listing status"
+      );
     });
   });
 });

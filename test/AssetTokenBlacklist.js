@@ -28,7 +28,7 @@ contract("Asset Token", accounts => {
       //contains logic contract
       PROXY = await PROJECT.createProxy(AssetToken, {
         initMethod: "initialize",
-        initArgs: ["CLR", "Asset Token", addrOwner, [], true]
+        initArgs: ["CLR", "Asset Token", addrOwner, [defaultOperator], true]
       });
 
       CONTRACT = PROXY.methods;
@@ -67,6 +67,22 @@ contract("Asset Token", accounts => {
       const recipient = accounts[3];
       try {
         await CONTRACT.send(recipient, 10, data).send({ from: delegate });
+      } catch (err) {
+        error = err;
+      }
+
+      assert.strictEqual(
+        error.toString(),
+        "Error: Returned error: VM Exception while processing transaction: revert The contract owner can not perform this operation"
+      );
+    });
+
+    it("Nor use an operator for a payment", async () => {
+      const recipient = accounts[3];
+      try {
+        await CONTRACT.operatorSend(delegate, recipient, 10, data, data).send({
+          from: defaultOperator
+        });
       } catch (err) {
         error = err;
       }
@@ -235,6 +251,26 @@ contract("Asset Token", accounts => {
         });
       });
     });
+
+    context("Switching to whitelist", () => {
+      let switchEvent = null;
+      beforeEach(async () => {
+        const res = await CONTRACT.switchList().send({ from: addrOwner });
+        switchEvent = res.events.SwitchList;
+      });
+      it("Emits switch event correctly", () => {
+        assert.notEqual(switchEvent, undefined || null);
+        assert.equal(switchEvent.returnValues.isBlacklist, false);
+      });
+      it("Accounts are not allowed anymore", async () => {
+        for (let i = 0; i < accounts.length; i++) {
+          const isAllowedToSend = await CONTRACT.isAllowedToSend(
+            accounts[i]
+          ).call();
+          assert.equal(isAllowedToSend, false);
+        }
+      });
+    });
   });
 
   describe("Whitelist mode", () => {
@@ -374,6 +410,26 @@ contract("Asset Token", accounts => {
           assert.equal(denyEvent.returnValues.who, victim);
           assert.equal(denyEvent.returnValues.isBlacklist, false);
         });
+      });
+    });
+
+    context("Switching to blacklist", () => {
+      let switchEvent = null;
+      beforeEach(async () => {
+        const res = await CONTRACT.switchList().send({ from: addrOwner });
+        switchEvent = res.events.SwitchList;
+      });
+      it("Emits switch event correctly", () => {
+        assert.notEqual(switchEvent, undefined || null);
+        assert.equal(switchEvent.returnValues.isBlacklist, true);
+      });
+      it("Accounts are now all allowed", async () => {
+        for (let i = 0; i < accounts.length; i++) {
+          const isAllowedToSend = await CONTRACT.isAllowedToSend(
+            accounts[i]
+          ).call();
+          assert.equal(isAllowedToSend, true);
+        }
       });
     });
   });

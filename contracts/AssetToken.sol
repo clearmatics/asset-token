@@ -182,14 +182,6 @@ contract AssetToken is IERC777, Initializable {
             _operators[holder][operator];
     }
 
-    function isAllowedToSend(address who) public view returns (bool) {
-        if (_isUsingBlacklist) {
-            return !_isBlacklisted[who];
-        } else {
-            return _isWhiteListed[who];
-        }
-    }
-
     function decimals() external pure returns (uint256) {
         return 18;
     }
@@ -212,6 +204,11 @@ contract AssetToken is IERC777, Initializable {
         }
 
         emit Allowed(who, _isUsingBlacklist);
+    }
+
+    function switchList() external onlyListsController {
+        _isUsingBlacklist = !_isUsingBlacklist;
+        emit SwitchList(_isUsingBlacklist);
     }
 
     function authorizeOperator(address operator) external {
@@ -251,6 +248,14 @@ contract AssetToken is IERC777, Initializable {
     function setListsController(address who) external onlyOwner {
         _listsController = who;
         emit ListDelegation(_listsController);
+    }
+
+    function isAllowedToSend(address who) public view returns (bool) {
+        if (_isUsingBlacklist) {
+            return !_isBlacklisted[who];
+        } else {
+            return _isWhiteListed[who];
+        }
     }
 
     // @dev starts trading by switching _isActive to true

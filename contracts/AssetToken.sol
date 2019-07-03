@@ -137,8 +137,8 @@ contract AssetToken is IERC777, Initializable {
     }
 
     modifier onlyWithListFilter() {
-       require(_listStatus != ListStatus.NoFilter, "You must do either in white or black listing status");
-       _;
+        require(_listStatus != ListStatus.NoFilter, "You must do either in white or black listing status");
+        _;
     }
 
     modifier checkActive() {

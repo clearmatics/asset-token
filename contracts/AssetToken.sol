@@ -63,14 +63,15 @@ contract AssetToken is IERC777, Initializable {
         string memory name,
         address owner,
         address[] memory defaultOperators,
-        uint8 status
+        uint8 status,
+        uint8 granularity
     )
     public initializer
     {
         _name = name;
         _symbol = symbol;
         _totalSupply = 0;
-        _granularity = 1;
+        _granularity = granularity;
         _owner = owner;
         _emergencyDelegate = _owner;
         _fundingDelegate = _owner;
@@ -156,6 +157,11 @@ contract AssetToken is IERC777, Initializable {
         {
             revert("The contract owner can not perform this operation");
         }
+        _;
+    }
+
+    modifier checkGranularity(uint amount) {
+        require(isMultipleOfGranularity(amount), "The amount must be a multiple of granularity");
         _;
     }
 
@@ -275,6 +281,10 @@ contract AssetToken is IERC777, Initializable {
         return true;
     }
 
+    function isMultipleOfGranularity(uint amount) public view returns (bool) {
+        return (amount % _granularity == 0);
+    }
+
     // @dev starts trading by switching _isActive to true
     function emergencyStart() public onlyOwner {
         if (_isActive == false) {
@@ -296,6 +306,7 @@ contract AssetToken is IERC777, Initializable {
         public
         onlyFundingAccount
         checkActive
+        checkGranularity(value)
         noOwnerAsCounterparty(member)
     {
 
@@ -365,6 +376,7 @@ contract AssetToken is IERC777, Initializable {
     )
         private
         checkActive
+        checkGranularity(amount)
         noOwnerAsCounterparty(from)
         noOwnerAsCounterparty(to)
         noOwnerAsCounterparty(operator)
@@ -392,6 +404,7 @@ contract AssetToken is IERC777, Initializable {
     )
         private
         checkActive
+        checkGranularity(amount)
         noOwnerAsCounterparty(operator)
         noOwnerAsCounterparty(from)
     {

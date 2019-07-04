@@ -34,7 +34,7 @@ import "zos-lib/contracts/Initializable.sol";
 contract myToken is AssetToken {
 
   function myInitialize() public initializer {
-      AssetToken.initialize(<string>, <string>, <address>, <[address]>, <uint8>);
+      AssetToken.initialize(<string>, <string>, <address>, <[address]>, <uint8>, <uint8>);
       //your constructor code
   }
 

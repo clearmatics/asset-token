@@ -17,19 +17,6 @@ contract("Asset Token", accounts => {
   const addrOwner = accounts[0];
   const proxyOwner = accounts[1];
   const data = web3.utils.randomHex(0);
-  beforeEach(async () => {
-    this.erc1820 = await singletons.ERC1820Registry(addrOwner);
-
-    PROJECT = await TestHelper({ from: proxyOwner });
-
-    //contains logic contract
-    PROXY = await PROJECT.createProxy(AssetToken, {
-      initMethod: "initialize",
-      initArgs: ["CLR", "Asset Token", addrOwner, [], 1]
-    });
-
-    CONTRACT = PROXY.methods;
-  });
 
   describe("Burn", () => {
     let addrRecipient,
@@ -44,6 +31,18 @@ contract("Asset Token", accounts => {
       fundEventVal,
       fundEventBalance;
     beforeEach(async () => {
+      this.erc1820 = await singletons.ERC1820Registry(addrOwner);
+
+      PROJECT = await TestHelper({ from: proxyOwner });
+
+      //contains logic contract
+      PROXY = await PROJECT.createProxy(AssetToken, {
+        initMethod: "initialize",
+        initArgs: ["CLR", "Asset Token", addrOwner, [], 1, 1]
+      });
+
+      CONTRACT = PROXY.methods;
+
       addrRecipient = accounts[2];
 
       totalSupplyBefore = await CONTRACT.totalSupply().call();

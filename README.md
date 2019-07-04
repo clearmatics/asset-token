@@ -12,8 +12,9 @@ Designed to represent a fungible asset with offchain interaction
   - tokensToSend hook function to manage outcoming tokens
   - Makes use of the [ERC1820][8] Pseudo-introspection Registry Contract to avoid token loss
 - Upgradeable via integration with [ZeppelinOS][7].
-- Emergency stop to prevent transfers.
+- Emergency stop to prevent transfers
 - Support for whitelisting and blacklisting with dynamic switching
+- Token granularity to be set upon deployment
 - Non compatible with ERC-20 standard
 
 ## Install

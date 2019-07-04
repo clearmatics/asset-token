@@ -1,6 +1,7 @@
 # Asset Token
 
 [![Build Status](https://travis-ci.org/clearmatics/asset-token.svg?branch=master)](https://travis-ci.org/clearmatics/asset-token)
+[![npm version](http://img.shields.io/npm/v/asset-token.svg?style=flat)](https://www.npmjs.com/package/asset-token)
 
 Designed to represent a fungible asset with offchain interaction
 
@@ -12,8 +13,9 @@ Designed to represent a fungible asset with offchain interaction
   - tokensToSend hook function to manage outcoming tokens
   - Makes use of the [ERC1820][8] Pseudo-introspection Registry Contract to avoid token loss
 - Upgradeable via integration with [ZeppelinOS][7].
-- Emergency stop to prevent transfers.
+- Emergency stop to prevent transfers
 - Support for whitelisting and blacklisting with dynamic switching
+- Token granularity to be set upon deployment
 - Non compatible with ERC-20 standard
 
 ## Install

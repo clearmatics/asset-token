@@ -1,6 +1,7 @@
 # Asset Token
 
 [![Build Status](https://travis-ci.org/clearmatics/asset-token.svg?branch=master)](https://travis-ci.org/clearmatics/asset-token)
+[![npm version](http://img.shields.io/npm/v/REPO.svg?style=flat)](https://www.npmjs.com/package/asset-token "View this project on npm")
 
 Designed to represent a fungible asset with offchain interaction
 

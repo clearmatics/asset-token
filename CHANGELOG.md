@@ -37,10 +37,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [ERC20] token standard support
 
-[1.0.0]: https://github.com/clearmatics/asset-token/compare/1e7ef2fbd8ebd744ee0cbcfdfa283f646829fcae...v1.0.0
+## [0.9.0] - 2019-05-30
+
+### Added
+
+- [zeppelinOS] framework integration
+- [Upgradable] contract through a proxy pattern
+
+### Changed
+
+- `constructor` code is moved into `initialize` public function
+- `openzeppelin-solidity` libraries are now imported from `openzeppelin-eth`
+
+[0.9.0]: https://github.com/clearmatics/asset-token/compare/d10f1c03eb1d468df642a24f3c0ffde1e980633a...v0.9.0
+[1.0.0]: https://github.com/clearmatics/asset-token/compare/v0.9.0...v1.0.0
 [1.1.0]: https://github.com/clearmatics/asset-token/compare/v1.0.0...v1.1.0
 [1.2.0]: https://github.com/clearmatics/asset-token/compare/v1.1.0...v1.2.0
 [erc777]: https://eips.ethereum.org/EIPS/eip-777
 [erc1820]: https://eips.ethereum.org/EIPS/eip-1820
 [erc20]: https://eips.ethereum.org/EIPS/eip-20
 [npm-package]: https://www.npmjs.com/package/asset-token
+[zeppelinos]: https://zeppelinos.org/
+[openzeppelin-eth]: https://github.com/OpenZeppelin/openzeppelin-eth
+[upgradable]: https://medium.com/clearmatics/upgrading-smart-contracts-c9fb144eceb7

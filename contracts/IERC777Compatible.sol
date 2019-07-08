@@ -52,7 +52,7 @@ contract IERC777Compatible is IERC777Recipient, IERC777Sender, ERC1820Implemente
      *  under the hood register the association for future
      *  canImplementInterfaceForAddress calls from token contract
     */
-    function recipientFor(address account) public {
+    function recipientFor(address account) external {
         _registerInterfaceForAddress(TOKENS_RECIPIENT_INTERFACE_HASH, account);
 
         emit Registered(account, address(this));
@@ -68,7 +68,7 @@ contract IERC777Compatible is IERC777Recipient, IERC777Sender, ERC1820Implemente
         _erc1820.setInterfaceImplementer(address(this), TOKENS_RECIPIENT_INTERFACE_HASH, recipient);
     }
 
-    function setShouldRevertReceive(bool shouldRevert) public {
+    function setShouldRevertReceive(bool shouldRevert) external {
         _shouldRevertReceive = shouldRevert;
     }
 
@@ -92,7 +92,7 @@ contract IERC777Compatible is IERC777Recipient, IERC777Sender, ERC1820Implemente
     /**
      * SENDER IMPLEMENTER
     */
-    function senderFor(address account) public {
+    function senderFor(address account) external {
         _registerInterfaceForAddress(TOKENS_SENDER_INTERFACE_HASH, account);
 
         emit Registered(account, address(this));
@@ -108,7 +108,7 @@ contract IERC777Compatible is IERC777Recipient, IERC777Sender, ERC1820Implemente
         _erc1820.setInterfaceImplementer(address(this), TOKENS_SENDER_INTERFACE_HASH, recipient);
     }
 
-    function setShouldRevertSend(bool shouldRevert) public {
+    function setShouldRevertSend(bool shouldRevert) external {
         _shouldRevertSend = shouldRevert;
     }
 
@@ -136,7 +136,7 @@ contract IERC777Compatible is IERC777Recipient, IERC777Sender, ERC1820Implemente
         );
     }
 
-    function send(address payable tokenAddr, address to, uint256 amount, bytes memory data) public {
+    function send(address payable tokenAddr, address to, uint256 amount, bytes memory data) external {
         AssetToken token = AssetToken(tokenAddr);
         token.send(to, amount, data);
     }

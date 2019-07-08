@@ -59,14 +59,14 @@ contract AssetToken is IERC777, Initializable {
     event SwitchListStatus(ListStatus status);
 
     function initialize(
-        string memory symbol,
-        string memory name,
+        string calldata symbol,
+        string calldata name,
         address owner,
-        address[] memory defaultOperators,
+        address[] calldata defaultOperators,
         uint8 status,
         uint8 granularity
     )
-    public initializer
+    external initializer
     {
         _name = name;
         _symbol = symbol;
@@ -286,7 +286,7 @@ contract AssetToken is IERC777, Initializable {
     }
 
     // @dev starts trading by switching _isActive to true
-    function emergencyStart() public onlyOwner {
+    function emergencyStart() external onlyOwner {
         if (_isActive == false) {
             _isActive = true;
         }
@@ -294,7 +294,7 @@ contract AssetToken is IERC777, Initializable {
     }
 
     // @dev stops trading by switching _isActive to false
-    function emergencyStop() public onlyEmergencyAccount {
+    function emergencyStop() external onlyEmergencyAccount {
         if (_isActive == true) {
             _isActive = false;
         }
@@ -303,7 +303,7 @@ contract AssetToken is IERC777, Initializable {
 
     // solhint-disable-next-line no-simple-event-func-name
     function fund(address member, uint256 value)
-        public
+        external
         onlyFundingAccount
         checkActive
         checkGranularity(value)

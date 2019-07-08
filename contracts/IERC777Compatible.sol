@@ -136,7 +136,7 @@ contract IERC777Compatible is IERC777Recipient, IERC777Sender, ERC1820Implemente
         );
     }
 
-    function send(address payable tokenAddr, address to, uint256 amount, bytes memory data) external {
+    function send(address payable tokenAddr, address to, uint256 amount, bytes calldata data) external {
         AssetToken token = AssetToken(tokenAddr);
         token.send(to, amount, data);
     }

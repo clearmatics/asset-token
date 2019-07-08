@@ -19,10 +19,10 @@ contract AssetToken is IERC777, Initializable {
     enum ListStatus {NoFilter, Blacklist, Whitelist}
     ListStatus private _listStatus;
 
-    string public _name;
-    string public _symbol;
-    uint256 public _totalSupply;
-    uint256 public _granularity;
+    string private _name;
+    string private _symbol;
+    uint256 private _totalSupply;
+    uint256 private _granularity;
 
     address private _owner;
     address private _emergencyDelegate;
@@ -197,12 +197,6 @@ contract AssetToken is IERC777, Initializable {
         return _listStatus;
     }
 
-    function isOperatorFor(address operator, address holder) external view returns (bool) {
-        return holder == operator ||
-            (_defaultOperators[operator] && !_revokedDefaultOperators[holder][operator]) ||
-            _operators[holder][operator];
-    }
-
     function decimals() external pure returns (uint256) {
         return 18;
     }
@@ -281,6 +275,12 @@ contract AssetToken is IERC777, Initializable {
         return true;
     }
 
+    function isOperatorFor(address operator, address holder) public view returns (bool) {
+        return holder == operator ||
+            (_defaultOperators[operator] && !_revokedDefaultOperators[holder][operator]) ||
+            _operators[holder][operator];
+    }
+
     function isMultipleOfGranularity(uint amount) public view returns (bool) {
         return (amount % _granularity == 0);
     }
@@ -336,7 +336,7 @@ contract AssetToken is IERC777, Initializable {
         external
     {
         //being isOperatorFor external the compiler doesn't sees it without `this`
-        require(this.isOperatorFor(msg.sender, from), "Caller is not operator for the specified holder");
+        require(isOperatorFor(msg.sender, from), "Caller is not operator for the specified holder");
 
         _burn(msg.sender, from, amount, data, operatorData);
 
@@ -358,7 +358,7 @@ contract AssetToken is IERC777, Initializable {
         external
     {
         //being isOperatorFor external the compiler doesn't sees it without `this`
-        require(this.isOperatorFor(msg.sender, from), "Caller is not operator for specified holder");
+        require(isOperatorFor(msg.sender, from), "Caller is not operator for specified holder");
 
         _send(msg.sender, from, to, amount, data, operatorData);
 

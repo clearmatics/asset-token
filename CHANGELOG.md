@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased (1.3.0)
 
+## [1.2.1] - 2019-07-08
+
+Minor modifications after running the [slither] source analyzer
+
+### Changed
+
+- `external` instead of `public` function modifier
+- `calldata` instead of `memory` data location of external function parameters
+- `private` instead of `public` state variables
+
 ## [1.2.0] - 2019-07-04
 
 ### Added
@@ -53,6 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [1.0.0]: https://github.com/clearmatics/asset-token/compare/v0.9.0...v1.0.0
 [1.1.0]: https://github.com/clearmatics/asset-token/compare/v1.0.0...v1.1.0
 [1.2.0]: https://github.com/clearmatics/asset-token/compare/v1.1.0...v1.2.0
+[1.2.1]: https://github.com/clearmatics/asset-token/compare/v1.2.0...v1.2.1
 [erc777]: https://eips.ethereum.org/EIPS/eip-777
 [erc1820]: https://eips.ethereum.org/EIPS/eip-1820
 [erc20]: https://eips.ethereum.org/EIPS/eip-20
@@ -60,3 +71,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [zeppelinos]: https://zeppelinos.org/
 [openzeppelin-eth]: https://github.com/OpenZeppelin/openzeppelin-eth
 [upgradable]: https://medium.com/clearmatics/upgrading-smart-contracts-c9fb144eceb7
+[slither]: https://github.com/crytic/slither

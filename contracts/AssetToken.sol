@@ -286,7 +286,7 @@ contract AssetToken is IERC777, Initializable {
     }
 
     // @dev starts trading by switching _isActive to true
-    function emergencyStart() external onlyOwner {
+    function emergencyStart() external onlyEmergencyAccount {
         if (_isActive == false) {
             _isActive = true;
         }

@@ -35,7 +35,7 @@ Minor modifications after running the [slither] source analyzer
 - Blacklist, Whitelist and NoFilter mode for payment operations
 - Switch function to change mode
 
-## [1.0.0] - 2019-07-28
+## [1.0.0] - 2019-06-28
 
 ### Added
 

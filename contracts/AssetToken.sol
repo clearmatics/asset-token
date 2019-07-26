@@ -64,7 +64,7 @@ contract AssetToken is IERC777, Initializable {
         address owner,
         address[] calldata defaultOperators,
         uint8 status,
-        uint8 granularity
+        uint256 granularity
     )
     external initializer
     {

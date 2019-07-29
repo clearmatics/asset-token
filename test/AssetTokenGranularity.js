@@ -13,7 +13,7 @@ const AssetToken = Contracts.getFromLocal("AssetToken");
 
 let CONTRACT;
 
-contract("Asset Token", accounts => {
+contract.only("Asset Token", accounts => {
   let totalSupplyInitial,
     balanceInitial,
     balanceFinal,
@@ -150,4 +150,48 @@ contract("Asset Token", accounts => {
       });
     });
   });
+
+  describe("Burning tokens with granularity 500", async () => {
+    beforeEach(async () => {
+      this.erc1820 = await singletons.ERC1820Registry(addrOwner);
+
+      PROJECT = await TestHelper({ from: proxyOwner });
+
+      //contains logic contract
+      PROXY = await PROJECT.createProxy(AssetToken, {
+        initMethod: "initialize",
+        initArgs: ["CLR", "Asset Token", addrOwner, [defaultOperator], 1, 500]
+      });
+
+      CONTRACT = PROXY.methods;
+
+      await CONTRACT.fund(victim, 3000).send({ from: addrOwner });
+
+      balanceInitial = await CONTRACT.balanceOf(victim).call();
+      assert.equal(balanceInitial, 3000);
+    });
+
+    it("Reject transaction as it is not rounded to granularity, keep state", async () => {
+      try {
+        let wrongAmount1 = 365;
+        await CONTRACT.burn(wrongAmount1, data).send({ from: victim });
+      } catch (err) {
+        actualError = err;
+      }
+
+      balanceFinal = await CONTRACT.balanceOf(victim).call();
+      assert.equal(balanceInitial, balanceFinal);
+    });
+
+  });
+
+
+
+
+
+
+
+
+
+
 });

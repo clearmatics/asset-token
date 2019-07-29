@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased (1.3.0)
 
+## [1.2.2] - 2019-07-29
+
+### Changed 
+
+- `granularity` data type from `uint8` to `uint256`
+
 ## [1.2.1] - 2019-07-08
 
 Minor modifications after running the [slither] source analyzer
@@ -64,6 +70,7 @@ Minor modifications after running the [slither] source analyzer
 [1.1.0]: https://github.com/clearmatics/asset-token/compare/v1.0.0...v1.1.0
 [1.2.0]: https://github.com/clearmatics/asset-token/compare/v1.1.0...v1.2.0
 [1.2.1]: https://github.com/clearmatics/asset-token/compare/v1.2.0...v1.2.1
+[1.2.2]: https://github.com/clearmatics/asset-token/compare/v1.2.1...v1.2.2
 [erc777]: https://eips.ethereum.org/EIPS/eip-777
 [erc1820]: https://eips.ethereum.org/EIPS/eip-1820
 [erc20]: https://eips.ethereum.org/EIPS/eip-20

@@ -63,7 +63,7 @@ contract AssetToken is IERC777, Initializable {
         string calldata name,
         address owner,
         address[] calldata defaultOperators,
-        uint8 status,
+        int status,
         uint256 granularity
     )
     external initializer

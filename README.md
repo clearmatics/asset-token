@@ -62,11 +62,11 @@ Start `ganache` in a separate terminal tab or window.
     yarn ganache
 
     # in separate window or tab
-    npx zos session --network development --from <address>
+    npx zos session --network development [--from <address>]
 
 This will start a session to work with in the network. --from flag is optional
 
-    npx zos push --deploy-dependencies
+    npx zos push --deploy-dependencies [--from <address>]
 
 This will compile and deploy contracts from zos.json and dependencies to the local network. --deploy flag not needed if running in public testnets (Rinkeby, Kovan, Ropsten) or mainnet.
 

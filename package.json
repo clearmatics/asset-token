@@ -29,8 +29,9 @@
     "openzeppelin-solidity": "^2.3.0",
     "solhint": "2.0.0",
     "solidity-coverage": "0.6.0-beta.5",
-    "truffle": "5.0.26",
-    "web3": "1.0.0-beta.53",
+    "truffle": "5.0.32",
+    "truffle-hdwallet-provider": "1.0.16",
+    "web3": "1.2.1",
     "zos": "2.2.3",
     "zos-lib": "2.2.3"
   },

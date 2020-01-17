@@ -14,5 +14,6 @@ module.exports = {
       runs: 200
     },
     version: "0.5.3+commit.10d17f24"
-  }
+  },
+  plugins: ["solidity-coverage"]
 };

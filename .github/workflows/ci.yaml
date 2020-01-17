@@ -26,6 +26,7 @@ jobs:
           npx zos session --network development
           npx zos push --deploy-dependencies
           yarn test
+          yarn coverage
 
       - name: Upload coverage to Codecov  
         uses: codecov/codecov-action@v1

@@ -20,12 +20,12 @@ jobs:
         with:
           node-version: '8.x'
       - run: |
-        yarn install
-        yarn lint
-        yarn ganache &
-        npx zos session --network development
-        npx zos push --deploy-dependencies
-        yarn test
+          yarn install
+          yarn lint
+          yarn ganache &
+          npx zos session --network development
+          npx zos push --deploy-dependencies
+          yarn test
 
       - name: Upload coverage to Codecov  
         uses: codecov/codecov-action@v1

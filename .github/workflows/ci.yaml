@@ -1,0 +1,38 @@
+on: ["push", "pull_request"]
+name: "Continuous Integration"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Get yarn cache
+        id: yarn-cache
+        run: echo "::set-output name=dir::$(yarn cache dir)"
+
+      - uses: actions/cache@v1
+        with:
+          path: ${{ steps.yarn-cache.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '8.x'
+      - run: |
+          yarn install
+          yarn lint
+          yarn ganache &
+          npx zos session --network development
+          npx zos push --deploy-dependencies
+          yarn test
+          # yarn coverage
+
+#      - name: Upload coverage to Codecov  
+#        uses: codecov/codecov-action@v1
+#        with:
+#          token: ${{ secrets.CODECOV_TOKEN }}
+#          file: ./coverage-all.out
+#          flags: unittests
+#          name: codecov-umbrella
+#          fail_ci_if_error: true

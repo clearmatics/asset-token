@@ -1,6 +1,7 @@
 # Asset Token
 
-[![Build Status](https://travis-ci.org/clearmatics/asset-token.svg?branch=master)](https://travis-ci.org/clearmatics/asset-token)
+![ci](https://github.com/clearmatics/asset-token/workflows/Continuous%20Integration/badge.svg)
+[![codecov](https://codecov.io/gh/clearmatics/asset-token/branch/master/graph/badge.svg)](https://codecov.io/gh/clearmatics/asset-token)
 [![npm version](http://img.shields.io/npm/v/asset-token.svg?style=flat)](https://www.npmjs.com/package/asset-token)
 
 Designed to represent a fungible asset with offchain interaction

@@ -13,7 +13,7 @@ const AssetToken = artifacts.require("AssetToken");
 
 let CONTRACT;
 
-contract.only("AssetToken", accounts => {
+contract("AssetToken", accounts => {
   const addrOwner = accounts[0];
   const proxyOwner = accounts[1];
   const data = web3.utils.randomHex(0);

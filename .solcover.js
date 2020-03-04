@@ -5,26 +5,26 @@
 const { scripts } = require("zos");
 const { push, session, add } = scripts;
 const { ZWeb3 } = require("zos-lib"); //to retrieve compiled contract artifacts
-const { exec } = require('child_process');
+const util = require('util');
+const exec = util.promisify(require('child_process').exec);
+
 var Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545')); //config object may be used to set dynamically
+const web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8555')); //config object may be used to set dynamically
 
 ZWeb3.initialize(web3.currentProvider);
 
 // triggered after ganache server is setup and before tests start
 // need to deploy zos dependencies 
 async function serverReadyHandler(config){
+
   accounts = await web3.eth.getAccounts()
 
-  add({
-    contractsData: [{ name: "AssetToken", alias: "AssetToken" }]
-  });
-
-  res = await session({network:"development", from:accounts[0]})
-  console.log(res)
+  await exec("npx zos session --network soliditycoverage")
   
-  await push({network:"development", deployDependencies:true})
-  console.log("here")
+  console.log("Deploying dependencies");
+  
+  await exec("npx zos push --deploy-dependencies --network soliditycoverage") 
+
 }
 
 module.exports = {

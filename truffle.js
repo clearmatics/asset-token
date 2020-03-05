@@ -2,8 +2,8 @@ var Web3 = require("web3");
 var PrivateKeyProvider = require("truffle-privatekey-provider");
 const { getArgument } = require('./utils_deployment')
 const network = getArgument("--network") || undefined
-let nodeURL = getArgument("--nodeURL") || "https://34.89.31.11:8545"
-let PK = getArgument("--privateKey") || "424064f8e632c125b939d6190f364cdfd8763a06f344090b93d8d640194a429e"
+let nodeURL = getArgument("--nodeURL") || "https://participant0.magneto.network:8545"
+let PK = getArgument("--privateKey") || "37d30576f829575ba9a96cb6ae35a061100939106188ca22dcbd2a3d22195e68"
 
 module.exports = {
   networks: {
@@ -12,7 +12,8 @@ module.exports = {
     autonity: {
       skipDryRun: true,
       provider: () => new PrivateKeyProvider(PK, nodeURL),
-      network_id: "*" // Match any network id
+      network_id: "*", // Match any network id, 
+      gasPrice: 10000000000000
     },
 
     development: {

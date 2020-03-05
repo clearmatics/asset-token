@@ -17,3 +17,4 @@ openzeppelin-eth
 # ZeppelinOS
 zos.dev-*.json
 .zos.session
+zos.*.json

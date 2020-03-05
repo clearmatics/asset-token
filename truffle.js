@@ -15,6 +15,11 @@ module.exports = {
       network_id: "*", // Match any network id, 
       gasPrice: 10000000000000
     },
+    rinkeby: {
+      skipDryRun: true,
+      network_id: "*", // Match any network id, 
+      provider: () => new PrivateKeyProvider(PK, nodeURL),
+    },
 
     development: {
       host: "localhost",

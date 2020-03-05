@@ -18,9 +18,9 @@ jobs:
 
       - uses: actions/setup-node@v1
         with:
-          node-version: '8.x'
+          node-version: '10.19.0'
       - run: |
-          yarn install
+          npm install
           npm run lint
           npm ganache &
           npx zos session --network development

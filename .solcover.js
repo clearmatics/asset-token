@@ -2,8 +2,6 @@
 
 // SPDX-License-Identifier: LGPL-3.0+
 
-const { scripts } = require("zos");
-const { push, session, add } = scripts;
 const { ZWeb3 } = require("zos-lib"); //to retrieve compiled contract artifacts
 const util = require('util');
 const exec = util.promisify(require('child_process').exec);
@@ -17,11 +15,9 @@ ZWeb3.initialize(web3.currentProvider);
 // need to deploy zos dependencies 
 async function serverReadyHandler(config){
 
-  accounts = await web3.eth.getAccounts()
-
   await exec("npx zos session --network soliditycoverage")
   
-  console.log("Deploying dependencies");
+  console.log("Deploying dependencies..");
   
   await exec("npx zos push --deploy-dependencies --network soliditycoverage") 
 

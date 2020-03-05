@@ -38,7 +38,7 @@
     "compile": "truffle compile",
     "deploy": "truffle deploy --network ci",
     "test": "truffle test --network development",
-    "coverage": "truffle run coverage",
+    "coverage": "truffle run coverage --file='test/Asset*.js'",
     "ganache": "ganache-cli --port 7545 --gasLimit 0xFFFFFFFF",
     "lint": "solhint contracts/**/*.sol"
   },

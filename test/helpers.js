@@ -9,7 +9,7 @@ testHelpers.filterEvent = (txReceipt, eventName) => {
             return l;
     })[0];
     
-    return event;
+    return event || undefined;
 }
 
 module.exports = testHelpers

@@ -49,5 +49,9 @@
   "devDependencies": {
     "chai": "^4.2.0",
     "openzeppelin-test-helpers": "^0.4.0"
+  },
+  "engines": {
+    "node": "10.19.0",
+    "npm": "6.13.4"
   }
 }

@@ -1,6 +1,7 @@
 # Asset Token
 
-[![Build Status](https://travis-ci.org/clearmatics/asset-token.svg?branch=master)](https://travis-ci.org/clearmatics/asset-token)
+![ci](https://github.com/clearmatics/asset-token/workflows/Continuous%20Integration/badge.svg)
+[![codecov](https://codecov.io/gh/clearmatics/asset-token/branch/master/graph/badge.svg)](https://codecov.io/gh/clearmatics/asset-token)
 [![npm version](http://img.shields.io/npm/v/asset-token.svg?style=flat)](https://www.npmjs.com/package/asset-token)
 
 Designed to represent a fungible asset with offchain interaction
@@ -45,21 +46,32 @@ contract myToken is AssetToken {
 
 ## Developing
 
-[Truffle][2] is used to develop and test the Asset Token Smart Contract. This has a dependency on [Node.js][3].
+### Prerequisites
 
-Prerequisites:
+This project is developed using Node.js with the following versions 
 
-[yarn][4] (but [npm][5] should work just as well)
+* node 10.19.0
+* npm 6.13.4
 
-    yarn install
+It is recommended that [Node Version Manager][9] is used to ensure the correct versions are used. 
 
-This will install all the required packages.
+    nvm install lts/dubnium
+    nvm use lts/dubnium
+    Now using node v10.19.0 (npm v6.13.4)
+
+### Dependencies
+
+Install dependencies using [npm][5]
+
+    npm install
+
+This will install all the required packages for developing the Asset Token Contract.
 
 ## Testing
 
 Start `ganache` in a separate terminal tab or window.
 
-    yarn ganache
+    npm run ganache
 
     # in separate window or tab
     npx zos session --network development [--from <address>]
@@ -70,7 +82,7 @@ This will start a session to work with in the network. --from flag is optional
 
 This will compile and deploy contracts from zos.json and dependencies to the local network. --deploy flag not needed if running in public testnets (Rinkeby, Kovan, Ropsten) or mainnet.
 
-    yarn test
+    npm test
 
 This will run tests
 
@@ -90,7 +102,9 @@ This will run tests
  
 3) Create proxy and call Asset Token constructor 
 
-`npx zos create ContractName --init <initialize_function_name> --args <list_of_arguments>`
+`npx zos create AssetToken --args <list_of_arguments>`
+
+where the list of arguments is a comma separated list with no spaces of the constructor arguments
 
 If everything goes fine, you should see a `zos.dev-.json` file indicating the addresses of all the deployed contracts and respective owners, including proxy.  
 
@@ -103,3 +117,4 @@ This will deploy Asset Token and fund accounts
 [5]: https://docs.npmjs.com/getting-started/installing-node
 [7]: https://zeppelinos.org/
 [8]: http://eips.ethereum.org/EIPS/eip-1820
+[9]: https://github.com/nvm-sh/nvm

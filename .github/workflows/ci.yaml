@@ -22,11 +22,11 @@ jobs:
       - run: |
           npm install
           npm run lint
-          npm ganache &
+          npm run ganache &
           npx zos session --network development
           npx zos push --deploy-dependencies
           npm test
-          # yarn coverage
+          # npm coverage
 
 #      - name: Upload coverage to Codecov  
 #        uses: codecov/codecov-action@v1

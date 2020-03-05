@@ -12,7 +12,7 @@ const AssetToken = artifacts.require("AssetToken");
 
 let CONTRACT;
 
-contract.only("Asset Token", accounts => {
+contract("Asset Token", accounts => {
   let totalSupplyInitial,
     balanceInitial,
     balanceFinal,

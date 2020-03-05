@@ -23,15 +23,23 @@ contract("Asset Token", accounts => {
     let delegate, res, error;
     beforeEach(async () => {
       this.erc1820 = await singletons.ERC1820Registry(addrOwner);
-      PROJECT = await TestHelper({ from: proxyOwner });
+      // PROJECT = await TestHelper({ from: proxyOwner });
 
-      //contains logic contract
-      PROXY = await PROJECT.createProxy(AssetToken, {
-        initMethod: "initialize",
-        initArgs: ["CLR", "Asset Token", addrOwner, [defaultOperator], 1, 1]
-      });
+      // //contains logic contract
+      // PROXY = await PROJECT.createProxy(AssetToken, {
+      //   initMethod: "initialize",
+      //   initArgs: ["CLR", "Asset Token", addrOwner, [defaultOperator], 1, 1]
+      // });
 
-      CONTRACT = PROXY.methods;
+      // CONTRACT = PROXY.methods;
+
+      // don't use the proxy or the coverage tool won't work
+      CONTRACT = await AssetToken.new(["CLR", "Asset Token", addrOwner, [accounts[2]], 1, 1], {gas: 100000000});
+      CONTRACT = CONTRACT.methods;
+
+      // call the constructor 
+      await CONTRACT.initialize("CLR", "Asset Token", addrOwner, [accounts[2]], 1, 1).send({from: addrOwner, gas: 100000000});
+
 
       delegate = accounts[2];
 
@@ -114,15 +122,23 @@ contract("Asset Token", accounts => {
   describe("Blacklist mode", () => {
     beforeEach(async () => {
       this.erc1820 = await singletons.ERC1820Registry(addrOwner);
-      PROJECT = await TestHelper({ from: proxyOwner });
+      // PROJECT = await TestHelper({ from: proxyOwner });
 
-      //contains logic contract
-      PROXY = await PROJECT.createProxy(AssetToken, {
-        initMethod: "initialize",
-        initArgs: ["CLR", "Asset Token", addrOwner, [defaultOperator], 1, 1]
-      });
+      // //contains logic contract
+      // PROXY = await PROJECT.createProxy(AssetToken, {
+      //   initMethod: "initialize",
+      //   initArgs: ["CLR", "Asset Token", addrOwner, [defaultOperator], 1, 1]
+      // });
 
-      CONTRACT = PROXY.methods;
+      // CONTRACT = PROXY.methods;
+
+      // don't use the proxy or the coverage tool won't work
+      CONTRACT = await AssetToken.new(["CLR", "Asset Token", addrOwner, [accounts[2]], 1, 1], {gas: 100000000});
+      CONTRACT = CONTRACT.methods;
+
+      // call the constructor 
+      await CONTRACT.initialize("CLR", "Asset Token", addrOwner, [accounts[2]], 1, 1).send({from: addrOwner, gas: 100000000});
+      
     });
 
     it("Accounts are allowed by default", async () => {
@@ -277,15 +293,22 @@ contract("Asset Token", accounts => {
 
   describe("Whitelist mode", () => {
     beforeEach(async () => {
-      PROJECT = await TestHelper({ from: proxyOwner });
+      // PROJECT = await TestHelper({ from: proxyOwner });
 
-      //contains logic contract
-      PROXY = await PROJECT.createProxy(AssetToken, {
-        initMethod: "initialize",
-        initArgs: ["CLR", "Asset Token", addrOwner, [defaultOperator], 2, 1]
-      });
+      // //contains logic contract
+      // PROXY = await PROJECT.createProxy(AssetToken, {
+      //   initMethod: "initialize",
+      //   initArgs: ["CLR", "Asset Token", addrOwner, [defaultOperator], 2, 1]
+      // });
 
-      CONTRACT = PROXY.methods;
+      // CONTRACT = PROXY.methods;
+
+      // don't use the proxy or the coverage tool won't work
+      CONTRACT = await AssetToken.new(["CLR", "Asset Token", addrOwner, [accounts[2]], 1, 1], {gas: 100000000});
+      CONTRACT = CONTRACT.methods;
+
+      // call the constructor 
+      await CONTRACT.initialize("CLR", "Asset Token", addrOwner, [accounts[2]], 1, 1).send({from: addrOwner, gas: 100000000});
     });
 
     it("Accounts are not allowed by default", async () => {
@@ -441,16 +464,23 @@ contract("Asset Token", accounts => {
   describe("No filter mode", () => {
     let actualError;
     beforeEach(async () => {
-      this.erc1820 = await singletons.ERC1820Registry(addrOwner);
-      PROJECT = await TestHelper({ from: proxyOwner });
+      // this.erc1820 = await singletons.ERC1820Registry(addrOwner);
+      // PROJECT = await TestHelper({ from: proxyOwner });
 
-      //contains logic contract
-      PROXY = await PROJECT.createProxy(AssetToken, {
-        initMethod: "initialize",
-        initArgs: ["CLR", "Asset Token", addrOwner, [defaultOperator], 0, 1]
-      });
+      // //contains logic contract
+      // PROXY = await PROJECT.createProxy(AssetToken, {
+      //   initMethod: "initialize",
+      //   initArgs: ["CLR", "Asset Token", addrOwner, [defaultOperator], 0, 1]
+      // });
 
-      CONTRACT = PROXY.methods;
+      // CONTRACT = PROXY.methods;
+
+      // don't use the proxy or the coverage tool won't work
+      CONTRACT = await AssetToken.new(["CLR", "Asset Token", addrOwner, [accounts[2]], 1, 1], {gas: 100000000});
+      CONTRACT = CONTRACT.methods;
+
+      // call the constructor 
+      await CONTRACT.initialize("CLR", "Asset Token", addrOwner, [accounts[2]], 1, 1).send({from: addrOwner, gas: 100000000});
 
       actualError = null;
     });

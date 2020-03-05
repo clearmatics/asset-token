@@ -21,11 +21,11 @@ jobs:
           node-version: '8.x'
       - run: |
           yarn install
-          yarn lint
-          yarn ganache &
+          npm run lint
+          npm ganache &
           npx zos session --network development
           npx zos push --deploy-dependencies
-          yarn test
+          npm test
           # yarn coverage
 
 #      - name: Upload coverage to Codecov  

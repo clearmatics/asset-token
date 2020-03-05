@@ -1,5 +1,6 @@
 const { scripts, ConfigVariablesInitializer } = require("zos");
 const { add, push, create } = scripts;
+const { sleep } = require("../utils_deployment")
 
 require("openzeppelin-test-helpers/configure")({ web3 });
 
@@ -9,7 +10,7 @@ const IERC777Compatible = artifacts.require("./IERC777Compatible");
 async function deploy(options, tokenOwner) {
   //Register Contract in the zos project
   add({
-    contractsData: [{ name: "AssetToken", alias: "AssetToken" }]
+    contractsData: [{ name: "AssetToken", alias: "AssetToken" }],
   });
 
   //push it to the network
@@ -35,9 +36,8 @@ module.exports = (deployer, networkName, accounts) => {
       network,
       txParams
     } = await ConfigVariablesInitializer.initNetworkConfiguration({
-      network: networkName,
-      from: accounts[1]
+      network: networkName
     });
-    await deploy({ network, txParams }, accounts[2]);
+    await deploy({ network, txParams, deployDependencies:true}, accounts[0]);
   });
 };

@@ -25,18 +25,21 @@
   "license": "LGPL-3.0",
   "dependencies": {
     "bn.js": "^4.11.0",
+    "command-line-args": "^5.1.1",
     "ganache-cli": "6.5.0",
     "openzeppelin-eth": "^2.1.3",
     "openzeppelin-solidity": "^2.4.0",
     "solhint": "2.0.0",
     "truffle": "5.0.26",
+    "truffle-hdwallet-provider": "^1.0.17",
+    "truffle-privatekey-provider": "^1.3.0",
     "web3": "1.0.0-beta.53",
     "zos": "2.2.3",
     "zos-lib": "2.2.3"
   },
   "scripts": {
     "compile": "truffle compile",
-    "deploy": "truffle deploy --network ci",
+    "truffle-deploy": "truffle migrate",
     "test": "truffle test --network development",
     "coverage": "truffle run coverage --file='test/Asset*.js'",
     "ganache": "ganache-cli --port 7545 --gasLimit 0xFFFFFFFF",
@@ -46,5 +49,9 @@
     "chai": "^4.2.0",
     "solidity-coverage": "0.7.1",
     "openzeppelin-test-helpers": "^0.4.0"
+  },
+  "engines": {
+    "node": "10.19.0",
+    "npm": "6.13.4"
   }
 }

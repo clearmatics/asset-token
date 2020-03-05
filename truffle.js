@@ -1,7 +1,26 @@
 var Web3 = require("web3");
+var PrivateKeyProvider = require("truffle-privatekey-provider");
+const { getArgument } = require('./utils_deployment')
+const network = getArgument("--network") || undefined
+let nodeURL = getArgument("--nodeURL") || undefined
+let PK = getArgument("--privateKey") || undefined
 
 module.exports = {
   networks: {
+
+    //this is for platformx2 
+    autonity: {
+      skipDryRun: true,
+      provider: () => new PrivateKeyProvider(PK, nodeURL),
+      network_id: "*", // Match any network id, 
+      gasPrice: 10000000000000
+    },
+    rinkeby: {
+      skipDryRun: true,
+      network_id: "*", // Match any network id, 
+      provider: () => new PrivateKeyProvider(PK, nodeURL),
+    },
+
     development: {
       host: "localhost",
       port: 7545,
@@ -13,6 +32,7 @@ module.exports = {
       network_id: "*" // Match any network id
     }
   },
+
   solc: {
     optimizer: {
       enabled: false, // test coverage won't work otherwise

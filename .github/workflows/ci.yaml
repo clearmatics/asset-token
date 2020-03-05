@@ -18,14 +18,14 @@ jobs:
 
       - uses: actions/setup-node@v1
         with:
-          node-version: '8.x'
+          node-version: '10.19.0'
       - run: |
-          yarn install
-          yarn lint
-          yarn ganache &
+          npm install
+          npm run lint
+          npm run ganache &
           npx zos session --network development
           npx zos push --deploy-dependencies
-          yarn test
+          npm run test
           npm run coverage
 
      - name: Upload coverage to Codecov  

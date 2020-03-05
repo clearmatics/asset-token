@@ -4,12 +4,12 @@
 
 const { TestHelper } = require("zos"); //function to retrieve zos project structure object
 const { Contracts, ZWeb3 } = require("zos-lib"); //to retrieve compiled contract artifacts
-
+const {filterEvent} = require("./helpers") 
 const { singletons } = require("openzeppelin-test-helpers");
 
 ZWeb3.initialize(web3.currentProvider);
 
-const AssetToken = Contracts.getFromLocal("AssetToken");
+const AssetToken = artifacts.require("AssetToken");
 
 let CONTRACT;
 
@@ -33,49 +33,54 @@ contract("Asset Token", accounts => {
     beforeEach(async () => {
       this.erc1820 = await singletons.ERC1820Registry(addrOwner);
 
-      PROJECT = await TestHelper({ from: proxyOwner });
+      // PROJECT = await TestHelper({ from: proxyOwner });
 
-      //contains logic contract
-      PROXY = await PROJECT.createProxy(AssetToken, {
-        initMethod: "initialize",
-        initArgs: ["CLR", "Asset Token", addrOwner, [], 1, 1]
-      });
+      // //contains logic contract
+      // PROXY = await PROJECT.createProxy(AssetToken, {
+      //   initMethod: "initialize",
+      //   initArgs: ["CLR", "Asset Token", addrOwner, [], 1, 1]
+      // });
 
-      CONTRACT = PROXY.methods;
+      // CONTRACT = PROXY.methods;
+
+      CONTRACT = await AssetToken.new({gas: 100000000});
+
+      // call the constructor 
+      await CONTRACT.initialize("CLR", "Asset Token", addrOwner, [], 1, 1);
 
       addrRecipient = accounts[2];
 
-      totalSupplyBefore = await CONTRACT.totalSupply().call();
-      balanceRecipientBefore = await CONTRACT.balanceOf(addrRecipient).call();
+      totalSupplyBefore = await CONTRACT.totalSupply();
+      balanceRecipientBefore = await CONTRACT.balanceOf(addrRecipient);
 
       fundVal = 100;
-      fundRes = await CONTRACT.fund(addrRecipient, fundVal).send({
+      fundRes = await CONTRACT.fund(addrRecipient, fundVal, {
         from: addrOwner
-      });
+      })
 
-      totalSupplyFunded = await CONTRACT.totalSupply().call();
-      balanceRecipientFunded = await CONTRACT.balanceOf(addrRecipient).call();
+      totalSupplyFunded = await CONTRACT.totalSupply();
+      balanceRecipientFunded = await CONTRACT.balanceOf(addrRecipient);
       actualError = null;
 
-      fundEvent = fundRes.events.Fund;
-      fundEventVal = parseInt(fundEvent.returnValues.value);
-      fundEventBalance = parseInt(fundEvent.returnValues.balance);
+      fundEvent = filterEvent(fundRes, "Fund")
+      fundEventVal = parseInt(fundEvent.args.value);
+      fundEventBalance = parseInt(fundEvent.args.balance);
     });
 
     it("more tokens than in the account - reverts", async () => {
       try {
         const defundVal = parseInt(balanceRecipientFunded) + 50;
-        const defundRes = await CONTRACT.burn(defundVal, data).send({
+        const defundRes = await CONTRACT.burn(defundVal, data, {
           from: addrRecipient
-        });
+        })
       } catch (error) {
         actualError = error;
       }
 
-      const totalSupplyDefunded = await CONTRACT.totalSupply().call();
+      const totalSupplyDefunded = await CONTRACT.totalSupply();
       const balanceRecipientDefunded = await CONTRACT.balanceOf(
         addrRecipient
-      ).call();
+      );
 
       assert.strictEqual(
         parseInt(totalSupplyBefore) + fundVal,
@@ -95,24 +100,24 @@ contract("Asset Token", accounts => {
         parseInt(balanceRecipientDefunded)
       );
       assert.strictEqual(
-        actualError.toString(),
+        actualError.toString().split(" --")[0],
         "Error: Returned error: VM Exception while processing transaction: revert"
       );
     });
 
     it("correctly burn tokens", async () => {
       const defundVal = 50;
-      const defundRes = await CONTRACT.burn(defundVal, data).send({
+      const defundRes = await CONTRACT.burn(defundVal, data, {
         from: addrRecipient
-      });
+      })
 
-      const defundEvent = defundRes.events.Burned;
-      const defundEventVal = parseInt(defundEvent.returnValues.amount);
+      const defundEvent = filterEvent(defundRes, "Burned")
+      const defundEventVal = parseInt(defundEvent.args.amount);
 
-      const totalSupplyDefunded = await CONTRACT.totalSupply().call();
+      const totalSupplyDefunded = await CONTRACT.totalSupply();
       const balanceRecipientDefunded = await CONTRACT.balanceOf(
         addrRecipient
-      ).call();
+      );
 
       assert(fundEvent != null);
       assert.strictEqual(fundVal, fundEventVal);
@@ -143,18 +148,18 @@ contract("Asset Token", accounts => {
     });
 
     it("the contract owner - reverts", async () => {
-      const balanceOwnerBefore = await CONTRACT.balanceOf(addrOwner).call();
+      const balanceOwnerBefore = await CONTRACT.balanceOf(addrOwner);
       try {
         const defundVal = 50;
-        const defundRes = await CONTRACT.burn(defundVal, data).send({
+        await CONTRACT.burn(defundVal, data, {
           from: addrOwner
-        });
+        })
       } catch (error) {
         actualError = error;
       }
 
-      const totalSupplyDefunded = await CONTRACT.totalSupply().call();
-      const balanceOwnerDefunded = await CONTRACT.balanceOf(addrOwner).call();
+      const totalSupplyDefunded = await CONTRACT.totalSupply();
+      const balanceOwnerDefunded = await CONTRACT.balanceOf(addrOwner);
 
       assert.strictEqual(
         parseInt(totalSupplyFunded),
@@ -165,7 +170,7 @@ contract("Asset Token", accounts => {
         parseInt(balanceOwnerDefunded)
       );
       assert.strictEqual(
-        actualError.toString(),
+        actualError.toString().split(" --")[0],
         "Error: Returned error: VM Exception while processing transaction: revert The contract owner can not perform this operation"
       );
     });

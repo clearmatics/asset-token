@@ -4,12 +4,12 @@
 
 const { TestHelper } = require("zos"); //function to retrieve zos project structure object
 const { Contracts, ZWeb3 } = require("zos-lib"); //to retrieve compiled contract artifacts
-
+const {filterEvent} = require("./helpers") 
 const { singletons } = require("openzeppelin-test-helpers");
 
 ZWeb3.initialize(web3.currentProvider);
 
-const AssetToken = Contracts.getFromLocal("AssetToken");
+const AssetToken = artifacts.require("AssetToken");
 
 let CONTRACT;
 
@@ -23,42 +23,44 @@ contract("Asset Token", accounts => {
     let delegate, res, error;
     beforeEach(async () => {
       this.erc1820 = await singletons.ERC1820Registry(addrOwner);
-      PROJECT = await TestHelper({ from: proxyOwner });
+      // PROJECT = await TestHelper({ from: proxyOwner });
 
-      //contains logic contract
-      PROXY = await PROJECT.createProxy(AssetToken, {
-        initMethod: "initialize",
-        initArgs: ["CLR", "Asset Token", addrOwner, [defaultOperator], 1, 1]
-      });
+      // //contains logic contract
+      // PROXY = await PROJECT.createProxy(AssetToken, {
+      //   initMethod: "initialize",
+      //   initArgs: ["CLR", "Asset Token", addrOwner, [defaultOperator], 1, 1]
+      // });
 
-      CONTRACT = PROXY.methods;
+      // CONTRACT = PROXY.methods;
+
+      // don't use the proxy or the coverage tool won't work
+      CONTRACT = await AssetToken.new(["CLR", "Asset Token", addrOwner, [defaultOperator], 1, 1], {gas: 100000000});
+
+      // call the constructor 
+      await CONTRACT.initialize("CLR", "Asset Token", addrOwner, [defaultOperator], 1, 1);
 
       delegate = accounts[2];
 
-      res = await CONTRACT.setListsController(delegate).send({
-        from: addrOwner
-      });
+      res = await CONTRACT.setListsController(delegate, {from: addrOwner})
 
       error = null;
     });
 
     it("Delegation event triggered", async () => {
-      const eventDel = res.events.ListDelegation;
-      assert.equal(eventDel.returnValues.member, delegate);
+      const eventDel = filterEvent(res, "ListDelegation")
+      assert.equal(eventDel.args.member, delegate);
     });
 
     it("Delegate account can't delegate", async () => {
       const thirdParty = accounts[3];
       try {
-        await CONTRACT.setListsController(thirdParty).send({
-          from: delegate
-        });
+        await CONTRACT.setListsController(thirdParty, {from: delegate})
       } catch (err) {
         error = err;
       }
 
       assert.strictEqual(
-        error.toString(),
+        error.toString().split(" --")[0],
         "Error: Returned error: VM Exception while processing transaction: revert Only the contract owner can perform this operation"
       );
     });
@@ -66,13 +68,13 @@ contract("Asset Token", accounts => {
     it("Delegate can't take part of a payment", async () => {
       const recipient = accounts[3];
       try {
-        await CONTRACT.send(recipient, 10, data).send({ from: delegate });
+        await CONTRACT.send(recipient, 10, data, {from: delegate})
       } catch (err) {
         error = err;
       }
 
       assert.strictEqual(
-        error.toString(),
+        error.toString().split(" --")[0],
         "Error: Returned error: VM Exception while processing transaction: revert The contract owner can not perform this operation"
       );
     });
@@ -80,15 +82,13 @@ contract("Asset Token", accounts => {
     it("Nor use an operator for a payment", async () => {
       const recipient = accounts[3];
       try {
-        await CONTRACT.operatorSend(delegate, recipient, 10, data, data).send({
-          from: defaultOperator
-        });
+        await CONTRACT.operatorSend(delegate, recipient, 10, data, data, {from: defaultOperator})
       } catch (err) {
         error = err;
       }
 
       assert.strictEqual(
-        error.toString(),
+        error.toString().split(" --")[0],
         "Error: Returned error: VM Exception while processing transaction: revert The contract owner can not perform this operation"
       );
     });
@@ -96,40 +96,45 @@ contract("Asset Token", accounts => {
     it("Delegate can blacklist an address", async () => {
       const victim = accounts[4];
 
-      await CONTRACT.denyAddress(victim).send({ from: delegate });
+      await CONTRACT.denyAddress(victim, {from: delegate})
 
-      const isAllowedToSend = await CONTRACT.isAllowedToSend(victim).call();
+      const isAllowedToSend = await CONTRACT.isAllowedToSend(victim);
       assert.equal(isAllowedToSend, false);
     });
 
     it("Revokes delegation", async () => {
-      const tx = await CONTRACT.setListsController(addrOwner).send({
-        from: addrOwner
-      });
-      const eventDel = await tx.events.ListDelegation;
-      assert.equal(eventDel.returnValues.member, addrOwner);
+      const tx = await CONTRACT.setListsController(addrOwner, {from: addrOwner})
+
+      const eventDel = filterEvent(tx, "ListDelegation")
+      assert.equal(eventDel.args.member, addrOwner);
     });
   });
 
   describe("Blacklist mode", () => {
     beforeEach(async () => {
       this.erc1820 = await singletons.ERC1820Registry(addrOwner);
-      PROJECT = await TestHelper({ from: proxyOwner });
+      // PROJECT = await TestHelper({ from: proxyOwner });
 
-      //contains logic contract
-      PROXY = await PROJECT.createProxy(AssetToken, {
-        initMethod: "initialize",
-        initArgs: ["CLR", "Asset Token", addrOwner, [defaultOperator], 1, 1]
-      });
+      // //contains logic contract
+      // PROXY = await PROJECT.createProxy(AssetToken, {
+      //   initMethod: "initialize",
+      //   initArgs: ["CLR", "Asset Token", addrOwner, [defaultOperator], 1, 1]
+      // });
 
-      CONTRACT = PROXY.methods;
+      // CONTRACT = PROXY.methods;
+
+      // don't use the proxy or the coverage tool won't work
+      CONTRACT = await AssetToken.new(["CLR", "Asset Token", addrOwner, [defaultOperator], 1, 1], {gas: 100000000});
+
+      // call the constructor 
+      await CONTRACT.initialize("CLR", "Asset Token", addrOwner, [defaultOperator], 1, 1);
     });
 
     it("Accounts are allowed by default", async () => {
       for (let i = 0; i < accounts.length; i++) {
         const isAllowedToSend = await CONTRACT.isAllowedToSend(
           accounts[i]
-        ).call();
+        );
         assert.equal(isAllowedToSend, true);
       }
     });
@@ -140,21 +145,20 @@ contract("Asset Token", accounts => {
         victim;
       beforeEach(async () => {
         victim = accounts[3];
-        const res = await CONTRACT.denyAddress(victim).send({
-          from: addrOwner
-        });
-        denyEvent = res.events.Denied;
+        const res = await CONTRACT.denyAddress(victim, {from:addrOwner})
+
+        denyEvent = filterEvent(res, "Denied")
       });
 
       it("Not allowed to send anymore", async () => {
-        const isAllowedToSend = await CONTRACT.isAllowedToSend(victim).call();
+        const isAllowedToSend = await CONTRACT.isAllowedToSend(victim);
         assert.equal(isAllowedToSend, false);
       });
 
       it("Emits Denied event", () => {
         assert.notEqual(denyEvent, null);
-        assert.equal(denyEvent.returnValues.who, victim);
-        assert.equal(denyEvent.returnValues.status, 1);
+        assert.equal(denyEvent.args.who, victim);
+        assert.equal(denyEvent.args.status, 1);
       });
 
       context("Payment operations", () => {
@@ -164,22 +168,18 @@ contract("Asset Token", accounts => {
           fundVal = 100;
           actualError = null;
 
-          await CONTRACT.fund(victim, fundVal).send({
-            from: addrOwner
-          });
+          await CONTRACT.fund(victim, fundVal, {from: addrOwner})
         });
 
         it("Send operation is reverted", async () => {
           try {
-            await CONTRACT.send(addrRecipient, fundVal, data).send({
-              from: victim
-            });
+            await CONTRACT.send(addrRecipient, fundVal, data, {from: victim})
           } catch (err) {
             actualError = err;
           }
 
           assert.equal(
-            actualError.toString(),
+            actualError.toString().split(" --")[0].split(" --")[0],
             "Error: Returned error: VM Exception while processing transaction: revert This account is not allowed to send money"
           );
         });
@@ -191,24 +191,20 @@ contract("Asset Token", accounts => {
               addrRecipient,
               fundVal,
               data,
-              data
-            ).send({
-              from: defaultOperator
-            });
+              data, {from: defaultOperator}
+            )
           } catch (err) {
             actualError = err;
           }
 
           assert.equal(
-            actualError.toString(),
+            actualError.toString().split(" --")[0].split(" --")[0],
             "Error: Returned error: VM Exception while processing transaction: revert This account is not allowed to send money"
           );
         });
 
         it("OperatorSend by a blacklisted operator is reverted", async () => {
-          await CONTRACT.denyAddress(defaultOperator).send({
-            from: addrOwner
-          });
+          await CONTRACT.denyAddress(defaultOperator, {from: addrOwner})
 
           try {
             await CONTRACT.operatorSend(
@@ -216,16 +212,14 @@ contract("Asset Token", accounts => {
               addrRecipient,
               fundVal,
               data,
-              data
-            ).send({
-              from: defaultOperator
-            });
+              data, {from: defaultOperator}
+            )
           } catch (err) {
             actualError = err;
           }
 
           assert.equal(
-            actualError.toString(),
+            actualError.toString().split(" --")[0].split(" --")[0],
             "Error: Returned error: VM Exception while processing transaction: revert This account is not allowed to send money"
           );
         });
@@ -233,21 +227,19 @@ contract("Asset Token", accounts => {
 
       context("Allow that account again", async () => {
         beforeEach(async () => {
-          const res = await CONTRACT.allowAddress(victim).send({
-            from: addrOwner
-          });
+          const res = await CONTRACT.allowAddress(victim, {from: addrOwner})
 
-          allowedEvent = res.events.Allowed;
+          allowedEvent = filterEvent(res, "Allowed");
         });
 
         it("Allowed to send again", async () => {
-          const isAllowedToSend = await CONTRACT.isAllowedToSend(victim).call();
+          const isAllowedToSend = await CONTRACT.isAllowedToSend(victim);
           assert.equal(isAllowedToSend, true);
         });
 
         it("Emits Allowed event", () => {
-          assert.equal(allowedEvent.returnValues.who, victim);
-          assert.equal(allowedEvent.returnValues.status, 1);
+          assert.equal(allowedEvent.args.who, victim);
+          assert.equal(allowedEvent.args.status, 1);
         });
       });
     });
@@ -255,20 +247,19 @@ contract("Asset Token", accounts => {
     context("Switching to whitelist", () => {
       let switchEvent = null;
       beforeEach(async () => {
-        const res = await CONTRACT.switchListStatus(2).send({
-          from: addrOwner
-        });
-        switchEvent = res.events.SwitchListStatus;
+        const res = await CONTRACT.switchListStatus(2, {from: addrOwner})
+        
+        switchEvent = filterEvent(res, "SwitchListStatus")
       });
       it("Emits switch event correctly", () => {
         assert.notEqual(switchEvent, undefined || null);
-        assert.equal(switchEvent.returnValues.status, 2);
+        assert.equal(switchEvent.args.status, 2);
       });
       it("Accounts are not allowed anymore", async () => {
         for (let i = 0; i < accounts.length; i++) {
           const isAllowedToSend = await CONTRACT.isAllowedToSend(
             accounts[i]
-          ).call();
+          );
           assert.equal(isAllowedToSend, false);
         }
       });
@@ -277,22 +268,29 @@ contract("Asset Token", accounts => {
 
   describe("Whitelist mode", () => {
     beforeEach(async () => {
-      PROJECT = await TestHelper({ from: proxyOwner });
+      // PROJECT = await TestHelper({ from: proxyOwner });
 
-      //contains logic contract
-      PROXY = await PROJECT.createProxy(AssetToken, {
-        initMethod: "initialize",
-        initArgs: ["CLR", "Asset Token", addrOwner, [defaultOperator], 2, 1]
-      });
+      // //contains logic contract
+      // PROXY = await PROJECT.createProxy(AssetToken, {
+      //   initMethod: "initialize",
+      //   initArgs: ["CLR", "Asset Token", addrOwner, [defaultOperator], 2, 1]
+      // });
 
-      CONTRACT = PROXY.methods;
+      // CONTRACT = PROXY.methods;
+
+      // don't use the proxy or the coverage tool won't work
+      CONTRACT = await AssetToken.new(["CLR", "Asset Token", addrOwner, [defaultOperator], 2, 1], {gas: 100000000});
+
+      // call the constructor 
+      await CONTRACT.initialize("CLR", "Asset Token", addrOwner, [defaultOperator], 2, 1, {from: addrOwner, gas: 100000000});
+    
     });
 
     it("Accounts are not allowed by default", async () => {
       for (let i = 0; i < accounts.length; i++) {
         const isAllowedToSend = await CONTRACT.isAllowedToSend(
           accounts[i]
-        ).call();
+        );
         assert.equal(isAllowedToSend, false);
       }
     });
@@ -305,22 +303,18 @@ contract("Asset Token", accounts => {
         fundVal = 100;
         actualError = null;
 
-        await CONTRACT.fund(addrSender, fundVal).send({
-          from: addrOwner
-        });
+        await CONTRACT.fund(addrSender, fundVal, {from:addrOwner})
       });
 
       it("Send operation is reverted", async () => {
         try {
-          await CONTRACT.send(addrRecipient, fundVal, data).send({
-            from: addrSender
-          });
+          await CONTRACT.send(addrRecipient, fundVal, data, {from:addrSender})
         } catch (err) {
           actualError = err;
         }
 
         assert.equal(
-          actualError.toString(),
+          actualError.toString().split(" --")[0].split(" --")[0],
           "Error: Returned error: VM Exception while processing transaction: revert This account is not allowed to send money"
         );
       });
@@ -332,24 +326,20 @@ contract("Asset Token", accounts => {
             addrRecipient,
             fundVal,
             data,
-            data
-          ).send({
-            from: defaultOperator
-          });
+            data, {from: defaultOperator}
+          )
         } catch (err) {
           actualError = err;
         }
 
         assert.equal(
-          actualError.toString(),
+          actualError.toString().split(" --")[0].split(" --")[0],
           "Error: Returned error: VM Exception while processing transaction: revert This account is not allowed to send money"
         );
       });
 
       it("OperatorSend by an unallowed operator is reverted", async () => {
-        await CONTRACT.denyAddress(defaultOperator).send({
-          from: addrOwner
-        });
+        await CONTRACT.denyAddress(defaultOperator, {from: addrOwner})
 
         try {
           await CONTRACT.operatorSend(
@@ -357,16 +347,14 @@ contract("Asset Token", accounts => {
             addrRecipient,
             fundVal,
             data,
-            data
-          ).send({
-            from: defaultOperator
-          });
+            data, {from: defaultOperator}
+          )
         } catch (err) {
           actualError = err;
         }
 
         assert.equal(
-          actualError.toString(),
+          actualError.toString().split(" --")[0].split(" --")[0],
           "Error: Returned error: VM Exception while processing transaction: revert This account is not allowed to send money"
         );
       });
@@ -377,40 +365,36 @@ contract("Asset Token", accounts => {
       let allowedEvent,
         denyEvent = null;
       beforeEach(async () => {
-        const res = await CONTRACT.allowAddress(victim).send({
-          from: addrOwner
-        });
+        const res = await CONTRACT.allowAddress(victim, {from: addrOwner})
 
-        allowedEvent = res.events.Allowed;
+        allowedEvent = filterEvent(res, "Allowed");
       });
 
       it("He is now allowed to send", async () => {
-        const isAllowedToSend = await CONTRACT.isAllowedToSend(victim).call();
+        const isAllowedToSend = await CONTRACT.isAllowedToSend(victim);
         assert.equal(isAllowedToSend, true);
       });
 
       it("Emits Allowed event", async () => {
-        assert.equal(allowedEvent.returnValues.who, victim);
-        assert.equal(allowedEvent.returnValues.status, 2);
+        assert.equal(allowedEvent.args.who, victim);
+        assert.equal(allowedEvent.args.status, 2);
       });
 
       context("Deny that account again", async () => {
         beforeEach(async () => {
-          const res = await CONTRACT.denyAddress(victim).send({
-            from: addrOwner
-          });
+          const res = await CONTRACT.denyAddress(victim, {from: addrOwner})
 
-          denyEvent = res.events.Denied;
+          denyEvent = filterEvent(res, "Denied")
         });
 
         it("Not allowed to send anymore", async () => {
-          const isAllowedToSend = await CONTRACT.isAllowedToSend(victim).call();
+          const isAllowedToSend = await CONTRACT.isAllowedToSend(victim);
           assert.equal(isAllowedToSend, false);
         });
 
         it("Emits Denied event", () => {
-          assert.equal(denyEvent.returnValues.who, victim);
-          assert.equal(denyEvent.returnValues.status, 2);
+          assert.equal(denyEvent.args.who, victim);
+          assert.equal(denyEvent.args.status, 2);
         });
       });
     });
@@ -418,20 +402,18 @@ contract("Asset Token", accounts => {
     context("Switching to blacklist", () => {
       let switchEvent = null;
       beforeEach(async () => {
-        const res = await CONTRACT.switchListStatus(1).send({
-          from: addrOwner
-        });
-        switchEvent = res.events.SwitchListStatus;
+        const res = await CONTRACT.switchListStatus(1, {from: addrOwner})
+        switchEvent = filterEvent(res, "SwitchListStatus")
       });
       it("Emits switch event correctly", () => {
         assert.notEqual(switchEvent, undefined || null);
-        assert.equal(switchEvent.returnValues.status, 1);
+        assert.equal(switchEvent.args.status, 1);
       });
       it("Accounts are now all allowed", async () => {
         for (let i = 0; i < accounts.length; i++) {
           const isAllowedToSend = await CONTRACT.isAllowedToSend(
             accounts[i]
-          ).call();
+          );
           assert.equal(isAllowedToSend, true);
         }
       });
@@ -441,17 +423,23 @@ contract("Asset Token", accounts => {
   describe("No filter mode", () => {
     let actualError;
     beforeEach(async () => {
-      this.erc1820 = await singletons.ERC1820Registry(addrOwner);
-      PROJECT = await TestHelper({ from: proxyOwner });
+      // this.erc1820 = await singletons.ERC1820Registry(addrOwner);
+      // PROJECT = await TestHelper({ from: proxyOwner });
 
-      //contains logic contract
-      PROXY = await PROJECT.createProxy(AssetToken, {
-        initMethod: "initialize",
-        initArgs: ["CLR", "Asset Token", addrOwner, [defaultOperator], 0, 1]
-      });
+      // //contains logic contract
+      // PROXY = await PROJECT.createProxy(AssetToken, {
+      //   initMethod: "initialize",
+      //   initArgs: ["CLR", "Asset Token", addrOwner, [defaultOperator], 0, 1]
+      // });
 
-      CONTRACT = PROXY.methods;
+      // CONTRACT = PROXY.methods;
 
+      // don't use the proxy or the coverage tool won't work
+      CONTRACT = await AssetToken.new(["CLR", "Asset Token", addrOwner, [defaultOperator], 1, 1], {gas: 100000000});
+
+      // call the constructor 
+      await CONTRACT.initialize("CLR", "Asset Token", addrOwner, [defaultOperator], 0, 1);
+      
       actualError = null;
     });
 
@@ -459,7 +447,7 @@ contract("Asset Token", accounts => {
       for (let i = 0; i < accounts.length; i++) {
         const isAllowedToSend = await CONTRACT.isAllowedToSend(
           accounts[i]
-        ).call();
+        );
         assert.equal(isAllowedToSend, true);
       }
     });
@@ -467,15 +455,13 @@ contract("Asset Token", accounts => {
     it("Not possible to deny an account", async () => {
       try {
         let victim = accounts[3];
-        const res = await CONTRACT.denyAddress(victim).send({
-          from: addrOwner
-        });
+        const res = await CONTRACT.denyAddress(victim, {from:addrOwner})
       } catch (err) {
         actualError = err;
       }
 
       assert.equal(
-        actualError.toString(),
+        actualError.toString().split(" --")[0].split(" --")[0],
         "Error: Returned error: VM Exception while processing transaction: revert You must do either in white or black listing status"
       );
     });
@@ -483,15 +469,13 @@ contract("Asset Token", accounts => {
     it("Nor to allow an account", async () => {
       try {
         let victim = accounts[3];
-        const res = await CONTRACT.allowAddress(victim).send({
-          from: addrOwner
-        });
+        const res = await CONTRACT.allowAddress(victim, {from: addrOwner})
       } catch (err) {
         actualError = err;
       }
 
       assert.equal(
-        actualError.toString(),
+        actualError.toString().split(" --")[0].split(" --")[0],
         "Error: Returned error: VM Exception while processing transaction: revert You must do either in white or black listing status"
       );
     });

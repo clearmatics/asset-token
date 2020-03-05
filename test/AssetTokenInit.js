@@ -8,8 +8,7 @@ const { Contracts, ZWeb3 } = require("zos-lib"); //to retrieve compiled contract
 const { singletons } = require("openzeppelin-test-helpers");
 
 ZWeb3.initialize(web3.currentProvider);
-
-const AssetToken = Contracts.getFromLocal("AssetToken");
+const AssetToken = artifacts.require("AssetToken");
 
 let CONTRACT;
 
@@ -19,50 +18,56 @@ contract("AssetTokenInit", accounts => {
   beforeEach(async () => {
     this.erc1820 = await singletons.ERC1820Registry(addrOwner);
 
-    PROJECT = await TestHelper({ from: proxyOwner });
+    // PROJECT = await TestHelper({ from: proxyOwner });
 
-    //contains logic contract
-    PROXY = await PROJECT.createProxy(AssetToken, {
-      initMethod: "initialize",
-      initArgs: ["CLR", "Asset Token", addrOwner, [accounts[2]], 1, 1]
-    });
+    // //contains logic contract
+    // PROXY = await PROJECT.createProxy(AssetToken, {
+    //   initMethod: "initialize",
+    //   initArgs: ["CLR", "Asset Token", addrOwner, [accounts[2]], 1, 1]
+    // });
 
-    CONTRACT = PROXY.methods;
+    // CONTRACT = PROXY.methods;
+    
+    // don't use the proxy or the coverage tool won't work
+    CONTRACT = await AssetToken.new(["CLR", "Asset Token", addrOwner, [accounts[2]], 1, 1], {gas: 100000000});
+
+    // call the constructor 
+    await CONTRACT.initialize("CLR", "Asset Token", addrOwner, [accounts[2]], 1, 1);
   });
 
   it("name: Check the name of the token", async () => {
-    const actualName = await CONTRACT.name().call();
+    const actualName = await CONTRACT.name();
     const expectedName = "Asset Token";
 
     assert.strictEqual(actualName, expectedName);
   });
 
   it("symbol: Check the tokens symbol", async () => {
-    const actualSymbol = await CONTRACT.symbol().call();
+    const actualSymbol = await CONTRACT.symbol();
     const expectedSymbol = "CLR";
 
     assert.strictEqual(actualSymbol, expectedSymbol);
   });
 
   it("decimals: Check the number of decimal place in the tokens", async () => {
-    const actualDecimals = await CONTRACT.decimals().call();
+    const actualDecimals = await CONTRACT.decimals();
     const expectedDecimals = 18;
 
     assert.strictEqual(parseInt(actualDecimals), expectedDecimals);
   });
 
   it("listStatus: Check the initial list status", async () => {
-    const status = await CONTRACT.getListStatus().call();
+    const status = await CONTRACT.getListStatus();
     assert.equal(status, 1);
   });
 
   it("granularity: Check the granularity", async () => {
-    const granularity = await CONTRACT.getListStatus().call();
+    const granularity = await CONTRACT.getListStatus();
     assert.equal(granularity, 1);
   });
 
   it("default operators: Set default operator", async () => {
-    const defOperator = await CONTRACT.defaultOperators().call();
+    const defOperator = await CONTRACT.defaultOperators();
     assert.equal(defOperator, accounts[2]);
   });
 
@@ -72,7 +77,7 @@ contract("AssetTokenInit", accounts => {
     let actualError = null;
     try {
       const result = await web3.eth.sendTransaction({
-        to: PROXY.address,
+        to: CONTRACT.address,
         value: weiToSend,
         from: addrOwner
       });
@@ -81,7 +86,7 @@ contract("AssetTokenInit", accounts => {
     }
 
     assert.strictEqual(
-      actualError.toString(),
+      actualError.toString().split(" --")[0],
       "Error: Returned error: VM Exception while processing transaction: revert This contract does not support ETH"
     );
   });

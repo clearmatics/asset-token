@@ -8,12 +8,11 @@ const { Contracts, ZWeb3 } = require("zos-lib"); //to retrieve compiled contract
 const { singletons } = require("openzeppelin-test-helpers");
 
 ZWeb3.initialize(web3.currentProvider);
-
-const AssetToken = Contracts.getFromLocal("AssetToken");
+const AssetToken = artifacts.require("AssetToken");
 
 let CONTRACT;
 
-contract.only("Asset Token", accounts => {
+contract("Asset Token", accounts => {
   let totalSupplyInitial,
     balanceInitial,
     balanceFinal,
@@ -33,96 +32,102 @@ contract.only("Asset Token", accounts => {
     beforeEach(async () => {
       this.erc1820 = await singletons.ERC1820Registry(addrOwner);
 
-      PROJECT = await TestHelper({ from: proxyOwner });
+      // PROJECT = await TestHelper({ from: proxyOwner });
 
-      //contains logic contract
-      PROXY = await PROJECT.createProxy(AssetToken, {
-        initMethod: "initialize",
-        initArgs: ["CLR", "Asset Token", addrOwner, [defaultOperator], 1, 3]
-      });
+      // //contains logic contract
+      // PROXY = await PROJECT.createProxy(AssetToken, {
+      //   initMethod: "initialize",
+      //   initArgs: ["CLR", "Asset Token", addrOwner, [defaultOperator], 1, 3]
+      // });
 
-      CONTRACT = PROXY.methods;
+      // CONTRACT = PROXY.methods;
 
-      await CONTRACT.fund(victim, 30).send({ from: addrOwner });
+      CONTRACT = await AssetToken.new(["CLR", "Asset Token", addrOwner, [defaultOperator], 1, 3], {gas: 100000000});
 
-      balanceInitial = await CONTRACT.balanceOf(victim).call();
+      // call the constructor 
+      await CONTRACT.initialize("CLR", "Asset Token", addrOwner, [defaultOperator], 1, 3);
+
+      await CONTRACT.fund(victim, 30, { from: addrOwner })
+
+      balanceInitial = await CONTRACT.balanceOf(victim);
       assert.equal(balanceInitial, 30);
 
-      totalSupplyInitial = await CONTRACT.totalSupply().call();
+      totalSupplyInitial = await CONTRACT.totalSupply();
       assert.equal(totalSupplyInitial, 30);
     });
 
     describe("Burning tokens", () => {
       it("Reject transaction, keep state", async () => {
         try {
-          await CONTRACT.burn(wrongAmount, data).send({ from: victim });
+          await CONTRACT.burn(wrongAmount, data, { from: victim })
         } catch (err) {
           actualError = err;
         }
 
-        balanceFinal = await CONTRACT.balanceOf(victim).call();
-        assert.equal(balanceInitial, balanceFinal);
+        balanceFinal = await CONTRACT.balanceOf(victim);
+        assert.deepEqual(balanceInitial, balanceFinal);
 
-        totalSupplyFinal = await CONTRACT.totalSupply().call();
-        assert.equal(totalSupplyInitial, totalSupplyFinal);
+        totalSupplyFinal = await CONTRACT.totalSupply();
+        assert.deepEqual(totalSupplyInitial, totalSupplyFinal);
 
-        assert.equal(actualError.toString(), errorMsg);
+        assert.equal(actualError.toString().split(" --")[0], errorMsg);
       });
 
       it("Operator burn reject, keep state", async () => {
         try {
-          await CONTRACT.operatorBurn(victim, wrongAmount, data, data).send({
+          await CONTRACT.operatorBurn(victim, wrongAmount, data, data, {
             from: defaultOperator
-          });
+          })
         } catch (err) {
           actualError = err;
         }
 
-        balanceFinal = await CONTRACT.balanceOf(victim).call();
-        assert.equal(balanceInitial, balanceFinal);
+        balanceFinal = await CONTRACT.balanceOf(victim);
+        assert.deepEqual(balanceInitial, balanceFinal);
 
-        totalSupplyFinal = await CONTRACT.totalSupply().call();
-        assert.equal(totalSupplyInitial, totalSupplyFinal);
+        totalSupplyFinal = await CONTRACT.totalSupply();
+        assert.deepEqual(totalSupplyInitial, totalSupplyFinal);
 
-        assert.equal(actualError.toString(), errorMsg);
+        assert.equal(actualError.toString().split(" --")[0], errorMsg);
+
       });
     });
     describe("Funding tokens", () => {
       it("Reject transaction, keep state", async () => {
         try {
-          await CONTRACT.fund(victim, wrongAmount).send({
+          await CONTRACT.fund(victim, wrongAmount, {
             from: addrOwner
-          });
+          })
         } catch (err) {
           actualError = err;
         }
 
-        balanceFinal = await CONTRACT.balanceOf(victim).call();
-        assert.equal(balanceInitial, balanceFinal);
+        balanceFinal = await CONTRACT.balanceOf(victim);
+        assert.deepEqual(balanceInitial, balanceFinal);
 
-        totalSupplyFinal = await CONTRACT.totalSupply().call();
-        assert.equal(totalSupplyInitial, totalSupplyFinal);
+        totalSupplyFinal = await CONTRACT.totalSupply();
+        assert.deepEqual(totalSupplyInitial, totalSupplyFinal);
 
-        assert.equal(actualError.toString(), errorMsg);
+        assert.equal(actualError.toString().split(" --")[0], errorMsg);
       });
     });
     describe("Sending tokens", () => {
       it("Reject transaction, keep state", async () => {
         try {
-          await CONTRACT.send(accounts[9], wrongAmount, data).send({
+          await CONTRACT.send(accounts[9], wrongAmount, data, {
             from: victim
-          });
+          })
         } catch (err) {
           actualError = err;
         }
 
-        balanceFinal = await CONTRACT.balanceOf(victim).call();
-        assert.equal(balanceInitial, balanceFinal);
+        balanceFinal = await CONTRACT.balanceOf(victim);
+        assert.deepEqual(balanceInitial, balanceFinal);
 
-        totalSupplyFinal = await CONTRACT.totalSupply().call();
-        assert.equal(totalSupplyInitial, totalSupplyFinal);
+        totalSupplyFinal = await CONTRACT.totalSupply();
+        assert.deepEqual(totalSupplyInitial, totalSupplyFinal);
 
-        assert.equal(actualError.toString(), errorMsg);
+        assert.equal(actualError.toString().split(" --")[0], errorMsg);
       });
 
       it("Operator send reject transaction, keep state", async () => {
@@ -132,21 +137,21 @@ contract.only("Asset Token", accounts => {
             accounts[9],
             wrongAmount,
             data,
-            data
-          ).send({
-            from: defaultOperator
-          });
+            data, {
+              from: defaultOperator
+            }
+          )
         } catch (err) {
           actualError = err;
         }
 
-        balanceFinal = await CONTRACT.balanceOf(victim).call();
-        assert.equal(balanceInitial, balanceFinal);
+        balanceFinal = await CONTRACT.balanceOf(victim);
+        assert.deepEqual(balanceInitial, balanceFinal);
 
-        totalSupplyFinal = await CONTRACT.totalSupply().call();
-        assert.equal(totalSupplyInitial, totalSupplyFinal);
+        totalSupplyFinal = await CONTRACT.totalSupply();
+        assert.deepEqual(totalSupplyInitial, totalSupplyFinal);
 
-        assert.equal(actualError.toString(), errorMsg);
+        assert.equal(actualError.toString().split(" --")[0], errorMsg);
       });
     });
   });
@@ -155,32 +160,37 @@ contract.only("Asset Token", accounts => {
     beforeEach(async () => {
       this.erc1820 = await singletons.ERC1820Registry(addrOwner);
 
-      PROJECT = await TestHelper({ from: proxyOwner });
+      // PROJECT = await TestHelper({ from: proxyOwner });
 
-      //contains logic contract
-      PROXY = await PROJECT.createProxy(AssetToken, {
-        initMethod: "initialize",
-        initArgs: ["CLR", "Asset Token", addrOwner, [defaultOperator], 1, 500]
-      });
+      // //contains logic contract
+      // PROXY = await PROJECT.createProxy(AssetToken, {
+      //   initMethod: "initialize",
+      //   initArgs: ["CLR", "Asset Token", addrOwner, [defaultOperator], 1, 500]
+      // });
 
-      CONTRACT = PROXY.methods;
+      // CONTRACT = PROXY.methods;
 
-      await CONTRACT.fund(victim, 3000).send({ from: addrOwner });
+      CONTRACT = await AssetToken.new(["CLR", "Asset Token", addrOwner, [accounts[2]], 1, 1], {gas: 100000000});
 
-      balanceInitial = await CONTRACT.balanceOf(victim).call();
-      assert.equal(balanceInitial, 3000);
+      // call the constructor 
+      await CONTRACT.initialize("CLR", "Asset Token", addrOwner, [defaultOperator], 1, 500);
+
+      await CONTRACT.fund(victim, 3000, { from: addrOwner })
+
+      balanceInitial = await CONTRACT.balanceOf(victim);
+      assert.deepEqual(parseInt(balanceInitial), 3000);
     });
 
     it("Reject transaction as it is not rounded to granularity, keep state", async () => {
       try {
         let wrongAmount1 = 365;
-        await CONTRACT.burn(wrongAmount1, data).send({ from: victim });
+        await CONTRACT.burn(wrongAmount1, data, { from: victim })
       } catch (err) {
         actualError = err;
       }
 
-      balanceFinal = await CONTRACT.balanceOf(victim).call();
-      assert.equal(balanceInitial, balanceFinal);
+      balanceFinal = await CONTRACT.balanceOf(victim);
+      assert.deepEqual(balanceInitial, balanceFinal);
     });
 
   });

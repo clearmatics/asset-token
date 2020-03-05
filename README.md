@@ -92,25 +92,32 @@ The following will guide you through deploying an Asset Token contract.
 
 1. Ensure you have all dependencies installed and are running the supported Node version (10.19.0).
 
-    npm install
+```
+npm install
+```
 
 2. Declare your network in your `truffle.js` configuration. Documentation on setting up a configuration file may be found [here][10].
 
-    rinkeby: {
-      skipDryRun: true,
-      provider: () => new PrivateKeyProvider(PK, nodeURL),
-    },
-
-
+```
+rinkeby: {
+  skipDryRun: true,
+  provider: () => new PrivateKeyProvider(PK, nodeURL),
+},
+```
+    
 3.  Setup the provider changing `rinkeby` to the name of your network.
 
-    npx zos session --network rinkeby
+```
+npx zos session --network rinkeby
+```
 
 4. Deploy Contracts and dependencies 
 
 For this you will need the URL of a node on the network and a private key. 
 
-    npx zos push --deploy-dependencies -- --privateKey <pk> --nodeURL <url>
+```
+npx zos push --deploy-dependencies -- --privateKey <pk> --nodeURL <url>
+```
 
 `--deploy-dependencies` is only needed only at first deployment on that network 
  
@@ -128,7 +135,10 @@ To initialise the contract pass arguments as follows
   * 2 - Use whitelisting
 * granularity (uint256) - The granularity allowed on the token
 
-    npx zos create AssetToken --init --args "FOO","foo","0x3C1d78EC2bB4415dC70d9b4a669783E77b4a78d0","[]",0,1 -- --privateKey <pk> --nodeURL <url>
+```
+npx zos create AssetToken --init --args "FOO","foo","0x3C1d78EC2bB4415dC70d9b4a669783E77b4a78d0","[]",0,1 -- --privateKey <pk> --nodeURL <url>
+
+```
 
 If successful you will see output as follows
 

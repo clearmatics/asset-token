@@ -26,13 +26,13 @@ jobs:
           npx zos session --network development
           npx zos push --deploy-dependencies
           yarn test
-          # yarn coverage
+          npm run coverage
 
-#      - name: Upload coverage to Codecov  
-#        uses: codecov/codecov-action@v1
-#        with:
-#          token: ${{ secrets.CODECOV_TOKEN }}
-#          file: ./coverage-all.out
-#          flags: unittests
-#          name: codecov-umbrella
-#          fail_ci_if_error: true
+     - name: Upload coverage to Codecov  
+       uses: codecov/codecov-action@v1
+       with:
+         token: ${{ secrets.CODECOV_TOKEN }}
+         file: ./coverage.json
+         flags: unittests
+         name: codecov-umbrella
+         fail_ci_if_error: true

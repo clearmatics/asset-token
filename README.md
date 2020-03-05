@@ -74,12 +74,25 @@ This will compile and deploy contracts from zos.json and dependencies to the loc
 
 This will run tests
 
-## Deploy Asset Token (ready to use with wallet)
+## Deploy Asset Token
 
-```
-npm install
-./run_private_accounts_ganache.sh
-```
+0) `npm install`
+
+1)  Setup the provider 
+
+`npx zos session --network autonity --privateKey <pk> --nodeURL <url>`
+
+2) Deploy Contracts and dependencies 
+
+`npx zos push --deploy-dependencies -- --privateKey <pk> --nodeURL <url>`
+
+`--deploy-dependencies` needed only at first deployment on that network 
+ 
+3) Create proxy and call Asset Token constructor 
+
+`npx zos create ContractName --init <initialize_function_name> --args <list_of_arguments>`
+
+If everything goes fine, you should see a `zos.dev-.json` file indicating the addresses of all the deployed contracts and respective owners, including proxy.  
 
 This will deploy Asset Token and fund accounts
 

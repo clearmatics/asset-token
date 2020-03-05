@@ -40,7 +40,6 @@
   },
   "scripts": {
     "compile": "truffle compile",
-    "deploy": "truffle deploy --network ci",
     "truffle-deploy": "truffle migrate",
     "test": "truffle test --network development",
     "coverage": "solidity-coverage",

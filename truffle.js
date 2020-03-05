@@ -2,8 +2,8 @@ var Web3 = require("web3");
 var PrivateKeyProvider = require("truffle-privatekey-provider");
 const { getArgument } = require('./utils_deployment')
 const network = getArgument("--network") || undefined
-let nodeURL = getArgument("--nodeURL") || "https://participant0.magneto.network:8545"
-let PK = getArgument("--privateKey") || "37d30576f829575ba9a96cb6ae35a061100939106188ca22dcbd2a3d22195e68"
+let nodeURL = getArgument("--nodeURL") || undefined
+let PK = getArgument("--privateKey") || undefined
 
 module.exports = {
   networks: {

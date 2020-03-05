@@ -92,7 +92,7 @@ This will run tests
 
 1)  Setup the provider 
 
-`npx zos session --network autonity --privateKey <pk> --nodeURL <url>`
+`npx zos session --network autonity`
 
 2) Deploy Contracts and dependencies 
 

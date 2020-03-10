@@ -1,6 +1,6 @@
 {
   "name": "asset-token",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "ERC777 token standard, designed to represent a fungible asset with offchain interaction",
   "keywords": [
     "ethereum",
@@ -42,6 +42,7 @@
     "truffle-deploy": "truffle migrate",
     "test": "truffle test --network development",
     "coverage": "truffle run coverage --file='test/Asset*.js'",
+    "istanbulRpc": "ganache-cli --hardfork istanbul --port 8545 --gasLimit 0xFFFFFFFFFFFFF --gasPrice 0 --defaultBalanceEther 99999999999 --networkId 1234",
     "ganache": "ganache-cli --port 7545 --gasLimit 0xFFFFFFFF",
     "lint": "solhint contracts/**/*.sol"
   },

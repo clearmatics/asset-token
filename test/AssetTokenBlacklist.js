@@ -18,6 +18,7 @@ contract("Asset Token", accounts => {
   const proxyOwner = accounts[1];
   const defaultOperator = accounts[9];
   const data = web3.utils.randomHex(0);
+  const zeroRegistryAddress = "0x0000000000000000000000000000000000000000"
 
   describe("Controller delegation", () => {
     let delegate, res, error;
@@ -37,7 +38,7 @@ contract("Asset Token", accounts => {
       CONTRACT = await AssetToken.new(["CLR", "Asset Token", addrOwner, [defaultOperator], 1, 1], {gas: 100000000});
 
       // call the constructor 
-      await CONTRACT.initialize("CLR", "Asset Token", addrOwner, [defaultOperator], 1, 1);
+      await CONTRACT.initialize("CLR", "Asset Token", addrOwner, [defaultOperator], 1, 1, zeroRegistryAddress);
 
       delegate = accounts[2];
 
@@ -127,7 +128,7 @@ contract("Asset Token", accounts => {
       CONTRACT = await AssetToken.new(["CLR", "Asset Token", addrOwner, [defaultOperator], 1, 1], {gas: 100000000});
 
       // call the constructor 
-      await CONTRACT.initialize("CLR", "Asset Token", addrOwner, [defaultOperator], 1, 1);
+      await CONTRACT.initialize("CLR", "Asset Token", addrOwner, [defaultOperator], 1, 1, zeroRegistryAddress);
     });
 
     it("Accounts are allowed by default", async () => {
@@ -282,7 +283,7 @@ contract("Asset Token", accounts => {
       CONTRACT = await AssetToken.new(["CLR", "Asset Token", addrOwner, [defaultOperator], 2, 1], {gas: 100000000});
 
       // call the constructor 
-      await CONTRACT.initialize("CLR", "Asset Token", addrOwner, [defaultOperator], 2, 1, {from: addrOwner, gas: 100000000});
+      await CONTRACT.initialize("CLR", "Asset Token", addrOwner, [defaultOperator], 2, 1, zeroRegistryAddress, {from: addrOwner, gas: 100000000});
     
     });
 
@@ -438,7 +439,7 @@ contract("Asset Token", accounts => {
       CONTRACT = await AssetToken.new(["CLR", "Asset Token", addrOwner, [defaultOperator], 1, 1], {gas: 100000000});
 
       // call the constructor 
-      await CONTRACT.initialize("CLR", "Asset Token", addrOwner, [defaultOperator], 0, 1);
+      await CONTRACT.initialize("CLR", "Asset Token", addrOwner, [defaultOperator], 0, 1,zeroRegistryAddress);
       
       actualError = null;
     });

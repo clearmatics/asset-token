@@ -23,6 +23,7 @@ contract("Asset Token", accounts => {
   const proxyOwner = accounts[1];
   const data = web3.utils.randomHex(0);
   const defaultOperator = accounts[9];
+  const zeroRegistryAddress = "0x0000000000000000000000000000000000000000"
 
   beforeEach(async () => {
     this.erc1820 = await singletons.ERC1820Registry(addrOwner);
@@ -41,7 +42,7 @@ contract("Asset Token", accounts => {
     CONTRACT = await AssetToken.new(["CLR", "Asset Token", addrOwner, [defaultOperator], 1, 1], {gas: 100000000});
 
     // call the constructor 
-    await CONTRACT.initialize("CLR", "Asset Token", addrOwner, [defaultOperator], 1, 1);
+    await CONTRACT.initialize("CLR", "Asset Token", addrOwner, [defaultOperator], 1, 1, zeroRegistryAddress);
   });
 
   describe("Transfer modifiers check", () => {

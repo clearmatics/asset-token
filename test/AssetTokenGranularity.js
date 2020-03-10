@@ -28,6 +28,8 @@ contract("Asset Token", accounts => {
   const proxyOwner = accounts[1];
   const data = web3.utils.randomHex(0);
 
+  const zeroRegistryAddress = "0x0000000000000000000000000000000000000000"
+
   describe("Operations not respecting granularity", () => {
     beforeEach(async () => {
       this.erc1820 = await singletons.ERC1820Registry(addrOwner);
@@ -45,7 +47,7 @@ contract("Asset Token", accounts => {
       CONTRACT = await AssetToken.new(["CLR", "Asset Token", addrOwner, [defaultOperator], 1, 3], {gas: 100000000});
 
       // call the constructor 
-      await CONTRACT.initialize("CLR", "Asset Token", addrOwner, [defaultOperator], 1, 3);
+      await CONTRACT.initialize("CLR", "Asset Token", addrOwner, [defaultOperator], 1, 3, zeroRegistryAddress);
 
       await CONTRACT.fund(victim, 30, { from: addrOwner })
 
@@ -173,7 +175,7 @@ contract("Asset Token", accounts => {
       CONTRACT = await AssetToken.new(["CLR", "Asset Token", addrOwner, [accounts[2]], 1, 1], {gas: 100000000});
 
       // call the constructor 
-      await CONTRACT.initialize("CLR", "Asset Token", addrOwner, [defaultOperator], 1, 500);
+      await CONTRACT.initialize("CLR", "Asset Token", addrOwner, [defaultOperator], 1, 500, zeroRegistryAddress);
 
       await CONTRACT.fund(victim, 3000, { from: addrOwner })
 

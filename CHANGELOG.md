@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased (1.3.0)
 
+## [1.2.3] - 2020-03-10
+
+### Changed 
+
+- `initialize` function takes an extra argument called `registry1820Addr`, a custom address of the ERC1820 registry contract deployed on the network with the Asset Token. If this address is `addresss(0)` then the default one, `0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24`, will be used, and the initialization of the token will fail if that registry doesn't exist. 
+
+### Added 
+
+- Code coverage enabled
+
 ## [1.2.2] - 2019-07-29
 
 ### Changed 
@@ -71,6 +81,7 @@ Minor modifications after running the [slither] source analyzer
 [1.2.0]: https://github.com/clearmatics/asset-token/compare/v1.1.0...v1.2.0
 [1.2.1]: https://github.com/clearmatics/asset-token/compare/v1.2.0...v1.2.1
 [1.2.2]: https://github.com/clearmatics/asset-token/compare/v1.2.1...v1.2.2
+[1.2.3]: https://github.com/clearmatics/asset-token/compare/v1.2.2...v1.2.3
 [erc777]: https://eips.ethereum.org/EIPS/eip-777
 [erc1820]: https://eips.ethereum.org/EIPS/eip-1820
 [erc20]: https://eips.ethereum.org/EIPS/eip-20

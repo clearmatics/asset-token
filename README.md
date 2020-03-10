@@ -37,7 +37,7 @@ import "zos-lib/contracts/Initializable.sol";
 contract myToken is AssetToken {
 
   function myInitialize() public initializer {
-      AssetToken.initialize(<string>, <string>, <address>, <[address]>, <uint8>, <uint8>);
+      AssetToken.initialize(<string>, <string>, <address>, <[address]>, <uint8>, <uint8>, <address>);
       //your constructor code
   }
 
@@ -134,9 +134,10 @@ To initialise the contract pass arguments as follows
   * 1 - Use blacklisting
   * 2 - Use whitelisting
 * granularity (uint256) - The granularity allowed on the token
+* registry1820Addr (address) - The address of the ERC1820 registry contract the token will use. Pass a zero address (like in the example below) to use the default one at `0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24`
 
 ```
-npx zos create AssetToken --init --args "FOO","foo","0x3C1d78EC2bB4415dC70d9b4a669783E77b4a78d0","[]",0,1 -- --privateKey <pk> --nodeURL <url>
+npx zos create AssetToken --init --args "FOO","foo","0x3C1d78EC2bB4415dC70d9b4a669783E77b4a78d0","[]",0,1,"0x0000000000000000000000000000000000000000" -- --privateKey <pk> --nodeURL <url>
 
 ```
 
@@ -152,6 +153,7 @@ If successful you will see output as follows
     - defaultOperators (address[]): []
     - status (int256): "0"
     - granularity (uint256): "1"
+    - registry1820Addr (address): "0x0000000000000000000000000000000000000000"
     Instance created at 0xe7997c19641246B64688893939C76b2AE2296D42
     0xe7997c19641246B64688893939C76b2AE2296D42
     Updated zos.rinkeby.json

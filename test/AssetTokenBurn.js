@@ -17,6 +17,7 @@ contract("Asset Token", accounts => {
   const addrOwner = accounts[0];
   const proxyOwner = accounts[1];
   const data = web3.utils.randomHex(0);
+  const zeroRegistryAddress = "0x0000000000000000000000000000000000000000"
 
   describe("Burn", () => {
     let addrRecipient,
@@ -46,7 +47,7 @@ contract("Asset Token", accounts => {
       CONTRACT = await AssetToken.new({gas: 100000000});
 
       // call the constructor 
-      await CONTRACT.initialize("CLR", "Asset Token", addrOwner, [], 1, 1);
+      await CONTRACT.initialize("CLR", "Asset Token", addrOwner, [], 1, 1, zeroRegistryAddress);
 
       addrRecipient = accounts[2];
 

@@ -15,6 +15,8 @@ let CONTRACT;
 contract("AssetTokenInit", accounts => {
   const addrOwner = accounts[0];
   const proxyOwner = accounts[1];
+  const zeroRegistryAddress = "0x0000000000000000000000000000000000000000"
+
   beforeEach(async () => {
     this.erc1820 = await singletons.ERC1820Registry(addrOwner);
 
@@ -32,7 +34,7 @@ contract("AssetTokenInit", accounts => {
     CONTRACT = await AssetToken.new(["CLR", "Asset Token", addrOwner, [accounts[2]], 1, 1], {gas: 100000000});
 
     // call the constructor 
-    await CONTRACT.initialize("CLR", "Asset Token", addrOwner, [accounts[2]], 1, 1);
+    await CONTRACT.initialize("CLR", "Asset Token", addrOwner, [accounts[2]], 1, 1, zeroRegistryAddress);
   });
 
   it("name: Check the name of the token", async () => {

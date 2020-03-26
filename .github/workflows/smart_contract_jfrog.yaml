@@ -1,0 +1,18 @@
+on:
+  push:
+    branches:
+    - 'sc_jfrog'
+
+name: "CMF Smart contract push to Jfrog"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with: 
+          token: ${{ secrets.GITHUB_PAT_TOKEN }}
+          
+      - name: To install and truffle compile to generate contract 
+        run: |
+          npm install
+          npm run compile

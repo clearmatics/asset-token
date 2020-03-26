@@ -37,5 +37,5 @@ jobs:
       - run: |
             # push to the Jfrog with Build info
             TAG=`git log -1 --pretty=%h`
-            jfrog rt u "build/contracts/AssetToken.json" QA_smart_contract/AssetToken/${TAG}/
+            jfrog rt u "build/contracts/AssetToken.json" qa-binaries/AssetToken/${TAG}/
             jfrog rt bp

@@ -4,7 +4,7 @@
 
 pragma solidity ^0.5.0;
 
-interface AssetToken {
+interface IAssetToken {
 
     enum ListStatus {NoFilter, Blacklist, Whitelist}
 

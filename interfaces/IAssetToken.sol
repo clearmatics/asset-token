@@ -1,4 +1,4 @@
-//Copyright (c) 2019 Clearmatics Technologies Ltd
+//Copyright (c) 2020 Clearmatics Technologies Ltd
 
 // SPDX-License-Identifier: LGPL-3.0+
 
@@ -70,7 +70,7 @@ interface AssetToken {
         bytes calldata data,
         bytes calldata operatorData
     ) external;
-    
+
     function name() external view returns (string memory);
 
     function symbol() external view returns (string memory);

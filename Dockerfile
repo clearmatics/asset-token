@@ -1,12 +1,18 @@
-FROM node:10.19.0-alpine
+FROM node:10.19.0-alpine as builder
 
 # build:
 # docker build -t asset-token .
 
+# Deploy to ganache
+# docker run --network="host" -ti asset-token deploy_development
+
 # Run and connect to ssh-forvarded network
-# docker run -v "$(pwd)"/truffle_config.js:/asset-token/truffle.js --network="host" -ti asset-token
+# docker run -v "$(pwd)"/truffle-config.js:/asset-token/truffle.js --network="host" -ti clearmatics/asset-token deploy_autonity
 
 # build environment
+
+WORKDIR /app
+
 RUN apk update \
     && apk add --virtual build-dependencies \
         build-base \
@@ -17,13 +23,20 @@ RUN apk update \
 
 RUN apk add --no-cache python
 
-RUN mkdir -p /asset-token
-COPY . /asset-token
-WORKDIR /asset-token
+COPY package*.json ./
 
-RUN yarn install
-RUN yarn lint
+RUN npm install
 
-#RUN npx zos push --deploy-dependencies
+COPY . /app
 
-ENTRYPOINT ["/bin/bash"]
+# Production container
+FROM node:10.19.0-alpine
+
+WORKDIR /app
+
+COPY --from=builder app /app
+
+RUN npm run compile
+
+ENTRYPOINT ["npm", "run"]
+CMD ["deploy_development"]

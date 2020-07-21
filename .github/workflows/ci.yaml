@@ -22,9 +22,9 @@ jobs:
       - run: |
           npm install
           npm run lint
+          npm run compile
           npm run ganache &
-          npx zos session --network development
-          npx zos push --deploy-dependencies
+          npm run deploy_development
           npm run test
           npm run coverage
 

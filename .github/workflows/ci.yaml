@@ -24,6 +24,7 @@ jobs:
           npm run lint
           npm run compile
           npm run ganache &
+          sleep 5
           npm run deploy_development
           npm run test
           npm run coverage

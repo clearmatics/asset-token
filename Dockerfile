@@ -1,10 +1,10 @@
-FROM node:8.16.1-alpine
+FROM node:10.19.0-alpine
 
 # build:
-# docker build -t asset .
+# docker build -t asset-token .
 
 # Run and connect to ssh-forvarded network
-# docker run -v "$(pwd)"/truffle_config.js:/asset-token/truffle.js --network="host" -ti asset
+# docker run -v "$(pwd)"/truffle_config.js:/asset-token/truffle.js --network="host" -ti asset-token
 
 # build environment
 RUN apk update \

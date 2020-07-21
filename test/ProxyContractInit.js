@@ -17,6 +17,7 @@ let proxyAdminAddress;
 contract("Proxy to upgradable token", async accounts => {
   const addrOwner = accounts[0];
   const proxyOwner = accounts[1];
+  const zeroRegistryAddress = "0x0000000000000000000000000000000000000000"
 
   beforeEach(async () => {
     this.erc1820 = await singletons.ERC1820Registry(addrOwner);
@@ -26,7 +27,7 @@ contract("Proxy to upgradable token", async accounts => {
     //contains logic contract
     PROXY = await PROJECT.createProxy(AssetToken, {
       initMethod: "initialize",
-      initArgs: ["CLR", "Asset Token", addrOwner, [], 1, 1]
+      initArgs: ["CLR", "Asset Token", addrOwner, [], 1, 1, zeroRegistryAddress]
     });
 
     CONTRACT = PROXY.methods;

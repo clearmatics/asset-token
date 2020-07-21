@@ -5,12 +5,12 @@
 const { TestHelper } = require("zos"); //function to retrieve zos project structure object
 const { Contracts, ZWeb3 } = require("zos-lib"); //to retrieve compiled contract artifacts
 const sha3 = require("js-sha3").keccak_256;
-
+const { filterEvent } = require("./helpers") 
 const { singletons } = require("openzeppelin-test-helpers");
 
 ZWeb3.initialize(web3.currentProvider);
 
-const AssetToken = Contracts.getFromLocal("AssetToken");
+const AssetToken = artifacts.require("AssetToken");
 const IERC777Compatible = artifacts.require("IERC777Compatible");
 
 let CONTRACT;
@@ -26,18 +26,26 @@ contract("Asset Token", accounts => {
   const defaultOperator = accounts[9];
   const userData = web3.utils.randomHex(10);
   const operatorData = web3.utils.randomHex(10);
+  const zeroRegistryAddress = "0x0000000000000000000000000000000000000000"
+
   beforeEach(async () => {
     this.erc1820 = await singletons.ERC1820Registry(addrOwner);
 
-    PROJECT = await TestHelper({ from: proxyOwner });
+    // PROJECT = await TestHelper({ from: proxyOwner });
 
-    //contains logic contract
-    PROXY = await PROJECT.createProxy(AssetToken, {
-      initMethod: "initialize",
-      initArgs: ["CLR", "Asset Token", addrOwner, [defaultOperator], 1, 1]
-    });
+    // //contains logic contract
+    // PROXY = await PROJECT.createProxy(AssetToken, {
+    //   initMethod: "initialize",
+    //   initArgs: ["CLR", "Asset Token", addrOwner, [defaultOperator], 1, 1]
+    // });
 
-    CONTRACT = PROXY.methods;
+    // CONTRACT = PROXY.methods;
+
+    // don't use the proxy or the coverage tool won't work
+    CONTRACT = await AssetToken.new(["CLR", "Asset Token", addrOwner, [accounts[2]], 1, 1], {gas: 100000000});
+
+    // call the constructor 
+    await CONTRACT.initialize("CLR", "Asset Token", addrOwner, [defaultOperator], 1, 1, zeroRegistryAddress);
   });
 
   describe("Operators", () => {
@@ -49,37 +57,33 @@ contract("Asset Token", accounts => {
     context("Self management", () => {
       it("an account is his own operator", async () => {
         assert.equal(
-          await CONTRACT.isOperatorFor(accounts[4], accounts[4]).call(),
+          await CONTRACT.isOperatorFor(accounts[4], accounts[4]),
           true
         );
       });
 
       it("an account can't authorize itself", async () => {
         try {
-          await CONTRACT.authorizeOperator(accounts[4]).send({
-            from: accounts[4]
-          });
+          await CONTRACT.authorizeOperator(accounts[4], {from:accounts[4]})
         } catch (err) {
           error = err;
         }
 
         assert.strictEqual(
-          error.toString(),
+          error.toString().split(" --")[0],
           "Error: Returned error: VM Exception while processing transaction: revert The sender is already his own operator"
         );
       });
 
       it("an account can't revoke itself", async () => {
         try {
-          await CONTRACT.revokeOperator(accounts[4]).send({
-            from: accounts[4]
-          });
+          await CONTRACT.revokeOperator(accounts[4], {from:accounts[4]})
         } catch (err) {
           error = err;
         }
 
         assert.strictEqual(
-          error.toString(),
+          error.toString().split(" --")[0],
           "Error: Returned error: VM Exception while processing transaction: revert You cannot revoke yourself your own rights"
         );
       });
@@ -93,86 +97,75 @@ contract("Asset Token", accounts => {
         "0x" + sha3("RevokedOperator(address,address)");
 
       beforeEach(async () => {
-        const res = await CONTRACT.authorizeOperator(newOperator).send({
-          from: tokenHolder
-        });
+        const res = await CONTRACT.authorizeOperator(newOperator, {from:tokenHolder})
+    
+        // const rec = await web3.eth.getTransactionReceipt(res.receipt.transactionHash);
 
-        const rec = await web3.eth.getTransactionReceipt(res.transactionHash);
-
-        authorizedEvent = rec.logs[0].topics;
+        authorizedEvent = filterEvent(res, "AuthorizedOperator")
       });
 
       it("AuthorizedOperator event is emitted correctly", async () => {
         assert.notEqual(authorizedEvent, null);
-        assert.equal(authorizedEvent[0], authorizedOperatorSignature);
+        assert.equal(authorizedEvent.args.operator, newOperator);
       });
 
       it("added to operators list", async () => {
         assert.equal(
-          await CONTRACT.isOperatorFor(newOperator, tokenHolder).call(),
+          await CONTRACT.isOperatorFor(newOperator, tokenHolder),
           true
         );
       });
 
       it("not added to default operators", async () => {
-        const defaults = await CONTRACT.defaultOperators().call();
+        const defaults = await CONTRACT.defaultOperators();
         for (let i = 0; i < defaults.length; i++)
           assert.notEqual(defaults[i], newOperator);
       });
 
       it("can be revoked", async () => {
-        await CONTRACT.revokeOperator(newOperator).send({ from: tokenHolder });
+        await CONTRACT.revokeOperator(newOperator, {from:tokenHolder})
         assert.equal(
-          await CONTRACT.isOperatorFor(newOperator, tokenHolder).call(),
+          await CONTRACT.isOperatorFor(newOperator, tokenHolder),
           false
         );
       });
 
       it("RevokedOperator event is emitted correctly", async () => {
-        const res = await CONTRACT.revokeOperator(newOperator).send({
-          from: tokenHolder
-        });
-        const rec = await web3.eth.getTransactionReceipt(res.transactionHash);
-
-        revokeEvent = rec.logs[0].topics;
+        const res = await CONTRACT.revokeOperator(newOperator, {from:tokenHolder})
+       
+        revokeEvent = filterEvent(res, "RevokedOperator")
 
         assert.notEqual(revokeEvent, null);
-        assert.equal(revokeEvent[0], revokedOperatorSignature);
+        assert.equal(revokeEvent.args.operator, newOperator);
       });
     });
 
     context("Default operators", () => {
       it("are set in constructor", async () => {
         assert.equal(
-          await CONTRACT.isOperatorFor(defaultOperator, tokenHolder).call(),
+          await CONTRACT.isOperatorFor(defaultOperator, tokenHolder),
           true
         );
       });
 
       it("can be revoked", async () => {
-        await CONTRACT.revokeOperator(defaultOperator).send({
-          from: tokenHolder
-        });
+        await CONTRACT.revokeOperator(defaultOperator, {from:tokenHolder})
         assert.equal(
-          await CONTRACT.isOperatorFor(defaultOperator, tokenHolder).call(),
+          await CONTRACT.isOperatorFor(defaultOperator, tokenHolder),
           false
         );
       });
 
       it("can be re-authorized", async () => {
-        await CONTRACT.revokeOperator(defaultOperator).send({
-          from: tokenHolder
-        });
+        await CONTRACT.revokeOperator(defaultOperator, {from:tokenHolder})
         assert.equal(
-          await CONTRACT.isOperatorFor(defaultOperator, tokenHolder).call(),
+          await CONTRACT.isOperatorFor(defaultOperator, tokenHolder),
           false
         );
 
-        await CONTRACT.authorizeOperator(defaultOperator).send({
-          from: tokenHolder
-        });
+        await CONTRACT.authorizeOperator(defaultOperator,  {from:tokenHolder})
         assert.equal(
-          await CONTRACT.isOperatorFor(defaultOperator, tokenHolder).call(),
+          await CONTRACT.isOperatorFor(defaultOperator, tokenHolder),
           true
         );
       });
@@ -184,9 +177,7 @@ contract("Asset Token", accounts => {
         addrRecipient = accounts[2];
         addrSender = accounts[3];
 
-        const res = await CONTRACT.authorizeOperator(newOperator).send({
-          from: addrSender
-        });
+        const res = await CONTRACT.authorizeOperator(newOperator, {from:addrSender})
 
         tokenRecipientImplementer = await IERC777Compatible.new({
           from: addrOwner
@@ -203,22 +194,20 @@ contract("Asset Token", accounts => {
           { from: addrRecipient }
         );
 
-        const totalSupplyStart = await CONTRACT.totalSupply().call();
-        const balanceSenderStart = await CONTRACT.balanceOf(addrSender).call();
+        const totalSupplyStart = await CONTRACT.totalSupply();
+        const balanceSenderStart = await CONTRACT.balanceOf(addrSender);
         const balanceRecipientStart = await CONTRACT.balanceOf(
           addrRecipient
-        ).call();
+        );
 
         const fundVal = 100;
-        const fundRes = await CONTRACT.fund(addrSender, fundVal).send({
-          from: addrOwner
-        });
+        const fundRes = await CONTRACT.fund(addrSender, fundVal, {from:addrOwner})
 
-        const totalSupplyFund = await CONTRACT.totalSupply().call();
-        const balanceSenderFund = await CONTRACT.balanceOf(addrSender).call();
+        const totalSupplyFund = await CONTRACT.totalSupply();
+        const balanceSenderFund = await CONTRACT.balanceOf(addrSender);
         const balanceRecipientFund = await CONTRACT.balanceOf(
           addrRecipient
-        ).call();
+        );
 
         const transferVal = 50;
         const transferRes = await CONTRACT.operatorSend(
@@ -226,23 +215,22 @@ contract("Asset Token", accounts => {
           addrRecipient,
           transferVal,
           userData,
-          operatorData
-        ).send({
-          from: newOperator
-        });
+          operatorData, {from:newOperator}
+        )
 
-        const totalSupplyAfterTransfer = await CONTRACT.totalSupply().call();
+        const totalSupplyAfterTransfer = await CONTRACT.totalSupply();
         const balanceSenderAfterTransfer = await CONTRACT.balanceOf(
           addrSender
-        ).call();
+        );
         const balanceRecipientAfterTransfer = await CONTRACT.balanceOf(
           addrRecipient
-        ).call();
+        );
 
-        const transferEvent = transferRes.events.Sent;
-        const transferEventFrom = transferEvent.returnValues.from;
-        const transferEventTo = transferEvent.returnValues.to;
-        const transferEventValue = parseInt(transferEvent.returnValues.amount);
+        const transferEvent = filterEvent(transferRes, "Sent");
+
+        const transferEventFrom = transferEvent.args.from;
+        const transferEventTo = transferEvent.args.to;
+        const transferEventValue = parseInt(transferEvent.args.amount);
 
         assert(transferEvent != null);
         assert.strictEqual(transferEventFrom, addrSender);
@@ -294,43 +282,40 @@ contract("Asset Token", accounts => {
 
       it("burns tokens on behalf of account", async () => {
         const fundVal = 100;
-        const fundRes = await CONTRACT.fund(addrSender, fundVal).send({
-          from: addrOwner
-        });
+        const fundRes = await CONTRACT.fund(addrSender, fundVal, {from:addrOwner})
 
-        const totalSupplyFund = await CONTRACT.totalSupply().call();
-        const balanceSenderFund = await CONTRACT.balanceOf(addrSender).call();
+        const totalSupplyFund = await CONTRACT.totalSupply();
+        const balanceSenderFund = await CONTRACT.balanceOf(addrSender);
 
         const burnAmount = 50;
         const res = await CONTRACT.operatorBurn(
           addrSender,
           burnAmount,
           userData,
-          operatorData
-        ).send({ from: newOperator });
+          operatorData, 
+          { from:newOperator } 
+        )
 
-        const resEvent = res.events.Burned;
-        const totalSupplyBurn = await CONTRACT.totalSupply().call();
-        const balanceSenderBurn = await CONTRACT.balanceOf(addrSender).call();
+        const resEvent = filterEvent(res, "Burned")
+        const totalSupplyBurn = await CONTRACT.totalSupply();
+        const balanceSenderBurn = await CONTRACT.balanceOf(addrSender);
 
         assert.equal(totalSupplyFund - burnAmount, totalSupplyBurn);
 
         assert.equal(balanceSenderFund - burnAmount, balanceSenderBurn);
 
         assert.notEqual(resEvent, null);
-        assert.equal(resEvent.returnValues.operator, newOperator);
-        assert.equal(resEvent.returnValues.from, addrSender);
-        assert.equal(resEvent.returnValues.amount, burnAmount);
-        assert.equal(resEvent.returnValues.data, userData);
-        assert.equal(resEvent.returnValues.operatorData, operatorData);
+        assert.equal(resEvent.args.operator, newOperator);
+        assert.equal(resEvent.args.from, addrSender);
+        assert.equal(resEvent.args.amount, burnAmount);
+        assert.equal(resEvent.args.data, userData);
+        assert.equal(resEvent.args.operatorData, operatorData);
       });
 
       context("if owner becomes operator", () => {
         let actualError = null;
         beforeEach(async () => {
-          await CONTRACT.authorizeOperator(addrOwner).send({
-            from: addrSender
-          });
+          await CONTRACT.authorizeOperator(addrOwner, { from:addrSender })
         });
         it("operatorSend reverts", async () => {
           try {
@@ -339,13 +324,14 @@ contract("Asset Token", accounts => {
               addrRecipient,
               10,
               userData,
-              userData
-            ).send({ from: addrOwner });
+              userData, 
+              { from:addrOwner }
+            )
           } catch (err) {
             actualError = err;
           }
           assert.equal(
-            actualError.toString(),
+            actualError.toString().split(" --")[0],
             "Error: Returned error: VM Exception while processing transaction: revert The contract owner can not perform this operation"
           );
         });
@@ -356,13 +342,13 @@ contract("Asset Token", accounts => {
               addrSender,
               10,
               userData,
-              userData
-            ).send({ from: addrOwner });
+              userData, { from:addrOwner }
+            )
           } catch (err) {
             actualError = err;
           }
           assert.equal(
-            actualError.toString(),
+            actualError.toString().split(" --")[0],
             "Error: Returned error: VM Exception while processing transaction: revert The contract owner can not perform this operation"
           );
         });

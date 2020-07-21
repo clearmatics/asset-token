@@ -21,3 +21,4 @@ zos.dev-*.json
 # IDE
 .idea/
 
+zos.*.json

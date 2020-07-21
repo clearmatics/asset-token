@@ -64,7 +64,8 @@ contract AssetToken is IERC777, Initializable {
         address owner,
         address[] calldata defaultOperators,
         int status,
-        uint256 granularity
+        uint256 granularity,
+        address registry1820Addr
     )
     external initializer
     {
@@ -84,13 +85,22 @@ contract AssetToken is IERC777, Initializable {
             _defaultOperators[defaultOperators[i]] = true;
         }
 
-        //the address of the registry is universally costant
-        _erc1820 = IERC1820Registry(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24);
+        // override the default address of the registry with the one provided if provided
+        if (registry1820Addr != address(0)) {
+            _erc1820 = IERC1820Registry(registry1820Addr);
+        } else {
+            _erc1820 = IERC1820Registry(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24);
+        }
+
+        // if the token sender has implemented the interface call its hook - optional 
         TOKENS_SENDER_INTERFACE_HASH =
             0x29ddb589b1fb5fc7cf394961c1adf5f8c6454761adf795e67fe149f658abe895;
+
+        // if the token recipient is a contract and hasn't registered the interface the call reverts 
         TOKENS_RECIPIENT_INTERFACE_HASH =
             0xb281fc8c12954d22544db45de3159a39272895b169a852b314f9cc762e44c53b;
 
+        // tells the registry this contract implements for itself the erc777 interface
         _erc1820.setInterfaceImplementer(address(this), keccak256("ERC777Token"), address(this));
     }
 
@@ -129,7 +139,7 @@ contract AssetToken is IERC777, Initializable {
     modifier onlyAllowedAddress(address who) {
         //the check only if either white or blacklisting
         if (_listStatus != ListStatus.NoFilter) {
-            require(isAllowedToSend(who), "This account is not allowed to send money");
+            require(_isAllowedToSend(who), "This account is not allowed to send money");
             _;
         } else {
             _;
@@ -161,7 +171,7 @@ contract AssetToken is IERC777, Initializable {
     }
 
     modifier checkGranularity(uint amount) {
-        require(isMultipleOfGranularity(amount), "The amount must be a multiple of granularity");
+        require(_isMultipleOfGranularity(amount), "The amount must be a multiple of granularity");
         _;
     }
 
@@ -265,24 +275,16 @@ contract AssetToken is IERC777, Initializable {
         emit ListDelegation(_listsController);
     }
 
-    function isAllowedToSend(address who) public view returns (bool) {
-        if (_listStatus == ListStatus.Blacklist) {
-            return !_isBlacklisted[who];
-        } else if (_listStatus == ListStatus.Whitelist) {
-            return _isWhiteListed[who];
-        }
-
-        return true;
+    function isAllowedToSend(address who) external view returns (bool) {
+        return _isAllowedToSend(who);
     }
 
-    function isOperatorFor(address operator, address holder) public view returns (bool) {
-        return holder == operator ||
-            (_defaultOperators[operator] && !_revokedDefaultOperators[holder][operator]) ||
-            _operators[holder][operator];
+    function isOperatorFor(address operator, address holder) external view returns (bool) {
+        return _isOperatorFor(operator, holder);
     }
 
-    function isMultipleOfGranularity(uint amount) public view returns (bool) {
-        return (amount % _granularity == 0);
+    function isMultipleOfGranularity(uint amount) external view returns (bool) {
+        return _isMultipleOfGranularity(amount);
     }
 
     // @dev starts trading by switching _isActive to true
@@ -336,7 +338,7 @@ contract AssetToken is IERC777, Initializable {
         external
     {
         //being isOperatorFor external the compiler doesn't sees it without `this`
-        require(isOperatorFor(msg.sender, from), "Caller is not operator for the specified holder");
+        require(_isOperatorFor(msg.sender, from), "Caller is not operator for the specified holder");
 
         _burn(msg.sender, from, amount, data, operatorData);
 
@@ -358,7 +360,7 @@ contract AssetToken is IERC777, Initializable {
         external
     {
         //being isOperatorFor external the compiler doesn't sees it without `this`
-        require(isOperatorFor(msg.sender, from), "Caller is not operator for specified holder");
+        require(_isOperatorFor(msg.sender, from), "Caller is not operator for specified holder");
 
         _send(msg.sender, from, to, amount, data, operatorData);
 
@@ -489,4 +491,23 @@ contract AssetToken is IERC777, Initializable {
         return (length > 0);
     }
 
+    function _isAllowedToSend(address who) internal view returns (bool) {
+        if (_listStatus == ListStatus.Blacklist) {
+            return !_isBlacklisted[who];
+        } else if (_listStatus == ListStatus.Whitelist) {
+            return _isWhiteListed[who];
+        }
+
+        return true;
+    }
+    
+    function _isOperatorFor(address operator, address holder) internal view returns (bool) {
+        return holder == operator ||
+            (_defaultOperators[operator] && !_revokedDefaultOperators[holder][operator]) ||
+            _operators[holder][operator];
+    }
+
+    function _isMultipleOfGranularity(uint amount) internal view returns (bool) {
+        return (amount % _granularity == 0);
+    }
 }

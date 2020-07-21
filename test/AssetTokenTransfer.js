@@ -3,12 +3,12 @@
 // SPDX-License-Identifier: LGPL-3.0+
 const { TestHelper } = require("zos"); //function to retrieve zos project structure object
 const { Contracts, ZWeb3 } = require("zos-lib"); //to retrieve compiled contract artifacts
-
+const { filterEvent } = require("./helpers") 
 const { singletons } = require("openzeppelin-test-helpers");
 
 ZWeb3.initialize(web3.currentProvider);
 
-const AssetToken = Contracts.getFromLocal("AssetToken");
+const AssetToken = artifacts.require("AssetToken");
 const IERC777Compatible = artifacts.require("IERC777Compatible");
 const MockAssetToken = artifacts.require("AssetToken");
 
@@ -23,19 +23,26 @@ contract("Asset Token", accounts => {
   const proxyOwner = accounts[1];
   const data = web3.utils.randomHex(0);
   const defaultOperator = accounts[9];
+  const zeroRegistryAddress = "0x0000000000000000000000000000000000000000"
 
   beforeEach(async () => {
     this.erc1820 = await singletons.ERC1820Registry(addrOwner);
 
-    PROJECT = await TestHelper({ from: proxyOwner });
+    // PROJECT = await TestHelper({ from: proxyOwner });
 
-    //contains logic contract
-    PROXY = await PROJECT.createProxy(AssetToken, {
-      initMethod: "initialize",
-      initArgs: ["CLR", "Asset Token", addrOwner, [defaultOperator], 1, 1]
-    });
+    // //contains logic contract
+    // PROXY = await PROJECT.createProxy(AssetToken, {
+    //   initMethod: "initialize",
+    //   initArgs: ["CLR", "Asset Token", addrOwner, [defaultOperator], 1, 1]
+    // });
 
-    CONTRACT = PROXY.methods;
+    // CONTRACT = PROXY.methods;
+
+    // don't use the proxy or the coverage tool won't work
+    CONTRACT = await AssetToken.new(["CLR", "Asset Token", addrOwner, [defaultOperator], 1, 1], {gas: 100000000});
+
+    // call the constructor 
+    await CONTRACT.initialize("CLR", "Asset Token", addrOwner, [defaultOperator], 1, 1, zeroRegistryAddress);
   });
 
   describe("Transfer modifiers check", () => {
@@ -43,22 +50,20 @@ contract("Asset Token", accounts => {
       const addrSender = accounts[2];
       const addrRecipient = accounts[3];
 
-      const totalSupplyStart = await CONTRACT.totalSupply().call();
-      const balanceSenderStart = await CONTRACT.balanceOf(addrSender).call();
+      const totalSupplyStart = await CONTRACT.totalSupply();
+      const balanceSenderStart = await CONTRACT.balanceOf(addrSender);
       const balanceRecipientStart = await CONTRACT.balanceOf(
         addrRecipient
-      ).call();
+      );
 
       const fundVal = 100;
-      const fundRes = await CONTRACT.fund(addrSender, fundVal).send({
-        from: addrOwner
-      });
+      const fundRes = await CONTRACT.fund(addrSender, fundVal, {from: addrOwner})
 
-      const totalSupplyFund = await CONTRACT.totalSupply().call();
-      const balanceSenderFund = await CONTRACT.balanceOf(addrSender).call();
+      const totalSupplyFund = await CONTRACT.totalSupply();
+      const balanceSenderFund = await CONTRACT.balanceOf(addrSender);
       const balanceRecipientFund = await CONTRACT.balanceOf(
         addrRecipient
-      ).call();
+      );
 
       let actualError = null;
       try {
@@ -66,21 +71,19 @@ contract("Asset Token", accounts => {
         const transferRes = await CONTRACT.send(
           addrRecipient,
           transferVal,
-          data
-        ).send({
-          from: addrSender
-        });
+          data, {from: addrSender}
+        )
       } catch (error) {
         actualError = error;
       }
 
-      const totalSupplyAfterTransfer = await CONTRACT.totalSupply().call();
+      const totalSupplyAfterTransfer = await CONTRACT.totalSupply();
       const balanceSenderAfterTransfer = await CONTRACT.balanceOf(
         addrSender
-      ).call();
+      );
       const balanceRecipientAfterTransfer = await CONTRACT.balanceOf(
         addrRecipient
-      ).call();
+      );
 
       assert.strictEqual(
         parseInt(totalSupplyStart) + fundVal,
@@ -109,7 +112,7 @@ contract("Asset Token", accounts => {
       );
 
       assert.strictEqual(
-        actualError.toString(),
+        actualError.toString().split(" --")[0],
         "Error: Returned error: VM Exception while processing transaction: revert"
       );
     });
@@ -118,22 +121,20 @@ contract("Asset Token", accounts => {
       const addrSender = accounts[2];
       const addrRecipient = addrOwner;
 
-      const totalSupplyStart = await CONTRACT.totalSupply().call();
-      const balanceSenderStart = await CONTRACT.balanceOf(addrSender).call();
+      const totalSupplyStart = await CONTRACT.totalSupply();
+      const balanceSenderStart = await CONTRACT.balanceOf(addrSender);
       const balanceRecipientStart = await CONTRACT.balanceOf(
         addrRecipient
-      ).call();
+      );
 
       const fundVal = 100;
-      const fundRes = await CONTRACT.fund(addrSender, fundVal).send({
-        from: addrOwner
-      });
+      const fundRes = await CONTRACT.fund(addrSender, fundVal, {from: addrOwner})
 
-      const totalSupplyFund = await CONTRACT.totalSupply().call();
-      const balanceSenderFund = await CONTRACT.balanceOf(addrSender).call();
+      const totalSupplyFund = await CONTRACT.totalSupply();
+      const balanceSenderFund = await CONTRACT.balanceOf(addrSender);
       const balanceRecipientFund = await CONTRACT.balanceOf(
         addrRecipient
-      ).call();
+      );
 
       let actualError = null;
       try {
@@ -141,21 +142,19 @@ contract("Asset Token", accounts => {
         const transferRes = await CONTRACT.send(
           addrRecipient,
           transferVal,
-          data
-        ).send({
-          from: addrSender
-        });
+          data, {from: addrSender}
+        )
       } catch (error) {
         actualError = error;
       }
 
-      const totalSupplyAfterTransfer = await CONTRACT.totalSupply().call();
+      const totalSupplyAfterTransfer = await CONTRACT.totalSupply();
       const balanceSenderAfterTransfer = await CONTRACT.balanceOf(
         addrSender
-      ).call();
+      );
       const balanceRecipientAfterTransfer = await CONTRACT.balanceOf(
         addrOwner
-      ).call();
+      );
 
       assert.strictEqual(
         parseInt(totalSupplyStart) + fundVal,
@@ -184,7 +183,7 @@ contract("Asset Token", accounts => {
       );
 
       assert.strictEqual(
-        actualError.toString(),
+        actualError.toString().split(" --")[0],
         "Error: Returned error: VM Exception while processing transaction: revert The contract owner can not perform this operation"
       );
     });
@@ -193,11 +192,11 @@ contract("Asset Token", accounts => {
       const addrSender = addrOwner;
       const addrRecipient = accounts[2];
 
-      const totalSupplyStart = await CONTRACT.totalSupply().call();
-      const balanceSenderStart = await CONTRACT.balanceOf(addrSender).call();
+      const totalSupplyStart = await CONTRACT.totalSupply();
+      const balanceSenderStart = await CONTRACT.balanceOf(addrSender);
       const balanceRecipientStart = await CONTRACT.balanceOf(
         addrRecipient
-      ).call();
+      );
 
       let actualError = null;
       try {
@@ -205,18 +204,16 @@ contract("Asset Token", accounts => {
         const transferRes = await CONTRACT.send(
           addrRecipient,
           transferVal,
-          data
-        ).send({
-          from: addrSender
-        });
+          data, {from: addrSender}
+        )
       } catch (error) {
         actualError = error;
       }
 
-      const totalSupplyAfterTransfer = await CONTRACT.totalSupply().call();
+      const totalSupplyAfterTransfer = await CONTRACT.totalSupply();
       const balanceRecipientAfterTransfer = await CONTRACT.balanceOf(
         addrOwner
-      ).call();
+      );
 
       assert.strictEqual(
         parseInt(totalSupplyStart),
@@ -229,7 +226,7 @@ contract("Asset Token", accounts => {
       );
 
       assert.strictEqual(
-        actualError.toString(),
+        actualError.toString().split(" --")[0],
         "Error: Returned error: VM Exception while processing transaction: revert The contract owner can not perform this operation"
       );
     });
@@ -259,11 +256,9 @@ contract("Asset Token", accounts => {
           fundVal = 100;
           actualError = null;
 
-          await CONTRACT.fund(addrSender, fundVal).send({
-            from: addrOwner
-          });
+          await CONTRACT.fund(addrSender, fundVal, {from: addrOwner})
 
-          balanceSenderFund = await CONTRACT.balanceOf(addrSender).call();
+          balanceSenderFund = await CONTRACT.balanceOf(addrSender);
         });
         context("with contract recipient", () => {
           beforeEach(async () => {
@@ -275,15 +270,13 @@ contract("Asset Token", accounts => {
           });
           it("send function reverts", async () => {
             try {
-              await CONTRACT.send(addrRecipient, transferVal, data).send({
-                from: addrSender
-              });
+              await CONTRACT.send(addrRecipient, transferVal, data, {from: addrSender})
             } catch (error) {
               actualError = error;
             }
 
             assert.strictEqual(
-              actualError.toString(),
+              actualError.toString().split(" --")[0],
               "Error: Returned error: VM Exception while processing transaction: revert The recipient contract must implement the ERC777TokensRecipient interface"
             );
           });
@@ -295,14 +288,14 @@ contract("Asset Token", accounts => {
                 addrRecipient,
                 transferVal,
                 data,
-                data
-              ).send({ from: defaultOperator });
+                data, {from: defaultOperator}
+              )
             } catch (error) {
               actualError = error;
             }
 
             assert.strictEqual(
-              actualError.toString(),
+              actualError.toString().split(" --")[0],
               "Error: Returned error: VM Exception while processing transaction: revert The recipient contract must implement the ERC777TokensRecipient interface"
             );
           });
@@ -315,21 +308,19 @@ contract("Asset Token", accounts => {
 
             balanceRecipientStart = await CONTRACT.balanceOf(
               addrRecipient
-            ).call();
+            );
           });
 
           it("send function completes - balances updated", async () => {
-            await CONTRACT.send(addrRecipient, transferVal, data).send({
-              from: addrSender
-            });
+            await CONTRACT.send(addrRecipient, transferVal, data, {from: addrSender})
 
             balanceSenderAfterTransfer = await CONTRACT.balanceOf(
               addrSender
-            ).call();
+            );
 
             balanceRecipientAfterTransfer = await CONTRACT.balanceOf(
               addrRecipient
-            ).call();
+            );
 
             assert.equal(
               parseInt(balanceSenderAfterTransfer),
@@ -348,16 +339,16 @@ contract("Asset Token", accounts => {
               addrRecipient,
               transferVal,
               data,
-              data
-            ).send({ from: defaultOperator });
+              data, {from: defaultOperator}
+            )
 
             balanceSenderAfterTransfer = await CONTRACT.balanceOf(
               addrSender
-            ).call();
+            );
 
             balanceRecipientAfterTransfer = await CONTRACT.balanceOf(
               addrRecipient
-            ).call();
+            );
 
             assert.equal(
               parseInt(balanceSenderAfterTransfer),
@@ -406,26 +397,24 @@ contract("Asset Token", accounts => {
               { from: addrRecipient }
             );
 
-            const totalSupplyStart = await CONTRACT.totalSupply().call();
+            const totalSupplyStart = await CONTRACT.totalSupply();
             const balanceSenderStart = await CONTRACT.balanceOf(
               addrSender
-            ).call();
+            );
             const balanceRecipientStart = await CONTRACT.balanceOf(
               addrRecipient
-            ).call();
+            );
 
             const fundVal = 100;
-            const fundRes = await CONTRACT.fund(addrSender, fundVal).send({
-              from: addrOwner
-            });
+            const fundRes = await CONTRACT.fund(addrSender, fundVal, {from:addrOwner})
 
-            const totalSupplyFund = await CONTRACT.totalSupply().call();
+            const totalSupplyFund = await CONTRACT.totalSupply();
             const balanceSenderFund = await CONTRACT.balanceOf(
               addrSender
-            ).call();
+            );
             const balanceRecipientFund = await CONTRACT.balanceOf(
               addrRecipient
-            ).call();
+            );
 
             const transferVal = 50;
 
@@ -433,27 +422,25 @@ contract("Asset Token", accounts => {
               const transferRes = await CONTRACT.send(
                 addrRecipient,
                 transferVal,
-                data
-              ).send({
-                from: addrSender
-              });
+                data, {from: addrSender}
+              )
             } catch (err) {
               actualError = err;
             }
 
-            const totalSupplyAfterTransfer = await CONTRACT.totalSupply().call();
+            const totalSupplyAfterTransfer = await CONTRACT.totalSupply();
             const balanceSenderAfterTransfer = await CONTRACT.balanceOf(
               addrSender
-            ).call();
+            );
             const balanceRecipientAfterTransfer = await CONTRACT.balanceOf(
               addrRecipient
-            ).call();
+            );
 
             assert.equal(
-              actualError.toString(),
+              actualError.toString().split(" --")[0],
               "Error: Returned error: VM Exception while processing transaction: revert Tokens to receive revert"
             );
-            assert.equal(balanceSenderAfterTransfer, balanceSenderFund);
+            assert.deepEqual(balanceSenderAfterTransfer, balanceSenderFund);
             assert.equal(balanceRecipientAfterTransfer, 0);
           });
         });
@@ -478,39 +465,35 @@ contract("Asset Token", accounts => {
                 { from: addrRecipient }
               );
 
-              totalSupplyStart = await CONTRACT.totalSupply().call();
-              balanceSenderStart = await CONTRACT.balanceOf(addrSender).call();
+              totalSupplyStart = await CONTRACT.totalSupply();
+              balanceSenderStart = await CONTRACT.balanceOf(addrSender);
               balanceRecipientStart = await CONTRACT.balanceOf(
                 addrRecipient
-              ).call();
+              );
 
               fundVal = 100;
-              fundRes = await CONTRACT.fund(addrSender, fundVal).send({
-                from: addrOwner
-              });
+              fundRes = await CONTRACT.fund(addrSender, fundVal, {from: addrOwner})
 
-              totalSupplyFund = await CONTRACT.totalSupply().call();
-              balanceSenderFund = await CONTRACT.balanceOf(addrSender).call();
+              totalSupplyFund = await CONTRACT.totalSupply();
+              balanceSenderFund = await CONTRACT.balanceOf(addrSender);
               balanceRecipientFund = await CONTRACT.balanceOf(
                 addrRecipient
-              ).call();
+              );
 
               transferVal = 50;
               transferRes = await CONTRACT.send(
                 addrRecipient,
                 transferVal,
-                data
-              ).send({
-                from: addrSender
-              });
+                data, {from: addrSender}
+              )
 
-              totalSupplyAfterTransfer = await CONTRACT.totalSupply().call();
+              totalSupplyAfterTransfer = await CONTRACT.totalSupply();
               balanceSenderAfterTransfer = await CONTRACT.balanceOf(
                 addrSender
-              ).call();
+              );
               balanceRecipientAfterTransfer = await CONTRACT.balanceOf(
                 addrRecipient
-              ).call();
+              );
             });
 
             it("updates token balance state", async () => {
@@ -542,11 +525,11 @@ contract("Asset Token", accounts => {
             });
 
             it("emits contract Sent event", () => {
-              const transferEvent = transferRes.events.Sent;
-              const transferEventFrom = transferEvent.returnValues.from;
-              const transferEventTo = transferEvent.returnValues.to;
+              const transferEvent = filterEvent(transferRes, "Sent")
+              const transferEventFrom = transferEvent.args.from;
+              const transferEventTo = transferEvent.args.to;
               const transferEventValue = parseInt(
-                transferEvent.returnValues.amount
+                transferEvent.args.amount
               );
 
               assert(transferEvent != null);
@@ -591,39 +574,35 @@ contract("Asset Token", accounts => {
                 tokenRecipientImplementer.address
               );
 
-              totalSupplyStart = await CONTRACT.totalSupply().call();
-              balanceSenderStart = await CONTRACT.balanceOf(addrSender).call();
+              totalSupplyStart = await CONTRACT.totalSupply();
+              balanceSenderStart = await CONTRACT.balanceOf(addrSender);
               balanceRecipientStart = await CONTRACT.balanceOf(
                 addrRecipient
-              ).call();
+              );
 
               fundVal = 100;
-              fundRes = await CONTRACT.fund(addrSender, fundVal).send({
-                from: addrOwner
-              });
+              fundRes = await CONTRACT.fund(addrSender, fundVal, {from: addrOwner})
 
-              totalSupplyFund = await CONTRACT.totalSupply().call();
-              balanceSenderFund = await CONTRACT.balanceOf(addrSender).call();
+              totalSupplyFund = await CONTRACT.totalSupply();
+              balanceSenderFund = await CONTRACT.balanceOf(addrSender);
               balanceRecipientFund = await CONTRACT.balanceOf(
                 addrRecipient
-              ).call();
+              );
 
               transferVal = 50;
               transferRes = await CONTRACT.send(
                 addrRecipient,
                 transferVal,
-                data
-              ).send({
-                from: addrSender
-              });
+                data, {from: addrSender}
+              )
 
-              totalSupplyAfterTransfer = await CONTRACT.totalSupply().call();
+              totalSupplyAfterTransfer = await CONTRACT.totalSupply();
               balanceSenderAfterTransfer = await CONTRACT.balanceOf(
                 addrSender
-              ).call();
+              );
               balanceRecipientAfterTransfer = await CONTRACT.balanceOf(
                 addrRecipient
-              ).call();
+              );
             });
 
             it("updates token balance state", async () => {
@@ -655,11 +634,11 @@ contract("Asset Token", accounts => {
             });
 
             it("emits contract Sent event", () => {
-              const transferEvent = transferRes.events.Sent;
-              const transferEventFrom = transferEvent.returnValues.from;
-              const transferEventTo = transferEvent.returnValues.to;
+              const transferEvent = filterEvent(transferRes, "Sent")
+              const transferEventFrom = transferEvent.args.from;
+              const transferEventTo = transferEvent.args.to;
               const transferEventValue = parseInt(
-                transferEvent.returnValues.amount
+                transferEvent.args.amount
               );
 
               assert(transferEvent != null);
@@ -695,39 +674,35 @@ contract("Asset Token", accounts => {
 
               await tokenRecipientImplementer.recipientFor(addrRecipient);
 
-              totalSupplyStart = await CONTRACT.totalSupply().call();
-              balanceSenderStart = await CONTRACT.balanceOf(addrSender).call();
+              totalSupplyStart = await CONTRACT.totalSupply();
+              balanceSenderStart = await CONTRACT.balanceOf(addrSender);
               balanceRecipientStart = await CONTRACT.balanceOf(
                 addrRecipient
-              ).call();
+              );
 
               fundVal = 100;
-              fundRes = await CONTRACT.fund(addrSender, fundVal).send({
-                from: addrOwner
-              });
+              fundRes = await CONTRACT.fund(addrSender, fundVal, {from: addrOwner})
 
-              totalSupplyFund = await CONTRACT.totalSupply().call();
-              balanceSenderFund = await CONTRACT.balanceOf(addrSender).call();
+              totalSupplyFund = await CONTRACT.totalSupply();
+              balanceSenderFund = await CONTRACT.balanceOf(addrSender);
               balanceRecipientFund = await CONTRACT.balanceOf(
                 addrRecipient
-              ).call();
+              );
 
               transferVal = 50;
               transferRes = await CONTRACT.send(
                 addrRecipient,
                 transferVal,
-                data
-              ).send({
-                from: addrSender
-              });
+                data, {from: addrSender}
+              )
 
-              totalSupplyAfterTransfer = await CONTRACT.totalSupply().call();
+              totalSupplyAfterTransfer = await CONTRACT.totalSupply();
               balanceSenderAfterTransfer = await CONTRACT.balanceOf(
                 addrSender
-              ).call();
+              );
               balanceRecipientAfterTransfer = await CONTRACT.balanceOf(
                 addrRecipient
-              ).call();
+              );
             });
 
             it("updates token balance state", async () => {
@@ -759,11 +734,11 @@ contract("Asset Token", accounts => {
             });
 
             it("emits contract Sent event", () => {
-              const transferEvent = transferRes.events.Sent;
-              const transferEventFrom = transferEvent.returnValues.from;
-              const transferEventTo = transferEvent.returnValues.to;
+              const transferEvent = filterEvent(transferRes, "Sent")
+              const transferEventFrom = transferEvent.args.from;
+              const transferEventTo = transferEvent.args.to;
               const transferEventValue = parseInt(
-                transferEvent.returnValues.amount
+                transferEvent.args.amount
               );
 
               assert(transferEvent != null);
@@ -828,17 +803,15 @@ contract("Asset Token", accounts => {
             { from: addrSender }
           );
 
-          balanceSenderStart = await CONTRACT.balanceOf(addrSender).call();
+          balanceSenderStart = await CONTRACT.balanceOf(addrSender);
           balanceRecipientStart = await CONTRACT.balanceOf(
             addrRecipient
-          ).call();
+          );
 
           fundVal = 100;
-          fundRes = await CONTRACT.fund(addrSender, fundVal).send({
-            from: addrOwner
-          });
+          fundRes = await CONTRACT.fund(addrSender, fundVal, {from: addrOwner})
 
-          balanceSenderFund = await CONTRACT.balanceOf(addrSender).call();
+          balanceSenderFund = await CONTRACT.balanceOf(addrSender);
 
           transferVal = 100;
         });
@@ -848,27 +821,25 @@ contract("Asset Token", accounts => {
             sendRes = await CONTRACT.send(
               addrRecipient,
               transferVal,
-              data
-            ).send({
-              from: addrSender
-            });
+              data, {from: addrSender}
+            )
           } catch (err) {
             actualError = err;
           }
 
           balanceSenderAfterTransfer = await CONTRACT.balanceOf(
             addrSender
-          ).call();
+          );
           balanceRecipientAfterTransfer = await CONTRACT.balanceOf(
             addrRecipient
-          ).call();
+          );
 
           assert.equal(
-            actualError.toString(),
+            actualError.toString().split(" --")[0],
             "Error: Returned error: VM Exception while processing transaction: revert Tokens to send revert"
           );
-          assert.equal(balanceSenderAfterTransfer, balanceSenderFund);
-          assert.equal(balanceRecipientAfterTransfer, 0);
+          assert.deepEqual(balanceSenderAfterTransfer, balanceSenderFund);
+          assert.equal(parseInt(balanceRecipientAfterTransfer), 0);
         });
       });
 
@@ -891,38 +862,34 @@ contract("Asset Token", accounts => {
               { from: addrSender }
             );
 
-            totalSupplyStart = await CONTRACT.totalSupply().call();
-            balanceSenderStart = await CONTRACT.balanceOf(addrSender).call();
+            totalSupplyStart = await CONTRACT.totalSupply();
+            balanceSenderStart = await CONTRACT.balanceOf(addrSender);
             balanceRecipientStart = await CONTRACT.balanceOf(
               addrRecipient
-            ).call();
+            );
 
             fundVal = 100;
-            fundRes = await CONTRACT.fund(addrSender, fundVal).send({
-              from: addrOwner
-            });
+            fundRes = await CONTRACT.fund(addrSender, fundVal, {from: addrOwner})
 
-            totalSupplyFund = await CONTRACT.totalSupply().call();
-            balanceSenderFund = await CONTRACT.balanceOf(addrSender).call();
+            totalSupplyFund = await CONTRACT.totalSupply();
+            balanceSenderFund = await CONTRACT.balanceOf(addrSender);
 
             transferVal = 100;
 
             sendRes = await CONTRACT.send(
               addrRecipient,
               transferVal,
-              data
-            ).send({
-              from: addrSender
-            });
+              data, {from: addrSender}
+            )
           });
 
           it("updates token balance state", async () => {
             const balanceRecipientAfter = await CONTRACT.balanceOf(
               addrRecipient
-            ).call();
+            );
             const balanceSenderAfter = await CONTRACT.balanceOf(
               addrSender
-            ).call();
+            );
 
             assert.equal(
               parseInt(balanceRecipientAfter),
@@ -943,7 +910,7 @@ contract("Asset Token", accounts => {
                 toBlock: "latest"
               }
             );
-
+            
             assert.equal(logs[0].event, "TokensToSendCalled");
             assert.equal(logs[0].returnValues.operator, addrSender);
             assert.equal(logs[0].returnValues.from, addrSender);
@@ -952,12 +919,11 @@ contract("Asset Token", accounts => {
           });
 
           it("token contract emits Sent event", async () => {
-            const transferEvent = sendRes.events.Sent;
-            assert.notEqual(transferEvent, null);
-            assert.equal(transferEvent.returnValues.operator, addrSender);
-            assert.equal(transferEvent.returnValues.from, addrSender);
-            assert.equal(transferEvent.returnValues.to, addrRecipient);
-            assert.equal(transferEvent.returnValues.amount, transferVal);
+            const transferEvent = filterEvent(sendRes, "Sent")
+            assert.equal(transferEvent.args.operator, addrSender);
+            assert.equal(transferEvent.args.from, addrSender);
+            assert.equal(transferEvent.args.to, addrRecipient);
+            assert.equal(transferEvent.args.amount, transferVal);
           });
         });
         context("with a contract implementer for another contract", () => {
@@ -974,24 +940,22 @@ contract("Asset Token", accounts => {
             //sender contract must be also receiver implementer for fund operations - itself
             await contractSender.registerRecipient(addrSender);
 
-            totalSupplyStart = await CONTRACT.totalSupply().call();
-            balanceSenderStart = await CONTRACT.balanceOf(addrSender).call();
+            totalSupplyStart = await CONTRACT.totalSupply();
+            balanceSenderStart = await CONTRACT.balanceOf(addrSender);
             balanceRecipientStart = await CONTRACT.balanceOf(
               addrRecipient
-            ).call();
+            );
 
             fundVal = 100;
-            fundRes = await CONTRACT.fund(addrSender, fundVal).send({
-              from: addrOwner
-            });
+            fundRes = await CONTRACT.fund(addrSender, fundVal, {from: addrOwner})
 
-            totalSupplyFund = await CONTRACT.totalSupply().call();
-            balanceSenderFund = await CONTRACT.balanceOf(addrSender).call();
+            totalSupplyFund = await CONTRACT.totalSupply();
+            balanceSenderFund = await CONTRACT.balanceOf(addrSender);
 
             transferVal = 100;
 
             sendRes = await contractSender.send(
-              PROXY._address,
+              CONTRACT.address,
               addrRecipient,
               transferVal,
               data,
@@ -1002,10 +966,10 @@ contract("Asset Token", accounts => {
           it("updates token balance state", async () => {
             const balanceRecipientAfter = await CONTRACT.balanceOf(
               addrRecipient
-            ).call();
+            );
             const balanceSenderAfter = await CONTRACT.balanceOf(
               addrSender
-            ).call();
+            );
 
             assert.equal(
               parseInt(balanceRecipientAfter),
@@ -1054,24 +1018,22 @@ contract("Asset Token", accounts => {
             //register recipient to get funds
             await tokenSenderImplementer.recipientFor(addrSender);
 
-            totalSupplyStart = await CONTRACT.totalSupply().call();
-            balanceSenderStart = await CONTRACT.balanceOf(addrSender).call();
+            totalSupplyStart = await CONTRACT.totalSupply();
+            balanceSenderStart = await CONTRACT.balanceOf(addrSender);
             balanceRecipientStart = await CONTRACT.balanceOf(
               addrRecipient
-            ).call();
+            );
 
             fundVal = 100;
-            fundRes = await CONTRACT.fund(addrSender, fundVal).send({
-              from: addrOwner
-            });
+            fundRes = await CONTRACT.fund(addrSender, fundVal, {from: addrOwner})
 
-            totalSupplyFund = await CONTRACT.totalSupply().call();
-            balanceSenderFund = await CONTRACT.balanceOf(addrSender).call();
+            totalSupplyFund = await CONTRACT.totalSupply();
+            balanceSenderFund = await CONTRACT.balanceOf(addrSender);
 
             transferVal = 100;
 
             sendRes = await tokenSenderImplementer.send(
-              PROXY._address,
+              CONTRACT.address,
               addrRecipient,
               transferVal,
               data,
@@ -1082,10 +1044,10 @@ contract("Asset Token", accounts => {
           it("updates token balance state", async () => {
             const balanceRecipientAfter = await CONTRACT.balanceOf(
               addrRecipient
-            ).call();
+            );
             const balanceSenderAfter = await CONTRACT.balanceOf(
               addrSender
-            ).call();
+            );
 
             assert.equal(
               parseInt(balanceRecipientAfter),

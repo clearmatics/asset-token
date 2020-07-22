@@ -32,7 +32,6 @@
     "truffle": "5.1.23",
     "truffle-hdwallet-provider": "^1.0.17",
     "truffle-privatekey-provider": "^1.3.0",
-    "web3": "1.0.0-beta.53",
     "zos": "2.2.3",
     "zos-lib": "2.2.3"
   },

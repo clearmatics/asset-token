@@ -4,10 +4,19 @@ FROM node:10.19.0-alpine as builder
 # docker build -t asset-token .
 
 # Deploy to ganache
-# docker run --network="host" -ti asset-token deploy_development
+# Deploy:
+# docker run --network="host" -ti asset-token
+
+# Run Tests
+# docker run --network="host" -ti asset-token test
+
+# Run Coverage
+
+# echo "" > coverage.json
+# docker run -v "$(pwd)"/coverage.json:/app/coverage.json --network="host" -ti asset-token coverage
 
 # Run and connect to ssh-forvarded network
-# docker run -v "$(pwd)"/truffle-config.js:/asset-token/truffle.js --network="host" -ti clearmatics/asset-token deploy_autonity
+# docker run -v "$(pwd)"/truffle-config.js:/app/truffle-config.js --network="host" -ti clearmatics/asset-token deploy
 
 # build environment
 
@@ -39,4 +48,4 @@ COPY --from=builder app /app
 RUN npm run compile
 
 ENTRYPOINT ["npm", "run"]
-CMD ["deploy_development"]
+CMD ["deploy"]

@@ -42,8 +42,6 @@
     "deploy": "zos push --network development --deploy-dependencies --skip-compile",
     "test": "truffle test",
     "coverage": "truffle run coverage --file='test/Asset*.js'",
-    "istanbulRpc": "ganache-cli --hardfork istanbul --port 8545 --gasLimit 0xFFFFFFFFFFFFF --gasPrice 0 --defaultBalanceEther 99999999999 --networkId 1234",
-    "ganache": "ganache-cli --port 7545 --gasLimit 0xFFFFFFFF",
     "lint": "solhint contracts/**/*.sol"
   },
   "devDependencies": {

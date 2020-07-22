@@ -187,6 +187,35 @@ Then verify the balance
     balance.toString()
     '10000'
 
+## Docker
+
+
+* build:
+  ```
+  docker build -t asset-token .
+  ```
+* Run Ganache network
+  ```
+  docker run -d -p 8545:8545 --name ganache trufflesuite/ganache-cli:v6.9.1 --gasLimit 0xFFFFFFFF
+  ```
+* Deploy contracts to default `development` network:
+  ```
+  docker run --network="host" -ti asset-token
+  ```
+* Run Tests
+  ```
+  docker run --network="host" -ti asset-token test
+  ```
+* Run Coverage
+  ```
+  echo "" > coverage.json
+  docker run -v "$(pwd)"/coverage.json:/app/coverage.json --network="host" -ti asset-token coverage
+  ```
+* Connect to ssh-forvarded network and deploy using custom truffle config
+  ```
+  docker run -v "$(pwd)"/truffle-config.js:/app/truffle-config.js --network="host" -ti clearmatics/asset-token deploy
+  ```
+
 [1]: https://eips.ethereum.org/EIPS/eip-777
 [2]: http://truffleframework.com/
 [3]: https://nodejs.org/

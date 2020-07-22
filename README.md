@@ -192,7 +192,7 @@ Then verify the balance
 
 * build:
   ```
-  docker build -t asset-token .
+  docker build -t clearmatics/asset-token .
   ```
 * Run Ganache network
   ```
@@ -200,16 +200,16 @@ Then verify the balance
   ```
 * Deploy contracts to default `development` network:
   ```
-  docker run --network="host" -ti asset-token
+  docker run --network="host" -ti clearmatics/asset-token
   ```
 * Run Tests
   ```
-  docker run --network="host" -ti asset-token test
+  docker run --network="host" -ti clearmatics/asset-token test
   ```
 * Run Coverage
   ```
   echo "" > coverage.json
-  docker run -v "$(pwd)"/coverage.json:/app/coverage.json --network="host" -ti asset-token coverage
+  docker run -v "$(pwd)"/coverage.json:/app/coverage.json --network="host" -ti clearmatics/asset-token coverage
   ```
 * Connect to ssh-forvarded network and deploy using custom truffle config
   ```

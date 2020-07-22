@@ -7,21 +7,21 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Build docker and Compile contracts
-        run: docker build -t asset-token .
+        run: docker build -t clearmatics/asset-token .
 
       - name: Lint
-        run: docker run asset-token lint
+        run: docker run clearmatics/asset-token lint
 
       - name: Run ganache network for tests
         run: docker run -d -p 8545:8545 --name ganache trufflesuite/ganache-cli:v6.9.1 --gasLimit 0xFFFFFFFF
 
       - name: Tests
-        run: docker run --network="host" asset-token test
+        run: docker run --network="host" clearmatics/asset-token test
 
       - name: Coverage
         run: |
           echo "" > coverage.json
-          docker run -v "$(pwd)"/coverage.json:/app/coverage.json asset-token coverage
+          docker run -v "$(pwd)"/coverage.json:/app/coverage.json clearmatics/asset-token coverage
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1

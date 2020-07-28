@@ -36,7 +36,9 @@
   },
   "scripts": {
     "compile": "truffle compile",
-    "deploy": "zos push --network development --deploy-dependencies --skip-compile",
+    "deploy_deps": "zos push --network development --deploy-dependencies --skip-compile",
+    "initialise": "npx zos create --network development AssetToken --init --args",
+    "deploy": "zos push --network development --deploy-dependencies --skip-compile; npx zos create --network development AssetToken --init --args",
     "test": "truffle test",
     "coverage": "truffle run coverage --file='test/Asset*.js'",
     "lint": "solhint contracts/**/*.sol"

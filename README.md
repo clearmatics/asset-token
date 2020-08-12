@@ -187,6 +187,47 @@ Then verify the balance
     balance.toString()
     '10000'
 
+## Docker
+
+
+* build:
+  ```
+  docker build -t clearmatics/asset-token .
+  ```
+* Run Ganache network
+  ```
+  docker run -d -p 8545:8545 --name ganache trufflesuite/ganache-cli:v6.9.1 --gasLimit 0xFFFFFFFF
+  ```
+* Deploy contracts to default `development` network:
+  ```
+  # Deploy ERC1820 for Ganache network if not exist
+  ERC1820_ADDR=$(docker run --network="host" eastata/erc1820-registry:v1.0.0 |grep "contract address" |grep -Eo '0x[a-fA-F0-9]{40}')
+  
+  # Deploy and initialize Asset Token
+  docker run --network="host" -t clearmatics/asset-token \
+    deploy "--" \
+    "GBP,sterling,0x3C1d78EC2bB4415dC70d9b4a669783E77b4a78d0,[],0,1,${ERC1820_ADDR}"
+  ```
+* Run Tests
+  ```
+  docker run --network="host" -t clearmatics/asset-token test
+  ```
+* Run Coverage
+  ```
+  echo "" > coverage.json
+  docker run -v "$(pwd)"/coverage.json:/app/coverage.json --network="host" -ti clearmatics/asset-token coverage
+  ```
+* Connect to ssh-forvarded network and deploy using custom truffle config
+  ```
+  # Deploy ERC1820 if not exist
+  ERC1820_ADDR=$(docker run -v "$(pwd)"/truffle-config.js:/app/truffle-config.js --network="host" eastata/erc1820-registry:v1.0.0 |grep "contract address" |grep -Eo '0x[a-fA-F0-9]{40}')
+
+  # Deploy and initialize Asset Token
+  docker run -v "$(pwd)"/truffle-config.js:/app/truffle-config.js --network="host" -ti clearmatics/asset-token \
+    deploy "--" \
+    "GBP,sterling,0x3C1d78EC2bB4415dC70d9b4a669783E77b4a78d0,[],0,1,${ERC1820_ADDR}"
+  ```
+
 [1]: https://eips.ethereum.org/EIPS/eip-777
 [2]: http://truffleframework.com/
 [3]: https://nodejs.org/

@@ -1,7 +1,7 @@
 {
   "zosversion": "2.2",
   "name": "AssetToken",
-  "version": "0.1.0",
+  "version": "1.2.3",
   "contracts": {
     "AssetToken": "AssetToken"
   },

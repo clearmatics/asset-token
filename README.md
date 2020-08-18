@@ -233,8 +233,9 @@ Then verify the balance
   * If using keystore provider, inject your keystore file into the docker deployment:
     ```
     # Deploy and initialize Asset Token
-    docker run -v "$(pwd)"/truffle-config.js:/app/truffle-config.js -v <local_path_to_keystore>:<path_in_docker> --network="host" -ti clearmatics/asset-token \
-      deploy "--" \
+    docker run -v "$(pwd)"/truffle-config.js:/app/truffle-config.js \
+    -v <local_path_to_keystore>:<path_in_docker> \
+    --network="host" -ti clearmatics/asset-token deploy "--" \
       "GBP,sterling,0x3C1d78EC2bB4415dC70d9b4a669783E77b4a78d0,[],0,1,${ERC1820_ADDR}"
     ```
 

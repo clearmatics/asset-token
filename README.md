@@ -102,6 +102,8 @@ npm install
 rinkeby: {
   skipDryRun: true,
   provider: () => new PrivateKeyProvider(PK, nodeURL),
+  // Or use below if injecting keystore file
+  // provider: KeystoreProvider(nodeURL, PATH_TO_KEYSTORE_FILE, OPTIONAL_PASSWORD) // If optional password is not supplied, you will be prompted to input password
 },
 ```
     

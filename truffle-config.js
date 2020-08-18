@@ -2,6 +2,7 @@ const GAS = 10000000
 
 // Replace it for Autonity network
 //const PrivateKeyProvider = require("truffle-privatekey-provider");
+//const KeystoreProvider = require("truffle-keystore-provider")
 //const PRIVATE_KEY = "0b04d7f7099c07632b43b6e259e37cb44b8cf329cd1dce423d0523aa98d91737"
 //const AUTONITY_RPC = "http://127.0.0.1:8545"
 //const GAS_PRICE = 10000000000000
@@ -22,6 +23,14 @@ module.exports = {
 //      gasPrice: GAS_PRICE,
 //      network_id: NETWORK_ID
 //    },
+
+//    Replace it for Autonity network with keystore provider
+//    development: {
+//      provider: KeystoreProvider(AUTONITY_RPC, PATH_TO_KEYSTORE_FILE, OPTIONAL_PASSWORD),
+//      gas: GAS,
+//      gasPrice: GAS_PRICE,
+//      network_id: NETWORK_ID
+//  }
     soliditycoverage: {
       host: "localhost",
       port: 8555,

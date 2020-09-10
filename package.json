@@ -42,12 +42,14 @@
     "deploy": "zos push --network development --deploy-dependencies --skip-compile; npx zos create --network development AssetToken --init --args",
     "test": "truffle test",
     "coverage": "truffle run coverage --file='test/Asset*.js'",
-    "lint": "solhint contracts/**/*.sol"
+    "lint": "solhint contracts/**/*.sol",
+    "docs": "rm -rf ./docs && npx soldocgen docs/ interfaces/" 
   },
   "devDependencies": {
     "chai": "^4.2.0",
     "solidity-coverage": "0.7.1",
-    "openzeppelin-test-helpers": "^0.4.0"
+    "openzeppelin-test-helpers": "^0.4.0",
+    "soldocgen": "0.0.3"
   },
   "engines": {
     "node": "10.19.0",

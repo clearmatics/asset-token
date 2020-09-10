@@ -18,6 +18,9 @@ jobs:
       - name: Tests
         run: docker run --network="host" clearmatics/asset-token test
 
+      - name: Natspec
+        run: docker run --network="host" clearmatics/asset-token docs
+
       - name: Coverage
         run: |
           echo "" > coverage.json

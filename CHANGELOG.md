@@ -94,6 +94,8 @@ Minor modifications after running the [slither] source analyzer
 [1.2.1]: https://github.com/clearmatics/asset-token/compare/v1.2.0...v1.2.1
 [1.2.2]: https://github.com/clearmatics/asset-token/compare/v1.2.1...v1.2.2
 [1.2.3]: https://github.com/clearmatics/asset-token/compare/v1.2.2...v1.2.3
+[1.2.4]: https://github.com/clearmatics/asset-token/compare/v1.2.3...v1.2.4
+[1.2.5]: https://github.com/clearmatics/asset-token/compare/v1.2.4...v1.2.5
 [erc777]: https://eips.ethereum.org/EIPS/eip-777
 [erc1820]: https://eips.ethereum.org/EIPS/eip-1820
 [erc20]: https://eips.ethereum.org/EIPS/eip-20

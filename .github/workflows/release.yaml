@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - testPublish 
-name: "NPM package release"
+      
 jobs: 
   publish: 
     runs-on: ubuntu-20.04

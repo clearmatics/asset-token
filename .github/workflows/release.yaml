@@ -1,3 +1,4 @@
+name: "NPM package release"
 on:  
   push:
     branches:

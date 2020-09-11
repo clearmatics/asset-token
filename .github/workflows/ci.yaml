@@ -34,22 +34,3 @@ jobs:
           flags: unittests
           name: codecov-umbrella
           fail_ci_if_error: true
-
-on: 
-  push:
-    branches:
-      - master 
-
-jobs: 
-  publish: 
-    runs-on: ubuntu-20.04
-    steps: 
-      - uses: actions/checkout@v1 
-      - uses: actions/setup-node@v1 
-        with: 
-          node-version: 10 
-      - run: docker build -t clearmatics/asset-token .
-      - run: docker run --network="host" clearmatics/asset-token test
-      - uses: JS-DevTools/npm-publish@v1 
-        with: 
-          token: ${{ secrets.NPM_TOKEN }}

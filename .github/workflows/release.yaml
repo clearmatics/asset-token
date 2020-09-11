@@ -2,7 +2,7 @@ name: "NPM package release"
 on:  
   push:
     branches:
-      - master 
+      - testPublish 
 name: "NPM package release"
 jobs: 
   publish: 

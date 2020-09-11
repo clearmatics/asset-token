@@ -1,6 +1,6 @@
 {
   "name": "asset-token",
-  "version": "1.2.3",
+  "version": "1.2.5",
   "description": "ERC777 token standard, designed to represent a fungible asset with offchain interaction",
   "keywords": [
     "ethereum",

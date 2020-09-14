@@ -5,13 +5,25 @@
 pragma solidity ^0.5.0;
 
 /**
- * `IERC777` Token holders can be notified of operations performed on their
- * tokens by having a contract implement this interface (contract holders can be
- * their own implementer) and registering it on the 1820 registry
- */
+* @title ERC777 Token Sender Interface
+* @author Andrea Di Nenno
+* @notice This interface allows a token sender (EOA or Smart Contract) to add extra logic to control his outgoing tokens.
+*/
+
 interface IERC777Sender {
 
-    //this call occurs before the token state is updated  and may revert to prevent the operation
+    /**
+    * @notice Called by a `ERC777` token contract before tokens are being transferred or burned.
+    * This call occurs before the contract state (i.e. balances) is updated and may revert to prevent transfer.
+    * It is OPTIONAL both for a Smart Contract and a EOA to implement this interface.
+    * @param operator address of the operator, if any, that triggered the transfer
+    * @param from address of the token sender
+    * @param to address of the token receiver
+    * @param amount amount of tokens being sent 
+    * @param userData extra information provided by the sender
+    * @param operatorData extra information provided by the operator, if present
+    */    
+    
     function tokensToSend(
         address operator,
         address from,

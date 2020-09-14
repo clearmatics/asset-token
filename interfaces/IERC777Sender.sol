@@ -7,7 +7,8 @@ pragma solidity ^0.5.0;
 /**
 * @title ERC777 Token Sender Interface
 * @author Andrea Di Nenno
-* @notice This interface allows a token sender (EOA or Smart Contract) to add extra logic to control his outgoing tokens.
+* @notice This interface allows a token sender (EOA or Smart Contract) to add extra logic 
+* to control his outgoing tokens.
 */
 
 interface IERC777Sender {

@@ -8,10 +8,44 @@ jobs:
   publish: 
     runs-on: ubuntu-20.04
     steps: 
-      - uses: actions/checkout@v1 
+      - uses: actions/checkout@v2
+
+      - name: Build docker and Compile contracts
+        run: docker build -t clearmatics/asset-token .
+
+      - name: Lint
+        run: docker run clearmatics/asset-token lint
+
+      - name: Run ganache network for tests
+        run: docker run -d -p 8545:8545 --name ganache trufflesuite/ganache-cli:v6.9.1 --gasLimit 0xFFFFFFFF
+
+      - name: Tests
+        run: docker run --network="host" clearmatics/asset-token test
+
+      - name: Natspec
+        run: docker run --network="host" clearmatics/asset-token docs
+
+      - name: Coverage
+        run: |
+          echo "" > coverage.json
+          docker run -v "$(pwd)"/coverage.json:/app/coverage.json clearmatics/asset-token coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./coverage.json
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: true
+
+      - name: Publish to NPM registry
+      - uses: actions/checkout@v1
+
       - uses: actions/setup-node@v1 
         with: 
           node-version: 10 
+          
       - uses: JS-DevTools/npm-publish@v1 
         with: 
           token: ${{ secrets.NPM_TOKEN }}

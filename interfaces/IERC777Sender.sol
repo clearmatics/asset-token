@@ -8,7 +8,7 @@ pragma solidity ^0.5.0;
 * @title ERC777 Token Sender Interface
 * @author Andrea Di Nenno
 * @notice This interface allows a token sender (EOA or Smart Contract) to add extra logic 
-* to control his outgoing tokens.
+* to control its outgoing tokens.
 */
 
 interface IERC777Sender {
@@ -16,7 +16,7 @@ interface IERC777Sender {
     /**
     * @notice Called by an `ERC777` token contract before tokens are transferred or burned.
     * This call occurs before the contract state (i.e. balances) is updated and may revert to prevent transfer.
-    * It is OPTIONAL both for a Smart Contract and a EOA to implement this interface.
+    * It is OPTIONAL both for a Smart Contract and an EOA to implement this interface.
     * @param operator address of the operator, if any, that triggered the transfer
     * @param from address of the token sender
     * @param to address of the token receiver

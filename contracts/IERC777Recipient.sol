@@ -14,7 +14,7 @@ pragma solidity ^0.5.0;
 interface IERC777Recipient {
 
     /**
-    * @notice Called by a `ERC777` token contract whenever tokens are being moved or created into a account (`to`).
+    * @notice Called by an `ERC777` token contract whenever tokens are moved or created into an account
     * This call occurs after the contract state (i.e. balances) is updated and may revert to prevent transfer.
     * It is MANDATORY for a Smart Contract that intends to receive and manage tokens to implement this interface, 
     * or each transfer to it would revert.

@@ -7,7 +7,7 @@ This interface allows a token receiver (EOA or Smart Contract) to add extra logi
 # Functions
 ## [🔗](/interfaces/IERC777Recipient.sol#L16) `tokensReceived(address operator, address from, address to, uint256 amount, bytes userData, bytes operatorData)`
 
-Called by an `ERC777` token contract whenever tokens are being moved or created into a account.
+Called by an `ERC777` token contract whenever tokens are being moved or created into an account.
 
 This call occurs after the contract state (i.e. balances) is updated and may revert to prevent transfer.
 

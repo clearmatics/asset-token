@@ -14,7 +14,7 @@ pragma solidity ^0.5.0;
 interface IERC777Sender {
 
     /**
-    * @notice Called by a `ERC777` token contract before tokens are being transferred or burned.
+    * @notice Called by an `ERC777` token contract before tokens are transferred or burned.
     * This call occurs before the contract state (i.e. balances) is updated and may revert to prevent transfer.
     * It is OPTIONAL both for a Smart Contract and a EOA to implement this interface.
     * @param operator address of the operator, if any, that triggered the transfer

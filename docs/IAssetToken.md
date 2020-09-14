@@ -216,11 +216,17 @@ Will revert if the caller address is either the `owner`, `fundingDelegate`, `eme
 
 Transfer tokens between addresses.
 
-Will trigger `tokensToSend` and `tokensReceived` hooks as per ERC777 Will revert if `amount` doesn't respect the granularity.
+Will trigger `tokensToSend` and `tokensReceived` hooks as per ERC777.
 
-Will revert if the caller is not allowed (blacklisted or not yet whitelisted) Will revert if the contract is in frozen state after an `emergencyStop`.
+Will revert if `amount` doesn't respect the granularity.
 
-Will revert if the recipient is  either the `owner`, `fundingDelegate`, `emergencyDelegate`, `listController` `Sent` event emitted
+Will revert if the caller is not allowed (blacklisted or not yet whitelisted).
+
+Will revert if the contract is in frozen state after an `emergencyStop`.
+
+Will revert if the recipient is  either the `owner`, `fundingDelegate`, `emergencyDelegate`, `listController`.
+
+`Sent` event emitted
 
 
 ### Parameters
@@ -236,9 +242,17 @@ Will trigger `tokensToSend` and `tokensReceived` hooks as per ERC777.
 
 Will revert if `amount` doesn't respect the granularity.
 
-Will revert if the caller is not an operator of the token holder Will revert if the operator or the token holder are not allowed (blacklisted or not yet whitelisted) Will revert if the contract is in frozen state after an `emergencyStop`.
+Will revert if the caller is not an operator of the token holder.
 
-Will revert if the recipient is  either the `owner`, `fundingDelegate`, `emergencyDelegate`, `listController` `Sent` event emitted
+Will revert if the operator or the token holder are not allowed (blacklisted or not yet whitelisted).
+
+Will revert if the contract is in frozen state after an `emergencyStop`.
+
+Will revert if the recipient is  either the `owner`, `fundingDelegate`, `emergencyDelegate`, `listController`.
+
+`Sent` event emitted.
+
+
 
 
 ### Parameters

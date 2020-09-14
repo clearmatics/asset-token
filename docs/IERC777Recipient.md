@@ -1,13 +1,13 @@
 # [🔗](/interfaces/IERC777Recipient.sol#L7) IERC777Recipient
 **Author** _Andrea Di Nenno_
 
-This interface allows a token receiver (EOA or Smart Contract) to add extra logic to control his incoming tokens.
+This interface allows a token receiver (EOA or Smart Contract) to add extra logic to control its incoming tokens.
 
 
 # Functions
-## [🔗](/interfaces/IERC777Recipient.sol#L15) `tokensReceived(address operator, address from, address to, uint256 amount, bytes userData, bytes operatorData)`
+## [🔗](/interfaces/IERC777Recipient.sol#L16) `tokensReceived(address operator, address from, address to, uint256 amount, bytes userData, bytes operatorData)`
 
-Called by a `ERC777` token contract whenever tokens are being moved or created into a registered account (`to`).
+Called by an `ERC777` token contract whenever tokens are being moved or created into a account.
 
 This call occurs after the contract state (i.e. balances) is updated and may revert to prevent transfer.
 

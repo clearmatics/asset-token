@@ -134,8 +134,8 @@ interface IAssetToken {
     * Calls the `tokensReceived` hook of the receiver address as per ERC777.
     * Only the `fundingDelegate` can call it. 
     * Will revert if `value` doesn't respect the granularity. 
-    * Will revert if the contract is in frozen state after an `emergencyStop`.
-    * Will revert if the target address is either the `owner`, `fundingDelegate`, `emergencyDelegate`, `listController`. 
+    * Will revert if the contract is in a frozen state after an `emergencyStop`.
+    * Will revert if the target address is either the `owner`, `fundingDelegate`, `emergencyDelegate`, or `listController`. 
     * `Minted` and `Fund` events are emitted.
     * @param member address funded. Must not be `address(0)`
     * @param value amount of tokens issued
@@ -146,8 +146,8 @@ interface IAssetToken {
     * @notice Burns tokens of the caller, decreasing his balance and the total supply.
     * Calls the `tokensToSend` hook of the caller address as per ERC777.
     * Will revert if `value` doesn't respect the granularity.
-    * Will revert if the contract is in frozen state after an `emergencyStop`.
-    * Will revert if the caller address is either the `owner`, `fundingDelegate`, `emergencyDelegate`, `listController`. 
+    * Will revert if the contract is in a frozen state after an `emergencyStop`.
+    * Will revert if the caller address is either the `owner`, `fundingDelegate`, `emergencyDelegate`, or `listController`. 
     * `Burn` event  emitted 
     * @param amount amount of tokens to burn
     * @param data extra information provided by the caller
@@ -159,8 +159,8 @@ interface IAssetToken {
     * Calls the `tokensToSend` hook of the target address as per ERC777.
     * Will revert if the caller is not an operator of the `from` address.
     * Will revert if `amount` doesn't respect the granularity.
-    * Will revert if the contract is in frozen state after an `emergencyStop`. 
-    * Will revert if the caller address is either the `owner`, `fundingDelegate`, `emergencyDelegate`, `listController`. 
+    * Will revert if the contract is in a frozen state after an `emergencyStop`. 
+    * Will revert if the caller address is either the `owner`, `fundingDelegate`, `emergencyDelegate`, or `listController`. 
     * `Burn` event  emitted 
     * @param from address whose tokens are burned. Must not be `address(0)`
     * @param amount amount of tokens to burn
@@ -178,9 +178,10 @@ interface IAssetToken {
     * @notice Transfer tokens between addresses.
     * Will trigger `tokensToSend` and `tokensReceived` hooks as per ERC777.
     * Will revert if `amount` doesn't respect the granularity.
-    * Will revert if the caller is not allowed (blacklisted or not yet whitelisted).
-    * Will revert if the contract is in frozen state after an `emergencyStop`. 
-    * Will revert if the recipient is  either the `owner`, `fundingDelegate`, `emergencyDelegate`, `listController`.
+    * Will revert if the caller is not allowed to use the token contract
+    * (i.e. blacklisted or not whitelisted if the contract is initialised in a list mode operation).
+    * Will revert if the contract is in a frozen state after an `emergencyStop`. 
+    * Will revert if the recipient is  either the `owner`, `fundingDelegate`, `emergencyDelegate`, or `listController`.
     * `Sent` event emitted
     * @param recipient address of the tokens recipient. Must not be `address(0)`
     * @param amount amount of tokens to send
@@ -193,9 +194,10 @@ interface IAssetToken {
     * Will trigger `tokensToSend` and `tokensReceived` hooks as per ERC777.
     * Will revert if `amount` doesn't respect the granularity.
     * Will revert if the caller is not an operator of the token holder.
-    * Will revert if the operator or the token holder are not allowed (blacklisted or not yet whitelisted).
-    * Will revert if the contract is in frozen state after an `emergencyStop`. 
-    * Will revert if the recipient is  either the `owner`, `fundingDelegate`, `emergencyDelegate`, `listController`.
+    * Will revert if the operator or the token holder are not allowed to use the token contract
+    * (i.e. blacklisted or not whitelisted if the contract is initialised in a list mode operation).
+    * Will revert if the contract is in a frozen state after an `emergencyStop`. 
+    * Will revert if the recipient is  either the `owner`, `fundingDelegate`, `emergencyDelegate`, or `listController`.
     * `Sent` event emitted.
     * @param from address of the token holder (the sender). Must not be `address(0)`
     * @param to address of the tokens recipient. Must not be `address(0)`

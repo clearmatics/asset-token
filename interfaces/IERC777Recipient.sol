@@ -8,13 +8,13 @@ pragma solidity ^0.5.0;
 * @title ERC777 Token Recipient Interface
 * @author Andrea Di Nenno
 * @notice This interface allows a token receiver (EOA or Smart Contract) to add extra logic 
-* to control his incoming tokens.
+* to control its incoming tokens.
 */
 
 interface IERC777Recipient {
 
     /**
-    * @notice Called by a `ERC777` token contract whenever tokens are being moved or created into a account (`to`).
+    * @notice Called by an `ERC777` token contract whenever tokens are being moved or created into a account.
     * This call occurs after the contract state (i.e. balances) is updated and may revert to prevent transfer.
     * It is MANDATORY for a Smart Contract that intends to receive and manage tokens to implement this interface, 
     * or each transfer to it would revert.

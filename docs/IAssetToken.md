@@ -157,9 +157,9 @@ Only the `fundingDelegate` can call it.
 
 Will revert if `value` doesn't respect the granularity.
 
-Will revert if the contract is in frozen state after an `emergencyStop`.
+Will revert if the contract is in a frozen state after an `emergencyStop`.
 
-Will revert if the target address is either the `owner`, `fundingDelegate`, `emergencyDelegate`, `listController`.
+Will revert if the target address is either the `owner`, `fundingDelegate`, `emergencyDelegate`, or `listController`.
 
 `Minted` and `Fund` events are emitted.
 
@@ -178,9 +178,9 @@ Calls the `tokensToSend` hook of the caller address as per ERC777.
 
 Will revert if `value` doesn't respect the granularity.
 
-Will revert if the contract is in frozen state after an `emergencyStop`.
+Will revert if the contract is in a frozen state after an `emergencyStop`.
 
-Will revert if the caller address is either the `owner`, `fundingDelegate`, `emergencyDelegate`, `listController`.
+Will revert if the caller address is either the `owner`, `fundingDelegate`, `emergencyDelegate`, or `listController`.
 
 `Burn` event  emitted
 
@@ -199,9 +199,9 @@ Will revert if the caller is not an operator of the `from` address.
 
 Will revert if `amount` doesn't respect the granularity.
 
-Will revert if the contract is in frozen state after an `emergencyStop`.
+Will revert if the contract is in a frozen state after an `emergencyStop`.
 
-Will revert if the caller address is either the `owner`, `fundingDelegate`, `emergencyDelegate`, `listController`.
+Will revert if the caller address is either the `owner`, `fundingDelegate`, `emergencyDelegate`, or `listController`.
 
 `Burn` event  emitted
 
@@ -220,11 +220,11 @@ Will trigger `tokensToSend` and `tokensReceived` hooks as per ERC777.
 
 Will revert if `amount` doesn't respect the granularity.
 
-Will revert if the caller is not allowed (blacklisted or not yet whitelisted).
+Will revert if the caller is not allowed to use the token contract (i.e. blacklisted or not whitelisted if the contract is initialised in a list mode operation).
 
-Will revert if the contract is in frozen state after an `emergencyStop`.
+Will revert if the contract is in a frozen state after an `emergencyStop`.
 
-Will revert if the recipient is  either the `owner`, `fundingDelegate`, `emergencyDelegate`, `listController`.
+Will revert if the recipient is  either the `owner`, `fundingDelegate`, `emergencyDelegate`, or `listController`.
 
 `Sent` event emitted
 
@@ -234,7 +234,7 @@ Will revert if the recipient is  either the `owner`, `fundingDelegate`, `emergen
 * `amount` amount of tokens to send
 * `data` extra information provided by the caller
 
-## [🔗](/interfaces/IAssetToken.sol#L191) `operatorSend(address from, address to, uint256 amount, bytes data, bytes operatorData)`
+## [🔗](/interfaces/IAssetToken.sol#L192) `operatorSend(address from, address to, uint256 amount, bytes data, bytes operatorData)`
 
 Transfer tokens of an address but called from his operator.
 
@@ -244,11 +244,11 @@ Will revert if `amount` doesn't respect the granularity.
 
 Will revert if the caller is not an operator of the token holder.
 
-Will revert if the operator or the token holder are not allowed (blacklisted or not yet whitelisted).
+Will revert if the operator or the token holder are not allowed to use the token contract (i.e. blacklisted or not whitelisted if the contract is initialised in a list mode operation).
 
-Will revert if the contract is in frozen state after an `emergencyStop`.
+Will revert if the contract is in a frozen state after an `emergencyStop`.
 
-Will revert if the recipient is  either the `owner`, `fundingDelegate`, `emergencyDelegate`, `listController`.
+Will revert if the recipient is  either the `owner`, `fundingDelegate`, `emergencyDelegate`, or `listController`.
 
 `Sent` event emitted.
 
@@ -262,35 +262,35 @@ Will revert if the recipient is  either the `owner`, `fundingDelegate`, `emergen
 * `data` extra information provided by the token holder
 * `operatorData` extra information provided by the operator
 
-## [🔗](/interfaces/IAssetToken.sol#L214) `name()`
+## [🔗](/interfaces/IAssetToken.sol#L216) `name()`
 
 View function
 
 ### Returns
 * `string` String name of the token
 
-## [🔗](/interfaces/IAssetToken.sol#L220) `symbol()`
+## [🔗](/interfaces/IAssetToken.sol#L222) `symbol()`
 
 View function
 
 ### Returns
 * `string` String symbol of the token
 
-## [🔗](/interfaces/IAssetToken.sol#L226) `totalSupply()`
+## [🔗](/interfaces/IAssetToken.sol#L228) `totalSupply()`
 
 View function
 
 ### Returns
 * `uint256` Total Supply of tokens currently in circulation
 
-## [🔗](/interfaces/IAssetToken.sol#L232) `granularity()`
+## [🔗](/interfaces/IAssetToken.sol#L234) `granularity()`
 
 View function
 
 ### Returns
 * `uint256` Granularity of the token, as the smallest part of the token that's not divisible
 
-## [🔗](/interfaces/IAssetToken.sol#L238) `balanceOf(address who)`
+## [🔗](/interfaces/IAssetToken.sol#L240) `balanceOf(address who)`
 
 View function
 
@@ -300,28 +300,28 @@ View function
 ### Returns
 * `uint256` The balance of the specified address
 
-## [🔗](/interfaces/IAssetToken.sol#L245) `defaultOperators()`
+## [🔗](/interfaces/IAssetToken.sol#L247) `defaultOperators()`
 
 View function
 
 ### Returns
 * `undefined` The list of the default operator addresses
 
-## [🔗](/interfaces/IAssetToken.sol#L251) `getTradingStatus()`
+## [🔗](/interfaces/IAssetToken.sol#L253) `getTradingStatus()`
 
 View function
 
 ### Returns
 * `bool` `True` if trading is active, `False` if frozen
 
-## [🔗](/interfaces/IAssetToken.sol#L257) `getListStatus()`
+## [🔗](/interfaces/IAssetToken.sol#L259) `getListStatus()`
 
 View function
 
 ### Returns
 * `ListStatus` The List mechanism in use (0=noFilter, 1=Blacklist, 2=Whitelist)
 
-## [🔗](/interfaces/IAssetToken.sol#L263) `isAllowedToSend(address who)`
+## [🔗](/interfaces/IAssetToken.sol#L265) `isAllowedToSend(address who)`
 
 View function
 
@@ -331,7 +331,7 @@ View function
 ### Returns
 * `bool` `True` if the address is allowd, `False` if not
 
-## [🔗](/interfaces/IAssetToken.sol#L270) `isOperatorFor(address operator, address holder)`
+## [🔗](/interfaces/IAssetToken.sol#L272) `isOperatorFor(address operator, address holder)`
 
 View function
 
@@ -342,7 +342,7 @@ View function
 ### Returns
 * `bool` `True` if operator for the holder, `False` if not
 
-## [🔗](/interfaces/IAssetToken.sol#L278) `isMultipleOfGranularity(uint amount)`
+## [🔗](/interfaces/IAssetToken.sol#L280) `isMultipleOfGranularity(uint amount)`
 
 View function
 
@@ -352,7 +352,7 @@ View function
 ### Returns
 * `bool` `True` if the amount respects granularity, `False` if not
 
-## [🔗](/interfaces/IAssetToken.sol#L285) `decimals()`
+## [🔗](/interfaces/IAssetToken.sol#L287) `decimals()`
 
 View function
 

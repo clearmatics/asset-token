@@ -1,17 +1,17 @@
 # [🔗](/interfaces/IERC777Sender.sol#L7) IERC777Sender
 **Author** _Andrea Di Nenno_
 
-This interface allows a token sender (EOA or Smart Contract) to add extra logic to control his outgoing tokens.
+This interface allows a token sender (EOA or Smart Contract) to add extra logic to control its outgoing tokens.
 
 
 # Functions
-## [🔗](/interfaces/IERC777Sender.sol#L15) `tokensToSend(address operator, address from, address to, uint256 amount, bytes userData, bytes operatorData)`
+## [🔗](/interfaces/IERC777Sender.sol#L16) `tokensToSend(address operator, address from, address to, uint256 amount, bytes userData, bytes operatorData)`
 
-Called by a `ERC777` token contract before tokens are being transferred or burned.
+Called by an `ERC777` token contract before tokens are transferred or burned.
 
 This call occurs before the contract state (i.e. balances) is updated and may revert to prevent transfer.
 
-It is OPTIONAL both for a Smart Contract and a EOA to implement this interface.
+It is OPTIONAL both for a Smart Contract and an EOA to implement this interface.
 
 
 

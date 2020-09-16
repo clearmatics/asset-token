@@ -3,7 +3,7 @@
 
 The Asset Token is a smart contract designed to represent a fungible asset with offchain interaction
 # Functions
-## [🔗](/interfaces/IAssetToken.sol#L32) `initialize(string symbol, string name, address owner, undefined defaultOperators, int status, uint256 granularity, address registry1820Addr)`
+## [🔗](/interfaces/IAssetToken.sol#L32) `initialize(string symbol, string name, address owner, undefined defaultOperators, uint8 status, uint256 granularity, address registry1820Addr)`
 
 Initialize is the constructor of the token
 
@@ -262,35 +262,42 @@ Will revert if the recipient is  either the `owner`, `fundingDelegate`, `emergen
 * `data` extra information provided by the token holder
 * `operatorData` extra information provided by the operator
 
-## [🔗](/interfaces/IAssetToken.sol#L216) `name()`
+## [🔗](/interfaces/IAssetToken.sol#L216) `owner()`
+
+View function
+
+### Returns
+* `address` Address of the token owner
+
+## [🔗](/interfaces/IAssetToken.sol#L222) `name()`
 
 View function
 
 ### Returns
 * `string` String name of the token
 
-## [🔗](/interfaces/IAssetToken.sol#L222) `symbol()`
+## [🔗](/interfaces/IAssetToken.sol#L228) `symbol()`
 
 View function
 
 ### Returns
 * `string` String symbol of the token
 
-## [🔗](/interfaces/IAssetToken.sol#L228) `totalSupply()`
+## [🔗](/interfaces/IAssetToken.sol#L234) `totalSupply()`
 
 View function
 
 ### Returns
 * `uint256` Total Supply of tokens currently in circulation
 
-## [🔗](/interfaces/IAssetToken.sol#L234) `granularity()`
+## [🔗](/interfaces/IAssetToken.sol#L240) `granularity()`
 
 View function
 
 ### Returns
 * `uint256` Granularity of the token, as the smallest part of the token that's not divisible
 
-## [🔗](/interfaces/IAssetToken.sol#L240) `balanceOf(address who)`
+## [🔗](/interfaces/IAssetToken.sol#L246) `balanceOf(address who)`
 
 View function
 
@@ -300,28 +307,28 @@ View function
 ### Returns
 * `uint256` The balance of the specified address
 
-## [🔗](/interfaces/IAssetToken.sol#L247) `defaultOperators()`
+## [🔗](/interfaces/IAssetToken.sol#L253) `defaultOperators()`
 
 View function
 
 ### Returns
 * `undefined` The list of the default operator addresses
 
-## [🔗](/interfaces/IAssetToken.sol#L253) `getTradingStatus()`
+## [🔗](/interfaces/IAssetToken.sol#L259) `getTradingStatus()`
 
 View function
 
 ### Returns
 * `bool` `True` if trading is active, `False` if frozen
 
-## [🔗](/interfaces/IAssetToken.sol#L259) `getListStatus()`
+## [🔗](/interfaces/IAssetToken.sol#L265) `getListStatus()`
 
 View function
 
 ### Returns
 * `ListStatus` The List mechanism in use (0=noFilter, 1=Blacklist, 2=Whitelist)
 
-## [🔗](/interfaces/IAssetToken.sol#L265) `isAllowedToSend(address who)`
+## [🔗](/interfaces/IAssetToken.sol#L271) `isAllowedToSend(address who)`
 
 View function
 
@@ -331,7 +338,7 @@ View function
 ### Returns
 * `bool` `True` if the address is allowd, `False` if not
 
-## [🔗](/interfaces/IAssetToken.sol#L272) `isOperatorFor(address operator, address holder)`
+## [🔗](/interfaces/IAssetToken.sol#L278) `isOperatorFor(address operator, address holder)`
 
 View function
 
@@ -342,7 +349,7 @@ View function
 ### Returns
 * `bool` `True` if operator for the holder, `False` if not
 
-## [🔗](/interfaces/IAssetToken.sol#L280) `isMultipleOfGranularity(uint amount)`
+## [🔗](/interfaces/IAssetToken.sol#L286) `isMultipleOfGranularity(uint amount)`
 
 View function
 
@@ -352,7 +359,7 @@ View function
 ### Returns
 * `bool` `True` if the amount respects granularity, `False` if not
 
-## [🔗](/interfaces/IAssetToken.sol#L287) `decimals()`
+## [🔗](/interfaces/IAssetToken.sol#L293) `decimals()`
 
 View function
 

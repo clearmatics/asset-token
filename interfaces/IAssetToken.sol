@@ -44,7 +44,7 @@ interface IAssetToken {
         string calldata name,
         address owner,
         address[] calldata defaultOperators,
-        int status,
+        uint8 status,
         uint256 granularity,
         address registry1820Addr
     ) external;
@@ -212,6 +212,12 @@ interface IAssetToken {
         bytes calldata data,
         bytes calldata operatorData
     ) external;
+
+    /**
+    * @notice View function
+    * @return Address of the token owner
+    */
+    function owner() external view returns (address);
 
     /**
     * @notice View function

@@ -63,7 +63,7 @@ contract AssetToken is IERC777, Initializable {
         string calldata name,
         address owner,
         address[] calldata defaultOperators,
-        int status,
+        uint8 status,
         uint256 granularity,
         address registry1820Addr
     )
@@ -175,6 +175,10 @@ contract AssetToken is IERC777, Initializable {
         _;
     }
 
+    function owner() external view returns (address) {
+        return _owner;
+    }
+    
     function name() external view returns (string memory) {
         return _name;
     }

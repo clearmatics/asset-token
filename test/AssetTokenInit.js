@@ -37,6 +37,12 @@ contract("AssetTokenInit", accounts => {
       // call the constructor 
       await CONTRACT.initialize("CLR", "Asset Token", addrOwner, [accounts[2]], 1, 1, zeroRegistryAddress);
     });
+
+    it("owner: Check the owner address", async () => {
+      const actualOwner = await CONTRACT.owner();
+  
+      assert.strictEqual(actualOwner, addrOwner);
+    });
   
     it("name: Check the name of the token", async () => {
       const actualName = await CONTRACT.name();

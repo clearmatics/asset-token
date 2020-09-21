@@ -1,7 +1,7 @@
 # [🔗](/interfaces/IAssetToken.sol#L7) IAssetToken
 **Author** _Zoe Nolan, Andrea Di Nenno, George Ornbo_
 
-The Asset Token is a smart contract designed to represent a fungible asset with offchain interaction
+The Asset Token is a smart contract designed to represent a fungible asset with offchain interaction.
 # Functions
 ## [🔗](/interfaces/IAssetToken.sol#L32) `initialize(string symbol, string name, address owner, undefined defaultOperators, uint8 status, uint256 granularity, address registry1820Addr)`
 
@@ -61,9 +61,9 @@ Only the `listController` can call it.
 
 ## [🔗](/interfaces/IAssetToken.sol#L78) `authorizeOperator(address operator)`
 
-Authorizes an address to be an operator for the caller, that is, to being able to transfer tokens on his behalf.
+Authorises an address to be an operator for the caller, that is, to being able to transfer tokens on his behalf.
 
-Reverts if the caller authorizes himself `AuthorizedOperator` event is emitted.
+Reverts if the caller authorises himself `AuthorizedOperator` event is emitted.
 
 
 
@@ -73,7 +73,7 @@ Reverts if the caller authorizes himself `AuthorizedOperator` event is emitted.
 
 ## [🔗](/interfaces/IAssetToken.sol#L86) `revokeOperator(address operator)`
 
-Revokes authorization for an address to be an operator for the caller.
+Revokes authorisation for an address to be an operator for the caller.
 
 Reverts if the caller revokes himself `RevokedOperator` event is emitted.
 

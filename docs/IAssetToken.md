@@ -5,7 +5,7 @@ The Asset Token is a smart contract designed to represent a fungible asset with 
 # Functions
 ## [🔗](/interfaces/IAssetToken.sol#L32) `initialize(string symbol, string name, address owner, undefined defaultOperators, uint8 status, uint256 granularity, address registry1820Addr)`
 
-Initialize is the constructor of the token
+Initialize is the constructor of the token.
 
 
 ### Parameters
@@ -25,7 +25,7 @@ Only the `listController` can call it.
 
 Will revert if the token is in NoFilter mode - `ListStatus(0)`.
 
-`Denied` event is emitted
+`Denied` event is emitted.
 
 
 ### Parameters
@@ -39,11 +39,11 @@ Only the `listController` can call it.
 
 Will revert if the token is in NoFilter mode - `ListStatus(0)`.
 
-`Allowed` event is emitted
+`Allowed` event is emitted.
 
 
 ### Parameters
-* `who` target address
+* `who` target address.
 
 ## [🔗](/interfaces/IAssetToken.sol#L70) `switchListStatus(uint8 status)`
 
@@ -61,7 +61,7 @@ Only the `listController` can call it.
 
 ## [🔗](/interfaces/IAssetToken.sol#L78) `authorizeOperator(address operator)`
 
-Authorizes an address to be an operator for the caller, that is to being able to transfer tokens on his behalf.
+Authorizes an address to be an operator for the caller, that is, to being able to transfer tokens on his behalf.
 
 Reverts if the caller authorizes himself `AuthorizedOperator` event is emitted.
 
@@ -85,7 +85,7 @@ Reverts if the caller revokes himself `RevokedOperator` event is emitted.
 
 ## [🔗](/interfaces/IAssetToken.sol#L94) `setEmergencyPermission(address who)`
 
-Sets an address as the `emergencyDelegate`, the only able to freeze the contract.
+Sets an address as the `emergencyDelegate`, the only address able to freeze the contract.
 
 Only the contract owner can call it.
 
@@ -99,7 +99,7 @@ Only the contract owner can call it.
 
 ## [🔗](/interfaces/IAssetToken.sol#L102) `setFundingPermission(address who)`
 
-Sets an address as the `fundingDelegate`, the only able to issue tokens to holders.
+Sets an address as the `fundingDelegate`, the only address able to issue tokens to holders.
 
 Only the contract owner can call it.
 
@@ -113,7 +113,7 @@ Only the contract owner can call it.
 
 ## [🔗](/interfaces/IAssetToken.sol#L110) `setListsController(address who)`
 
-Sets an address as the `listController`, the only able to switch list, deny and allow addresses.
+Sets an address as the `listController`, the only address able to switch list, deny and allow addresses.
 
 Only the contract owner can call it.
 
@@ -182,7 +182,7 @@ Will revert if the contract is in a frozen state after an `emergencyStop`.
 
 Will revert if the caller address is either the `owner`, `fundingDelegate`, `emergencyDelegate`, or `listController`.
 
-`Burn` event  emitted
+`Burn` event  emitted.
 
 
 ### Parameters
@@ -203,7 +203,7 @@ Will revert if the contract is in a frozen state after an `emergencyStop`.
 
 Will revert if the caller address is either the `owner`, `fundingDelegate`, `emergencyDelegate`, or `listController`.
 
-`Burn` event  emitted
+`Burn` event  emitted.
 
 
 ### Parameters
@@ -226,7 +226,7 @@ Will revert if the contract is in a frozen state after an `emergencyStop`.
 
 Will revert if the recipient is  either the `owner`, `fundingDelegate`, `emergencyDelegate`, or `listController`.
 
-`Sent` event emitted
+`Sent` event emitted.
 
 
 ### Parameters
@@ -264,42 +264,42 @@ Will revert if the recipient is  either the `owner`, `fundingDelegate`, `emergen
 
 ## [🔗](/interfaces/IAssetToken.sol#L216) `owner()`
 
-View function
+View function.
 
 ### Returns
-* `address` Address of the token owner
+* `address` Address of the token owner.
 
 ## [🔗](/interfaces/IAssetToken.sol#L222) `name()`
 
 View function
 
 ### Returns
-* `string` String name of the token
+* `string` String name of the token.
 
 ## [🔗](/interfaces/IAssetToken.sol#L228) `symbol()`
 
-View function
+View function.
 
 ### Returns
-* `string` String symbol of the token
+* `string` String symbol of the token.
 
 ## [🔗](/interfaces/IAssetToken.sol#L234) `totalSupply()`
 
-View function
+View function.
 
 ### Returns
-* `uint256` Total Supply of tokens currently in circulation
+* `uint256` Total Supply of tokens currently in circulation.
 
 ## [🔗](/interfaces/IAssetToken.sol#L240) `granularity()`
 
-View function
+View function.
 
 ### Returns
-* `uint256` Granularity of the token, as the smallest part of the token that's not divisible
+* `uint256` Granularity of the token, as the smallest part of the token that's not divisible.
 
 ## [🔗](/interfaces/IAssetToken.sol#L246) `balanceOf(address who)`
 
-View function
+View function.
 
 
 ### Parameters
@@ -309,10 +309,10 @@ View function
 
 ## [🔗](/interfaces/IAssetToken.sol#L253) `defaultOperators()`
 
-View function
+View function.
 
 ### Returns
-* `undefined` The list of the default operator addresses
+* `undefined` The list of the default operator addresses.
 
 ## [🔗](/interfaces/IAssetToken.sol#L259) `getTradingStatus()`
 
@@ -323,24 +323,24 @@ View function
 
 ## [🔗](/interfaces/IAssetToken.sol#L265) `getListStatus()`
 
-View function
+View function.
 
 ### Returns
-* `ListStatus` The List mechanism in use (0=noFilter, 1=Blacklist, 2=Whitelist)
+* `ListStatus` The List mechanism in use (0=noFilter, 1=Blacklist, 2=Whitelist).
 
 ## [🔗](/interfaces/IAssetToken.sol#L271) `isAllowedToSend(address who)`
 
-View function
+View function.
 
 
 ### Parameters
-* `who` queried address
+* `who` queried address.
 ### Returns
-* `bool` `True` if the address is allowd, `False` if not
+* `bool` `True` if the address is allowd, `False` if not.
 
 ## [🔗](/interfaces/IAssetToken.sol#L278) `isOperatorFor(address operator, address holder)`
 
-View function
+View function.
 
 
 ### Parameters
@@ -351,7 +351,7 @@ View function
 
 ## [🔗](/interfaces/IAssetToken.sol#L286) `isMultipleOfGranularity(uint amount)`
 
-View function
+View function.
 
 
 ### Parameters
@@ -361,8 +361,8 @@ View function
 
 ## [🔗](/interfaces/IAssetToken.sol#L293) `decimals()`
 
-View function
+View function.
 
 ### Returns
-* `uint256` Decimal positions of the token. Fixed to 18
+* `uint256` Decimal positions of the token. Fixed to 18.
 

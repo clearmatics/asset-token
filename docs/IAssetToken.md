@@ -5,7 +5,7 @@ The Asset Token is a smart contract designed to represent a fungible asset with 
 # Functions
 ## [🔗](/interfaces/IAssetToken.sol#L32) `initialize(string symbol, string name, address owner, undefined defaultOperators, uint8 status, uint256 granularity, address registry1820Addr)`
 
-Initialize is the constructor of the token.
+Initialise is the constructor of the token.
 
 
 ### Parameters

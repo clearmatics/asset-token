@@ -1,13 +1,14 @@
 const GAS = 10000000
+const KeystoreProvider = require("truffle-keystore-provider")
+const PrivateKeyProvider = require("truffle-privatekey-provider")
+const HDWalletProvier = require("@truffle/hdwallet-provider")
 
-// Replace it for Autonity network
-// const PrivateKeyProvider = require("truffle-privatekey-provider");
-// const KeystoreProvider = require("truffle-keystore-provider")
-// const PRIVATE_KEY = "766a8043f468c1bf574107160dc470eb1e0838a2fde35449b76e8504054f61af"
-// const PATH_TO_KEYSTORE_FILE = ""
-// const AUTONITY_RPC = "https://rpc.testnet.autonity.io:8545"
-// const GAS_PRICE = 10000000000000
-// const NETWORK_ID = 444900
+const GAS_PRICE = 10000000000000
+
+// the hd wallet provider allows to unlock multiple accounts
+const privateKeys = [
+  "6def495775234de1a31e3e777bcef596d80296fce26e1b869ade84937a1927f9"
+]
 
 module.exports = {
   networks: {
@@ -16,6 +17,12 @@ module.exports = {
       port: 8545,
       gas: GAS,
       network_id: "*"
+    },
+    noise: {
+      provider: () => new HDWalletProvier(privateKeys, "http://rpc2.testnet.autonity.io:8545", 0, privateKeys.length),
+      gas: GAS,
+      gasPrice: GAS_PRICE, 
+      network_id: "*",
     },
 //    // Replace it for Autonity network
 //    development: {

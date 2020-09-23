@@ -3,7 +3,8 @@ const commandLineArgs = require('command-line-args')
 const flags = [
     { name: "network", type: String},
     { name: "privateKey", type: String},
-    { name: "nodeURL", type:String}
+    { name: "nodeURL", type:String},
+    { name: "tokenAddr", type:String}
 ]
 
 const options = commandLineArgs(flags, {partial: true}) //allow for unknown options

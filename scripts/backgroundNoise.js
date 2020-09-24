@@ -119,6 +119,7 @@ module.exports = async callback => {
     console.log("----- Interacting with Asset Token at", tokenAddr)
 
     tokenIssuer = await tokenInstance.owner()
+    console.log("----- The Token Issuer is", tokenIssuer)
 
     accounts = await web3.eth.getAccounts()
     console.log("----- Available accounts:\n", accounts)

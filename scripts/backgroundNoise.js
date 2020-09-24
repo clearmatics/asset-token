@@ -110,7 +110,7 @@ const sendRepeteadRandomTx = async () => {
             console.log(e)
         }
 
-        setTimeout(sendRandomTx, 1000)
+        setTimeout(sendRepeteadRandomTx, 1000)
     }, 1000)
     
 } 

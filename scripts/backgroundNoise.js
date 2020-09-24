@@ -5,7 +5,7 @@ const methods = ["issue", "burn", "transfer", "allow", "deny", "authorize", "rev
 const MAX_AMOUNT = 1000
 const INTERVAL = 1000 //ms
 
-let tokenInstance, tokenIssuer, tokenAddr, accounts
+let tokenInstance, tokenIssuer, tokenAddr, accounts, interval, max_amount
 
 const fund = async (from, to, amount) => {
     console.log("\n----- About to fund", amount, "tokens", "to address", to)
@@ -64,7 +64,7 @@ const shuffleAccount = (accounts) => {
 }
 
 const shuffleAmount = () => {
-    return Math.floor(Math.random() * (MAX_AMOUNT))
+    return Math.floor(Math.random() * (max_amount))
 }
 
 const sendRepeteadRandomTx = async () => {
@@ -103,8 +103,8 @@ const sendRepeteadRandomTx = async () => {
             console.log(e)
         }
 
-        setTimeout(sendRepeteadRandomTx, INTERVAL)
-    }, INTERVAL)
+        setTimeout(sendRepeteadRandomTx, interval)
+    }, interval)
     
 } 
 
@@ -112,6 +112,8 @@ const sendRepeteadRandomTx = async () => {
 module.exports = async callback => {
 
     tokenAddr = getArgument("--tokenAddr")
+    max_amount = getArgument("--maxAmount") || MAX_AMOUNT
+    interval = getArgument("--interval") || INTERVAL
             
     tokenInstance = await AssetToken.at(tokenAddr)
     console.log("----- Interacting with Asset Token at", tokenAddr)

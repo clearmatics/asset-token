@@ -1,8 +1,9 @@
 const AssetToken = artifacts.require("AssetToken")
-const { getArgument, sleep } = require("./utils_deployment")
+const { getArgument } = require("./utils_deployment")
 
 const methods = ["issue", "burn", "transfer", "allow", "deny", "authorize", "revoke"]
 const MAX_AMOUNT = 1000
+const INTERVAL = 1000 //ms
 
 let tokenInstance
 
@@ -110,8 +111,8 @@ const sendRepeteadRandomTx = async () => {
             console.log(e)
         }
 
-        setTimeout(sendRepeteadRandomTx, 1000)
-    }, 1000)
+        setTimeout(sendRepeteadRandomTx, INTERVAL)
+    }, INTERVAL)
     
 } 
 

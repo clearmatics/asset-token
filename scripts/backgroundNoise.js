@@ -1,5 +1,5 @@
 const AssetToken = artifacts.require("AssetToken")
-const { getArgument } = require("./utils_deployment")
+const { getArgument, sleep } = require("./utils_deployment")
 
 const methods = ["issue", "burn", "transfer", "allow", "deny", "authorize", "revoke"]
 const MAX_AMOUNT = 1000
@@ -66,50 +66,57 @@ const shuffleAmount = () => {
     return Math.floor(Math.random() * (MAX_AMOUNT))
 }
 
+const sendRepeteadRandomTx = async () => {
+
+    setTimeout(async () => {
+        try{
+
+            const tokenAddr = getArgument("--tokenAddr")
+    
+            tokenInstance = await AssetToken.at(tokenAddr)
+            console.log("----- Interacting with Asset Token at", tokenAddr)
+    
+            const accounts = await web3.eth.getAccounts()
+            console.log("----- Available accounts:\n", accounts)
+    
+            // randomly select what function is called
+            switch(method = shuffleMethod()){
+                case "issue":
+                    await fund(shuffleAccount(accounts), shuffleAccount(accounts), shuffleAmount())
+                    break
+                case "transfer":
+                    await transfer(shuffleAccount(accounts), shuffleAccount(accounts), shuffleAmount())
+                    break
+                case "burn":
+                    await burn(shuffleAccount(accounts), shuffleAmount())
+                    break
+                case "allow":
+                    await allow(shuffleAccount(accounts), shuffleAccount(accounts))
+                    break
+                case "deny":
+                    await deny(shuffleAccount(accounts), shuffleAccount(accounts))
+                    break
+                case "authorize":
+                    await authorizeOperator(shuffleAccount(accounts), shuffleAccount(accounts))
+                    break
+                case "revoke":
+                    await revokeOperator(shuffleAccount(accounts), shuffleAccount(accounts))
+                    break
+                default:
+                    console.log("This method is not present:", method)
+            }            
+    
+        }catch(e){
+            console.log(e)
+        }
+
+        setTimeout(sendRandomTx, 1000)
+    }, 1000)
+    
+} 
+
 // ENTRY POINT 
 module.exports = async callback => {
 
-    const tokenAddr = getArgument("--tokenAddr")
-
-    try{
-
-        tokenInstance = await AssetToken.at(tokenAddr)
-        console.log("----- Interacting with Asset Token at", tokenAddr)
-
-        const accounts = await web3.eth.getAccounts()
-        console.log("----- Available accounts:\n", accounts)
-
-        // randomly select what function is called
-        switch(method = shuffleMethod()){
-            case "issue":
-                await fund(shuffleAccount(accounts), shuffleAccount(accounts), shuffleAmount())
-                break
-            case "transfer":
-                await transfer(shuffleAccount(accounts), shuffleAccount(accounts), shuffleAmount())
-                break
-            case "burn":
-                await burn(shuffleAccount(accounts), shuffleAmount())
-                break
-            case "allow":
-                await allow(shuffleAccount(accounts), shuffleAccount(accounts))
-                break
-            case "deny":
-                await deny(shuffleAccount(accounts), shuffleAccount(accounts))
-                break
-            case "authorize":
-                await authorizeOperator(shuffleAccount(accounts), shuffleAccount(accounts))
-                break
-            case "revoke":
-                await revokeOperator(shuffleAccount(accounts), shuffleAccount(accounts))
-                break
-            default:
-                console.log("This method is not present:", method)
-        }
-
-    }catch(e){
-        console.log(e)
-        callback(e)
-    }
-
-    callback()
+    await sendRepeteadRandomTx()
 }

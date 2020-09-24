@@ -5,7 +5,7 @@ const methods = ["issue", "burn", "transfer", "allow", "deny", "authorize", "rev
 const MAX_AMOUNT = 1000
 const INTERVAL = 1000 //ms
 
-let tokenInstance
+let tokenInstance, tokenIssuer, tokenAddr, accounts
 
 const fund = async (from, to, amount) => {
     console.log("----- About to fund", amount, "tokens", "to address", to)
@@ -71,19 +71,11 @@ const sendRepeteadRandomTx = async () => {
 
     setTimeout(async () => {
         try{
-
-            const tokenAddr = getArgument("--tokenAddr")
-    
-            tokenInstance = await AssetToken.at(tokenAddr)
-            console.log("----- Interacting with Asset Token at", tokenAddr)
-    
-            const accounts = await web3.eth.getAccounts()
-            console.log("----- Available accounts:\n", accounts)
     
             // randomly select what function is called
             switch(method = shuffleMethod()){
                 case "issue":
-                    await fund(shuffleAccount(accounts), shuffleAccount(accounts), shuffleAmount())
+                    await fund(tokenIssuer, shuffleAccount(accounts), shuffleAmount())
                     break
                 case "transfer":
                     await transfer(shuffleAccount(accounts), shuffleAccount(accounts), shuffleAmount())
@@ -92,10 +84,10 @@ const sendRepeteadRandomTx = async () => {
                     await burn(shuffleAccount(accounts), shuffleAmount())
                     break
                 case "allow":
-                    await allow(shuffleAccount(accounts), shuffleAccount(accounts))
+                    await allow(shuffleAccount(accounts), tokenIssuer)
                     break
                 case "deny":
-                    await deny(shuffleAccount(accounts), shuffleAccount(accounts))
+                    await deny(shuffleAccount(accounts), tokenIssuer)
                     break
                 case "authorize":
                     await authorizeOperator(shuffleAccount(accounts), shuffleAccount(accounts))
@@ -118,6 +110,16 @@ const sendRepeteadRandomTx = async () => {
 
 // ENTRY POINT 
 module.exports = async callback => {
+
+    tokenAddr = getArgument("--tokenAddr")
+            
+    tokenInstance = await AssetToken.at(tokenAddr)
+    console.log("----- Interacting with Asset Token at", tokenAddr)
+
+    tokenIssuer = await tokenInstance.owner()
+
+    accounts = await web3.eth.getAccounts()
+    console.log("----- Available accounts:\n", accounts)
 
     await sendRepeteadRandomTx()
 }

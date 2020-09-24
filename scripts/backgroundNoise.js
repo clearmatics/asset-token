@@ -8,51 +8,51 @@ const INTERVAL = 1000 //ms
 let tokenInstance, tokenIssuer, tokenAddr, accounts
 
 const fund = async (from, to, amount) => {
-    console.log("----- About to fund", amount, "tokens", "to address", to)
+    console.log("\n----- About to fund", amount, "tokens", "to address", to)
     const tx = await tokenInstance.fund(to, amount, {from})
-    console.log("tx", tx.receipt.transactionHash)
+    console.log("----- Tx Hash", tx.receipt.transactionHash)
 }
 
 const transfer = async (from, to, amount) => {
-    console.log("----- About to transfer", amount, "tokens", "from address", from, "to address", to)
+    console.log("\n----- About to transfer", amount, "tokens", "from address", from, "to address", to)
     const data = web3.utils.randomHex(10);
     const tx = await tokenInstance.send(to, amount, data, { from })
-    console.log("tx", tx.receipt.transactionHash)
+    console.log("----- Tx Hash", tx.receipt.transactionHash)
 }
 
 const burn = async (from, amount) => {
-    console.log("----- About to burn", amount, "tokens", "from address", from)
+    console.log("\n----- About to burn", amount, "tokens", "from address", from)
     const data = web3.utils.randomHex(10);
     const tx = await tokenInstance.burn(amount, data, { from })
-    console.log("tx", tx.receipt.transactionHash)
+    console.log("----- Tx Hash", tx.receipt.transactionHash)
 }
 
 const allow = async (who, from) => {
-    console.log("----- About to allow address", who, "to move out tokens")
+    console.log("\n----- About to allow address", who, "to move out tokens")
 
     const tx = await tokenInstance.allowAddress(who, { from })
-    console.log("tx", tx.receipt.transactionHash)
+    console.log("----- Tx Hash", tx.receipt.transactionHash)
 }
 
 const deny = async (who, from) => {
-    console.log("----- About to deny address", who, "to move out tokens")
+    console.log("\n----- About to deny address", who, "to move out tokens")
 
     const tx = await tokenInstance.allowAddress(who, { from })
-    console.log("tx", tx.receipt.transactionHash)
+    console.log("----- Tx Hash", tx.receipt.transactionHash)
 }
 
 const authorizeOperator = async (operator, from) => {
-    console.log("----- About to authorize operator", operator, "for", from)
+    console.log("\n----- About to authorize operator", operator, "for", from)
 
     const tx = await tokenInstance.authorizeOperator(operator, { from })
-    console.log("tx", tx.receipt.transactionHash)
+    console.log("----- Tx Hash", tx.receipt.transactionHash)
 }
 
 const revokeOperator = async (operator, from) => {
-    console.log("----- About to revoke operator", operator, "for", from)
+    console.log("\n----- About to revoke operator", operator, "for", from)
 
     const tx = await tokenInstance.revokeOperator(operator, { from })
-    console.log("tx", tx.receipt.transactionHash)
+    console.log("----- Tx Hash", tx.receipt.transactionHash)
 }
 
 const shuffleMethod = () => {

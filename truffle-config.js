@@ -19,25 +19,23 @@ module.exports = {
       network_id: "*"
     },
     noise: {
-      provider: () => new HDWalletProvier(privateKeys, "http://rpc2.testnet.autonity.io:8545", 0, privateKeys.length),
+      provider: () => new HDWalletProvier({
+        privateKeys, 
+        providerOrUrl: "https://temp-rpc.testnet.autonity.network:8545/", 
+        numberOfAddresses: 1,
+        shareNonce: true
+      }),
       gas: GAS,
       gasPrice: GAS_PRICE, 
       network_id: "*",
     },
-//    // Replace it for Autonity network
-//    development: {
-//      provider: () =>  new PrivateKeyProvider(PRIVATE_KEY, AUTONITY_RPC),
-//      gas: GAS,
-//      gasPrice: GAS_PRICE,
-//      network_id: NETWORK_ID
-//    },
-//    Replace it for Autonity network with keystore provider
-//    development: {
-//      provider: new KeystoreProvider(AUTONITY_RPC, PATH_TO_KEYSTORE_FILE, OPTIONAL_PASSWORD),
-//      gas: GAS,
-//      gasPrice: GAS_PRICE,
-//      network_id: NETWORK_ID
-//  },
+    // noise: {
+    //   provider: new KeystoreProvider("https://temp-rpc.testnet.autonity.network:8545/", "./account2.json", ""),
+    //   gas: GAS,
+    //   gasPrice: GAS_PRICE,
+    //   network_id: "*",
+    // },
+
     soliditycoverage: {
       host: "localhost",
       port: 8555,

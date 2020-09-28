@@ -114,7 +114,7 @@ module.exports = async callback => {
     tokenAddr = getArgument("--tokenAddr")
     max_amount = getArgument("--maxAmount") || MAX_AMOUNT
     interval = getArgument("--interval") || INTERVAL
-            
+      
     tokenInstance = await AssetToken.at(tokenAddr)
     console.log("----- Interacting with Asset Token at", tokenAddr)
 
@@ -124,5 +124,10 @@ module.exports = async callback => {
     accounts = await web3.eth.getAccounts()
     console.log("----- Available accounts:\n", accounts)
 
-    await sendRepeteadRandomTx()
+    if (!accounts.includes(tokenIssuer)){
+        console.log("----- The Issuer Account is not part of the set of unlocked accounts, must return")
+        process.exit()
+    }
+
+    await sendRepeteadRandomTx(web3)
 }

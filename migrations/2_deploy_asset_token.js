@@ -1,6 +1,5 @@
 const { scripts, ConfigVariablesInitializer } = require("zos");
 const { add, push, create } = scripts;
-const { sleep } = require("../utils_deployment")
 
 require("openzeppelin-test-helpers/configure")({ web3 });
 

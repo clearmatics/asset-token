@@ -191,7 +191,7 @@ Then verify the balance
 
 ## Generating Random Transactions
 
-A script provides a way to generate random Smart Contract calls between a set of accounts to an Asset Token deployed on a network. 
+A script provides a way to generate random Smart Contract calls between a set of accounts to an Asset Token deployed on a network. Once launched it will keep running until stopped.
 
 In order to do that, you have to include your list of private keys in a file called `accounts.js` placed in the root folder of the project, as in the example below: 
 
@@ -216,11 +216,11 @@ The run:
 That accepts the following flags (remember to precede the list of flag with `--`):
 
 * `--tokenAddr`: address of the deployed Asset Token.
-* `--method`: if you want to only call one method. Must be one among `issue`, `transfer`, `burn`, `allow`, `deny`, `authorize`, `revoke`.
+* `--method`: to call only one method and not random ones. Must be one among `issue`, `transfer`, `burn`, `allow`, `deny`, `authorize`, `revoke`.
 * `--interval`: the interval in milliseconds between subsequent calls.
 * `--maxAmount`: the upper amount of tokens allowed.
 * `--network`: the network name as in your `truffle-config.js`.
-* `--url`: the url to an RPC node api endpoint.
+* `--url`: the url to an RPC endpoint in the network. 
 
 ## Docker
 

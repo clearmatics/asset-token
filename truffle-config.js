@@ -5,10 +5,7 @@ const HDWalletProvier = require("@truffle/hdwallet-provider")
 
 const GAS_PRICE = 10000000000000
 
-// the hd wallet provider allows to unlock multiple accounts
-const privateKeys = [
-  // "6def495775234de1a31e3e777bcef596d80296fce26e1b869ade84937a1927f9"
-]
+const privateKeys = require("./accounts")
 
 module.exports = {
   networks: {
@@ -18,12 +15,12 @@ module.exports = {
       gas: GAS,
       network_id: "*"
     },
-    noise: {
+    testnet: {
       provider: new HDWalletProvier({
         privateKeys, 
         providerOrUrl: "https://temp-rpc.testnet.autonity.network:8545/", 
         numberOfAddresses: privateKeys.length,
-        shareNonce: true
+        shareNonce: false
       }),
       gas: GAS,
       gasPrice: GAS_PRICE, 

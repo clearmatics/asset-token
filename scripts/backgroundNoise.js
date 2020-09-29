@@ -72,8 +72,8 @@ const sendRepeteadRandomTx = async () => {
     setTimeout(async () => {
         try{
     
-            // randomly select what function is called
-            switch(method = shuffleMethod()){
+            method = methods.includes(defaultMethod) ? defaultMethod : shuffleMethod()
+            switch(method){
                 case "issue":
                     await fund(tokenIssuer, shuffleAccount(accounts), shuffleAmount())
                     break
@@ -114,6 +114,7 @@ module.exports = async callback => {
     tokenAddr = getArgument("--tokenAddr")
     max_amount = getArgument("--maxAmount") || MAX_AMOUNT
     interval = getArgument("--interval") || INTERVAL
+    defaultMethod = getArgument("--method") || undefined
 
     try {
         tokenInstance = await AssetToken.at(tokenAddr)

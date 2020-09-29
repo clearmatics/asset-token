@@ -6,7 +6,8 @@ const flags = [
     { name: "nodeURL", type:String},
     { name: "tokenAddr", type:String},
     { name: "maxAmount", type: String},
-    { name: "interval", type: String}
+    { name: "interval", type: String},
+    { name: "method", type: String}
 ]
 
 const options = commandLineArgs(flags, {partial: true}) //allow for unknown options

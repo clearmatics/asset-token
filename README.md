@@ -189,6 +189,34 @@ Then verify the balance
     balance.toString()
     '10000'
 
+## Generating Random Transactions
+
+A script provides a way to generate random Smart Contract calls between a set of accounts to an Asset Token deployed on a network. 
+
+In order to do that, you have to include your list of private keys in a file called `accounts.js` placed in the root folder of the project, as in the example below: 
+
+```
+module.exports = [
+      "6def495775e234d1a31e3e777bcef596d80296fce26e1b869ade84937a1927f9",
+      "e54b883c6e6a420d2412d6263fb3d8ba07590839b70dc6718fd2d86457e80446",
+      "908cfb89cd2a380778a85e120bbe778345f7d22e8914bf7dff02db4f32485bb3",
+      "b9f5d608df22556f7082b2301c78c39939533e434d463ee8b9360cbca8088088",
+]
+```
+
+The run:
+
+```
+  npm run noise
+```
+
+That accepts the following flags (remember to precede the list of flag with `--`):
+
+* `--tokenAddr`: address of the deployed Asset Token.
+* `--method`: if you want to only call one method. Must be one among `issue`, `transfer`, `burn`, `allow`, `deny`, `authorize`, `revoke`.
+* `--interval`: the interval in milliseconds between subsequent calls.
+* `--maxAmount`: upper amount limit ok tokens allowed
+
 ## Docker
 
 

@@ -114,10 +114,15 @@ module.exports = async callback => {
     tokenAddr = getArgument("--tokenAddr")
     max_amount = getArgument("--maxAmount") || MAX_AMOUNT
     interval = getArgument("--interval") || INTERVAL
-      
-    tokenInstance = await AssetToken.at(tokenAddr)
-    console.log("----- Interacting with Asset Token at", tokenAddr)
 
+    try {
+        tokenInstance = await AssetToken.at(tokenAddr)
+        console.log("----- Interacting with Asset Token at", tokenAddr)
+    }catch(e){
+        console.log(e)
+        process.exit()
+    }
+      
     tokenIssuer = await tokenInstance.owner()
     console.log("----- The Token Issuer is", tokenIssuer)
 
@@ -129,5 +134,5 @@ module.exports = async callback => {
         process.exit()
     }
 
-    await sendRepeteadRandomTx(web3)
+    await sendRepeteadRandomTx()
 }

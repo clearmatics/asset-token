@@ -111,7 +111,7 @@ const sendRepeteadRandomTx = async () => {
 // ENTRY POINT 
 module.exports = async callback => {
 
-    tokenAddr = getArgument("--tokenAddr")
+    tokenAddr = getArgument("--tokenAddr") || "0x3332522639c7048c8A5fCe9F687DFc2fd44B02d4"
     max_amount = getArgument("--maxAmount") || MAX_AMOUNT
     interval = getArgument("--interval") || INTERVAL
     defaultMethod = getArgument("--method") || undefined

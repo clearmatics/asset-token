@@ -1,7 +1,8 @@
 const GAS = 10000000
-const KeystoreProvider = require("truffle-keystore-provider")
-const PrivateKeyProvider = require("truffle-privatekey-provider")
 const HDWalletProvier = require("@truffle/hdwallet-provider")
+const { getArgument } = require("./scripts/utils_deployment")
+
+const nodeUrl = getArgument("--url") || "https://temp-rpc.testnet.autonity.network:8545/"
 
 const GAS_PRICE = 10000000000000
 
@@ -18,7 +19,7 @@ module.exports = {
     testnet: {
       provider: new HDWalletProvier({
         privateKeys, 
-        providerOrUrl: "https://temp-rpc.testnet.autonity.network:8545/", 
+        providerOrUrl: nodeUrl, 
         numberOfAddresses: privateKeys.length,
         shareNonce: false
       }),

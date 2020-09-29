@@ -7,7 +7,7 @@ const GAS_PRICE = 10000000000000
 
 // the hd wallet provider allows to unlock multiple accounts
 const privateKeys = [
-  "6def495775234de1a31e3e777bcef596d80296fce26e1b869ade84937a1927f9"
+  // "6def495775234de1a31e3e777bcef596d80296fce26e1b869ade84937a1927f9"
 ]
 
 module.exports = {
@@ -19,7 +19,7 @@ module.exports = {
       network_id: "*"
     },
     noise: {
-      provider: () => new HDWalletProvier({
+      provider: new HDWalletProvier({
         privateKeys, 
         providerOrUrl: "https://temp-rpc.testnet.autonity.network:8545/", 
         numberOfAddresses: 1,
@@ -29,13 +29,6 @@ module.exports = {
       gasPrice: GAS_PRICE, 
       network_id: "*",
     },
-    // noise: {
-    //   provider: new KeystoreProvider("https://temp-rpc.testnet.autonity.network:8545/", "./account2.json", ""),
-    //   gas: GAS,
-    //   gasPrice: GAS_PRICE,
-    //   network_id: "*",
-    // },
-
     soliditycoverage: {
       host: "localhost",
       port: 8555,

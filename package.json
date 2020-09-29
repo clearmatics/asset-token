@@ -44,7 +44,8 @@
     "test": "truffle test",
     "coverage": "truffle run coverage --file='test/Asset*.js'",
     "lint": "solhint contracts/**/*.sol",
-    "docs": "rm -rf ./docs && npx soldocgen docs/ interfaces/"
+    "docs": "rm -rf ./docs && npx soldocgen docs/ interfaces/",
+    "noise": "truffle exec scripts/backgroundNoise.js"
   },
   "devDependencies": {
     "chai": "^4.2.0",

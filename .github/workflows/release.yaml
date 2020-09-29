@@ -1,9 +1,13 @@
-on: ["push", "pull_request"]
-name: "Continuous Integration"
-jobs:
-  build:
+name: "NPM package release"
+on:  
+  push:
+    branches:
+      - master 
+
+jobs: 
+  publish: 
     runs-on: ubuntu-20.04
-    steps:
+    steps: 
       - uses: actions/checkout@v2
 
       - name: Build docker and Compile contracts
@@ -33,4 +37,16 @@ jobs:
           file: ./coverage.json
           flags: unittests
           name: codecov-umbrella
+          fail_ci_if_error: true
+
+      - name: Publish to NPM registry
+      - uses: actions/checkout@v1
+
+      - uses: actions/setup-node@v1 
+        with: 
+          node-version: 10 
+          
+      - uses: JS-DevTools/npm-publish@v1 
+        with: 
+          token: ${{ secrets.NPM_TOKEN }}
           fail_ci_if_error: true

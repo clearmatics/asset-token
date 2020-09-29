@@ -102,6 +102,8 @@ npm install
 rinkeby: {
   skipDryRun: true,
   provider: () => new PrivateKeyProvider(PK, nodeURL),
+  // Or use below if injecting keystore file
+  // provider: KeystoreProvider(nodeURL, PATH_TO_KEYSTORE_FILE, OPTIONAL_PASSWORD) // If optional password is not supplied, you will be prompted to input password
 },
 ```
     
@@ -186,6 +188,61 @@ Then verify the balance
     var balance = await token.balanceOf("0xD079Bd77bF485908e145C8A54d5086c10b9868c3")
     balance.toString()
     '10000'
+
+## Docker
+
+
+* build:
+  ```
+  docker build -t clearmatics/asset-token .
+  ```
+
+* Test Deployments
+  * Run Ganache network
+    ```
+    docker run -d -p 8545:8545 --name ganache trufflesuite/ganache-cli:v6.9.1 --gasLimit 0xFFFFFFFF
+    ```
+  * Deploy contracts to default `development` network:
+    ```
+    # Deploy ERC1820 for Ganache network if not exist
+    ERC1820_ADDR=$(docker run --network="host" eastata/erc1820-registry:v1.0.0 |grep "contract address" |grep -Eo '0x[a-fA-F0-9]{40}')
+    
+    # Deploy and initialize Asset Token
+    docker run --network="host" -t clearmatics/asset-token \
+      deploy "--" \
+      "GBP,sterling,0x3C1d78EC2bB4415dC70d9b4a669783E77b4a78d0,[],0,1,${ERC1820_ADDR}"
+    ```
+  * Run Tests
+    ```
+    docker run --network="host" -t clearmatics/asset-token test
+    ```
+  * Run Coverage
+    ```
+    echo "" > coverage.json
+    docker run -v "$(pwd)"/coverage.json:/app/coverage.json --network="host" -ti clearmatics/asset-token coverage
+    ```
+* Deploy to custom network
+  * Connect to ssh-forwarded network and deploy using custom truffle config
+    ```
+    # Deploy ERC1820 if not exist
+    ERC1820_ADDR=$(docker run -v "$(pwd)"/truffle-config.js:/app/truffle-config.js --network="host" eastata/erc1820-registry:v1.0.0 |grep "contract address" |grep -Eo '0x[a-fA-F0-9]{40}')
+
+    # Deploy and initialize Asset Token
+    docker run -v "$(pwd)"/truffle-config.js:/app/truffle-config.js --network="host" -ti clearmatics/asset-token \
+      deploy "--" \
+      "GBP,sterling,0x3C1d78EC2bB4415dC70d9b4a669783E77b4a78d0,[],0,1,${ERC1820_ADDR}"
+    ```
+  * If using keystore provider, inject your keystore file into the docker deployment:
+    ```
+    # Deploy and initialize Asset Token
+    docker run -v "$(pwd)"/truffle-config.js:/app/truffle-config.js \
+    -v <local_path_to_keystore>:<path_in_docker> \
+    --network="host" -ti clearmatics/asset-token deploy "--" \
+      "GBP,sterling,0x3C1d78EC2bB4415dC70d9b4a669783E77b4a78d0,[],0,1,${ERC1820_ADDR}"
+    ```
+
+    Ensure that the path injected into the docker filesystem is the same as the one included in your custom truffle config.
+
 
 [1]: https://eips.ethereum.org/EIPS/eip-777
 [2]: http://truffleframework.com/

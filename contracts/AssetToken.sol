@@ -63,7 +63,7 @@ contract AssetToken is IERC777, Initializable {
         string calldata name,
         address owner,
         address[] calldata defaultOperators,
-        int status,
+        uint8 status,
         uint256 granularity,
         address registry1820Addr
     )
@@ -139,7 +139,7 @@ contract AssetToken is IERC777, Initializable {
     modifier onlyAllowedAddress(address who) {
         //the check only if either white or blacklisting
         if (_listStatus != ListStatus.NoFilter) {
-            require(isAllowedToSend(who), "This account is not allowed to send money");
+            require(_isAllowedToSend(who), "This account is not allowed to send money");
             _;
         } else {
             _;
@@ -171,10 +171,14 @@ contract AssetToken is IERC777, Initializable {
     }
 
     modifier checkGranularity(uint amount) {
-        require(isMultipleOfGranularity(amount), "The amount must be a multiple of granularity");
+        require(_isMultipleOfGranularity(amount), "The amount must be a multiple of granularity");
         _;
     }
 
+    function owner() external view returns (address) {
+        return _owner;
+    }
+    
     function name() external view returns (string memory) {
         return _name;
     }
@@ -275,24 +279,16 @@ contract AssetToken is IERC777, Initializable {
         emit ListDelegation(_listsController);
     }
 
-    function isAllowedToSend(address who) public view returns (bool) {
-        if (_listStatus == ListStatus.Blacklist) {
-            return !_isBlacklisted[who];
-        } else if (_listStatus == ListStatus.Whitelist) {
-            return _isWhiteListed[who];
-        }
-
-        return true;
+    function isAllowedToSend(address who) external view returns (bool) {
+        return _isAllowedToSend(who);
     }
 
-    function isOperatorFor(address operator, address holder) public view returns (bool) {
-        return holder == operator ||
-            (_defaultOperators[operator] && !_revokedDefaultOperators[holder][operator]) ||
-            _operators[holder][operator];
+    function isOperatorFor(address operator, address holder) external view returns (bool) {
+        return _isOperatorFor(operator, holder);
     }
 
-    function isMultipleOfGranularity(uint amount) public view returns (bool) {
-        return (amount % _granularity == 0);
+    function isMultipleOfGranularity(uint amount) external view returns (bool) {
+        return _isMultipleOfGranularity(amount);
     }
 
     // @dev starts trading by switching _isActive to true
@@ -346,7 +342,7 @@ contract AssetToken is IERC777, Initializable {
         external
     {
         //being isOperatorFor external the compiler doesn't sees it without `this`
-        require(isOperatorFor(msg.sender, from), "Caller is not operator for the specified holder");
+        require(_isOperatorFor(msg.sender, from), "Caller is not operator for the specified holder");
 
         _burn(msg.sender, from, amount, data, operatorData);
 
@@ -368,7 +364,7 @@ contract AssetToken is IERC777, Initializable {
         external
     {
         //being isOperatorFor external the compiler doesn't sees it without `this`
-        require(isOperatorFor(msg.sender, from), "Caller is not operator for specified holder");
+        require(_isOperatorFor(msg.sender, from), "Caller is not operator for specified holder");
 
         _send(msg.sender, from, to, amount, data, operatorData);
 
@@ -499,4 +495,23 @@ contract AssetToken is IERC777, Initializable {
         return (length > 0);
     }
 
+    function _isAllowedToSend(address who) internal view returns (bool) {
+        if (_listStatus == ListStatus.Blacklist) {
+            return !_isBlacklisted[who];
+        } else if (_listStatus == ListStatus.Whitelist) {
+            return _isWhiteListed[who];
+        }
+
+        return true;
+    }
+    
+    function _isOperatorFor(address operator, address holder) internal view returns (bool) {
+        return holder == operator ||
+            (_defaultOperators[operator] && !_revokedDefaultOperators[holder][operator]) ||
+            _operators[holder][operator];
+    }
+
+    function _isMultipleOfGranularity(uint amount) internal view returns (bool) {
+        return (amount % _granularity == 0);
+    }
 }

@@ -16,3 +16,4 @@ const getArgument = (flag) => {
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
 
 module.exports={getArgument, sleep}
+

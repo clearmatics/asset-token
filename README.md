@@ -204,6 +204,8 @@ module.exports = [
 ]
 ```
 
+Remember then to setup your truffle network configuration, as in `truffle-config.js` examples.
+
 The run:
 
 ```
@@ -215,7 +217,9 @@ That accepts the following flags (remember to precede the list of flag with `--`
 * `--tokenAddr`: address of the deployed Asset Token.
 * `--method`: if you want to only call one method. Must be one among `issue`, `transfer`, `burn`, `allow`, `deny`, `authorize`, `revoke`.
 * `--interval`: the interval in milliseconds between subsequent calls.
-* `--maxAmount`: upper amount limit ok tokens allowed
+* `--maxAmount`: the upper amount of tokens allowed.
+* `--network`: the network name as in your `truffle-config.js`.
+* `--url`: the url to an RPC node api endpoint.
 
 ## Docker
 

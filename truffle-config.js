@@ -22,7 +22,7 @@ module.exports = {
       provider: new HDWalletProvier({
         privateKeys, 
         providerOrUrl: "https://temp-rpc.testnet.autonity.network:8545/", 
-        numberOfAddresses: 1,
+        numberOfAddresses: privateKeys.length,
         shareNonce: true
       }),
       gas: GAS,

@@ -17,5 +17,5 @@ COPY . /app
 
 COPY --from=builder /app/node_modules /app/node_modules
 
-ENTRYPOINT ["npx", "truffle"]
-CMD ["exec", "scripts/backgroundNoise.js", "--tokenAddr", "0x11A6F511268aFe1aa51cEBe5FECBAC2014CE49D3"]
+ENTRYPOINT ["npx", "truffle", "exec", "scripts/backgroundNoise.js"]
+CMD ["--tokenAddr", "0x11A6F511268aFe1aa51cEBe5FECBAC2014CE49D3"]

@@ -207,7 +207,7 @@ module.exports = [
 Remember then to setup your truffle network configuration, as in `truffle-config.js` examples.
 
 
-The run:
+Then run:
 
 ```
   npm run noise
@@ -221,6 +221,14 @@ That accepts the following flags (remember to precede the list of flag with `--`
 * `--maxAmount`: the upper amount of tokens allowed.
 * `--network`: the network name as in your `truffle-config.js`.
 * `--url`: the url to an RPC endpoint in the network. 
+
+Alternatively you can run the script through a docker container, so that you don't have to clone the repo. Remember to have in the same directory the `truffle-config.js` and the `account.js` files as shown above. Then run: 
+
+```
+  docker run --net="host" clearmatics/asset-token-noise:v0.1 
+```
+
+which accepts the same set of flags.
 
 ## Docker
 

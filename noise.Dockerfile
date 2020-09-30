@@ -17,5 +17,7 @@ COPY . /app
 
 COPY --from=builder /app/node_modules /app/node_modules
 
+RUN npm run compile
+
 ENTRYPOINT ["npx", "truffle", "exec", "scripts/backgroundNoise.js"]
 CMD ["--tokenAddr", "0x11A6F511268aFe1aa51cEBe5FECBAC2014CE49D3"]

@@ -225,7 +225,7 @@ That accepts the following flags (remember to precede the list of flag with `--`
 Alternatively you can run the script through a docker container, so that you don't have to clone the repo. Remember to have in the same directory the `truffle-config.js` and the `account.js` files as shown above. Then run: 
 
 ```
-  docker run --net="host" clearmatics/asset-token-noise:v0.1 
+  docker run --net="host" clearmatics/asset-token-noise-bot:v0.0.1 
 ```
 
 which accepts the same set of flags.
